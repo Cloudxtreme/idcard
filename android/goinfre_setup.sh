@@ -1,11 +1,13 @@
-#!/bin/sh
+#!/bin/sh -e
 
 if [ ! -e ./gradlew ]; then
+	echo "not in project root directory"
 	exit 1
 fi
 
 echo "CHECK THE FOLLOWING:"
 echo " - This is being run from the PROJECT/android directory."
+echo " - This is being run from a 42 Lab computer."
 echo ""
 read -p "Enter to continue / ^C" -r
 

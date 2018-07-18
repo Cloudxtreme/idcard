@@ -6,4 +6,20 @@
     <string name="nfc_open">Please touch the ID Card to the device</string>
     <string name="nfc_found">Found Card, working…</string>
     <string name="nfc_done">Card Operation complete</string>
+
+    <string name="menu1">Choose a country</string>
+    <string-array name="menu1_items">
+        <item>Root</item>
+        <item>Card42</item>
+    </string-array>
+
+    <string name="menu2">Dropdown Menu 2</string>
+    <string-array name="menu2_items">
+        <item>(None)</item>
+        <item>Test Master Key</item>
+        <item>Null Key</item>
+        <item>Android Public Key</item>
+    </string-array>
+
+
 </resources>

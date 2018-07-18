@@ -7,14 +7,14 @@
     <string name="nfc_found">Found Card, working…</string>
     <string name="nfc_done">Card Operation complete</string>
 
-    <string name="menu1">Choose a country</string>
-    <string-array name="menu1_items">
+    <string name="nfc_appid_label">App ID</string>
+    <string-array name="nfc_appid_items">
         <item>Root</item>
         <item>Card42</item>
     </string-array>
 
-    <string name="menu2">Dropdown Menu 2</string>
-    <string-array name="menu2_items">
+    <string name="nfc_keyid_label">App Key</string>
+    <string-array name="nfc_keyid_items">
         <item>(None)</item>
         <item>Test Master Key</item>
         <item>Null Key</item>

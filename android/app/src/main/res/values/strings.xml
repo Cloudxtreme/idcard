@@ -2,4 +2,8 @@
     <string name="app_name">42 ID Cards</string>
     <string name="action_settings">Settings</string>
     <string name="door">Door</string>
+    <string name="run_nfc_test">Run NFC Test</string>
+    <string name="nfc_open">Please touch the ID Card to the device</string>
+    <string name="nfc_found">Found Card, working…</string>
+    <string name="nfc_done">Card Operation complete</string>
 </resources>

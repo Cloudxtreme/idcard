@@ -1,0 +1,3 @@
+[submodule "android/farebot"]
+	path = android/farebot
+	url = git@github.com:codebutler/farebot.git

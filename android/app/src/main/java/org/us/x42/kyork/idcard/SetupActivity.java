@@ -8,6 +8,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 
 public class SetupActivity extends AppCompatActivity {
 
@@ -26,6 +27,8 @@ public class SetupActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+        Button clickButton = (Button) findViewById(R.id.nfc_test_button);
     }
 
     @Override

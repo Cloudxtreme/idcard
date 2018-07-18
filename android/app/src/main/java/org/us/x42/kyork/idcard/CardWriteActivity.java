@@ -33,6 +33,7 @@ public class CardWriteActivity extends AppCompatActivity {
     private Handler mHandler;
 
     private static final int MSG_ID_NFC_STATUS = 23;
+    public static final String CARD_PAYLOAD = "CARD_PAYLOAD";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,9 +41,9 @@ public class CardWriteActivity extends AppCompatActivity {
         setContentView(R.layout.activity_card_communicate);
 
         Intent launchIntent = getIntent();
-        mJob = (CardJob)launchIntent.getParcelableExtra("CARD_PAYLOAD");
+        mJob = launchIntent.getParcelableExtra(CARD_PAYLOAD);
         if (mJob == null) {
-            Log.i("CardWriteActivity", "no CARD_DATA extra");
+            Log.e("CardWriteActivity", "no CARD_DATA extra");
             setResult(Activity.RESULT_CANCELED);
             finish();
             return;
@@ -143,7 +144,6 @@ public class CardWriteActivity extends AppCompatActivity {
 
                 return response;
             } catch (Exception e) {
-                Log.d(LOG_TAG,"Command exception", e);
                 throw e;
             }
         }
@@ -178,6 +178,10 @@ public class CardWriteActivity extends AppCompatActivity {
                 args[2] = (byte) (mJob.appId & 0xFF);
                 response = sendAndLog(CardJob.SELECT_APPLICATION, args);
 
+                // Authenticated
+                if (this.mJob.encKey != null) {
+                    response = sendAndLog(CardJob.AUTHENTICATE, new byte[] { this.mJob.keyId });
+                }
                 // Perform each thing
 
                 for (CardJob.CardOp op : mJob.commands) {

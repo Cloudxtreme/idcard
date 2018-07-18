@@ -30,11 +30,20 @@ public class CardJob implements Parcelable {
     public static final byte GET_KEY_SETTINGS = (byte) 0x45;
 
     public int appId;
+    public byte keyId;
     public byte[] encKey;
     public CardOp[] commands;
 
-    public CardJob(int appId, byte[] encKey, CardOp... commands) {
+    public CardJob(int appId, CardOp... commands) {
         this.appId = appId;
+        this.keyId = 0xE;
+        this.encKey = null;
+        this.commands = commands;
+    }
+
+    public CardJob(int appId, byte keyId, byte[] encKey, CardOp... commands) {
+        this.appId = appId;
+        this.keyId = keyId;
         this.encKey = encKey;
         this.commands = commands;
     }

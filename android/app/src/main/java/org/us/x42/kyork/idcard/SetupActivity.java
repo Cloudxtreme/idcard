@@ -6,6 +6,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -45,24 +46,35 @@ public class SetupActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 int appId;
+                Log.i(this.getClass().getSimpleName(), "appid spinner position " + appid_spinner.getSelectedItemPosition());
                 switch (appid_spinner.getSelectedItemPosition()) {
                     case 0:
                     default:
                         appId = CardJob.APP_ID_NULL;
+                        break;
                     case 1:
                         appId = CardJob.APP_ID_CARD42;
+                        break;
                 }
-                byte[] encKey;
+                byte[] encKey = null;
+                byte keyId = 0xE;
                 switch (keyid_spinner.getSelectedItemPosition()) {
                     default:
                     case 0: // No encryption
                         encKey = CardJob.ENC_KEY_NONE;
-                    case 1: // test master
-                        encKey = CardJob.ENC_KEY_MASTER_TEST;
-                    case 2: // Null key
-                        encKey = CardJob.ENC_KEY_NULL;
-                    case 3: // public key
+                        break;
+                    case 1: // public key
                         encKey = CardJob.ENC_KEY_ANDROID_PUBLIC;
+                        keyId = 2;
+                        break;
+                    case 2: // test master
+                        encKey = CardJob.ENC_KEY_MASTER_TEST;
+                        keyId = 0;
+                        break;
+                    case 3: // Null Master key
+                        encKey = CardJob.ENC_KEY_NULL;
+                        keyId = 0;
+                        break;
                 }
                 String cmdIdStr = cmd_id_edittext.getText().toString();
                 int cmdIdInt;
@@ -79,16 +91,26 @@ public class SetupActivity extends AppCompatActivity {
                 byte cmdId = (byte)cmdIdInt;
 
                 String inputText = payload_edittext.getText().toString();
+                inputText = inputText.replaceAll(" ", "");
                 if (!BaseEncoding.base16().canDecode(inputText)) {
                     errorText.setText(R.string.error_not_valid_hex_bytes);
                     return;
                 }
-                byte[] data = BaseEncoding.base16().decode(inputText);
+                byte[] data;
+                if (inputText.isEmpty()) {
+                    data = null;
+                } else {
+                    data = BaseEncoding.base16().decode(inputText);
+                }
 
                 Intent intent = new Intent(SetupActivity.this, CardWriteActivity.class);
-                CardJob job = new CardJob(appId, encKey,
-                        new CardJob.CardOpRaw(cmdId, data));
-                intent.putExtra("CARD_PAYLOAD", job);
+                CardJob job;
+                if (encKey == null) {
+                    job = new CardJob(appId, new CardJob.CardOpRaw(cmdId, data));
+                } else {
+                    job = new CardJob(appId, keyId, encKey, new CardJob.CardOpRaw(cmdId, data));
+                }
+                intent.putExtra(CardWriteActivity.CARD_PAYLOAD, job);
                 startActivity(intent);
             }
         });

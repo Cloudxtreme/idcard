@@ -2,12 +2,6 @@
 
 buildscript {
     ext.kotlin_version = '1.2.31'
-    ext.vers = [
-            compileSdkVersion: 27,
-            targetSdkVersion: 27,
-            minSdkVersion: 19,
-            buildToolsVersion: '27.0.3'
-    ]
 
     repositories {
         mavenLocal()
@@ -18,11 +12,11 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.1.3'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'io.fabric.tools:gradle:1.25.2'
-        classpath 'com.squareup.sqldelight:gradle-plugin:0.6.1'
     }
 }
+
+apply from: 'dependencies.gradle'
 
 allprojects {
     repositories {
@@ -61,17 +55,6 @@ subprojects {
             }
         }
     }
-}
-
-apply from: 'dependencies.gradle'
-
-ext {
-    vers = [
-            compileSdkVersion: 27,
-            targetSdkVersion : 27,
-            minSdkVersion    : 19,
-            buildToolsVersion: '27.0.3'
-    ]
 }
 
 task clean(type: Delete) {

@@ -1,12 +1,11 @@
 apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion 26
     defaultConfig {
         applicationId "org.us.x42.kyork.idcard"
         versionCode 26
-        minSdkVersion 21
+        minSdkVersion 19
         targetSdkVersion 26
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -22,19 +21,14 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.android.support:appcompat-v7:26.1.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    implementation libs.supportAppcompat
+    implementation libs.supportConstraint
     implementation libs.supportDesign
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation libs.kotlinStdlib
 
     api 'com.google.code.findbugs:jsr305:2.0.1'
-
-//    implementation project(':farebot-card-desfire')
-//    implementation project(':farebot-card')
-//    implementation project(':farebot-base')
 }
 repositories {
     mavenCentral()

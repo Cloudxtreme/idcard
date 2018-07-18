@@ -10,7 +10,11 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
+
+import com.google.common.io.BaseEncoding;
 
 public class SetupActivity extends AppCompatActivity {
 
@@ -30,15 +34,60 @@ public class SetupActivity extends AppCompatActivity {
             }
         });
 
-        Spinner spinner = findViewById(R.id.appid_spinner);
+        final Spinner appid_spinner = findViewById(R.id.appid_spinner);
+        final Spinner keyid_spinner = findViewById(R.id.keyid_spinner);
+        final EditText cmd_id_edittext = findViewById(R.id.setup_cmdid_text);
+        final EditText payload_edittext = findViewById(R.id.setup_payload_editText);
+        final TextView errorText = findViewById(R.id.errorText);
 
         Button clickButton = (Button) findViewById(R.id.nfc_test_button);
         clickButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(SetupActivity.this, CardCommunicateActivity.class);
-                CardJob job = new CardJob(CardJob.APP_ID_NULL, CardJob.ENC_KEY_NONE,
-                        new CardJob.CardOpRaw(CardJob.GET_KEY_SETTINGS, null));
+                int appId;
+                switch (appid_spinner.getSelectedItemPosition()) {
+                    case 0:
+                    default:
+                        appId = CardJob.APP_ID_NULL;
+                    case 1:
+                        appId = CardJob.APP_ID_CARD42;
+                }
+                byte[] encKey;
+                switch (keyid_spinner.getSelectedItemPosition()) {
+                    default:
+                    case 0: // No encryption
+                        encKey = CardJob.ENC_KEY_NONE;
+                    case 1: // test master
+                        encKey = CardJob.ENC_KEY_MASTER_TEST;
+                    case 2: // Null key
+                        encKey = CardJob.ENC_KEY_NULL;
+                    case 3: // public key
+                        encKey = CardJob.ENC_KEY_ANDROID_PUBLIC;
+                }
+                String cmdIdStr = cmd_id_edittext.getText().toString();
+                int cmdIdInt;
+                try {
+                    cmdIdInt = Integer.parseInt(cmdIdStr.trim(), 16);
+                } catch (NumberFormatException e) {
+                    errorText.setText(R.string.error_cmdid_out_of_range);
+                    return;
+                }
+                if (cmdIdInt < 0 || cmdIdInt > 255) {
+                    errorText.setText(R.string.error_cmdid_out_of_range);
+                    return;
+                }
+                byte cmdId = (byte)cmdIdInt;
+
+                String inputText = payload_edittext.getText().toString();
+                if (!BaseEncoding.base16().canDecode(inputText)) {
+                    errorText.setText(R.string.error_not_valid_hex_bytes);
+                    return;
+                }
+                byte[] data = BaseEncoding.base16().decode(inputText);
+
+                Intent intent = new Intent(SetupActivity.this, CardWriteActivity.class);
+                CardJob job = new CardJob(appId, encKey,
+                        new CardJob.CardOpRaw(cmdId, data));
                 intent.putExtra("CARD_PAYLOAD", job);
                 startActivity(intent);
             }

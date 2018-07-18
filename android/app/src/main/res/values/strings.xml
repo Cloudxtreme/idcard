@@ -14,12 +14,14 @@
     </string-array>
 
     <string name="nfc_keyid_label">App Key</string>
+    <string name="payload">Payload</string>
     <string-array name="nfc_keyid_items">
         <item>(None)</item>
         <item>Test Master Key</item>
         <item>Null Key</item>
         <item>Android Public Key</item>
     </string-array>
-
+    <string name="error_not_valid_hex_bytes">Error: content not valid hex bytes</string>
+    <string name="error_cmdid_out_of_range">Error: cmdId must be hex byte (00-FF)</string>
 
 </resources>

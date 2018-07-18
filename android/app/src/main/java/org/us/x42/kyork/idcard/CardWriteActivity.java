@@ -40,8 +40,9 @@ public class CardWriteActivity extends AppCompatActivity {
         setContentView(R.layout.activity_card_communicate);
 
         Intent launchIntent = getIntent();
-        mJob = (CardJob)launchIntent.getParcelableExtra("CARD_DATA");
+        mJob = (CardJob)launchIntent.getParcelableExtra("CARD_PAYLOAD");
         if (mJob == null) {
+            Log.i("CardWriteActivity", "no CARD_DATA extra");
             setResult(Activity.RESULT_CANCELED);
             finish();
             return;

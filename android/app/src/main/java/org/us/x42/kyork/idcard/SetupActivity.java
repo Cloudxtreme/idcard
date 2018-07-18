@@ -34,7 +34,9 @@ public class SetupActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(SetupActivity.this, CardCommunicateActivity.class);
-                intent.putExtra("CARD_PAYLOAD", "1234");
+                CardJob job = new CardJob(CardJob.APP_ID_NULL, CardJob.ENC_KEY_NONE,
+                        new CardJob.CardOpRaw(CardJob.GET_KEY_SETTINGS, null));
+                intent.putExtra("CARD_PAYLOAD", job);
                 startActivity(intent);
             }
         });

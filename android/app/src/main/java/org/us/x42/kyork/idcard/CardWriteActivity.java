@@ -1,35 +1,33 @@
 package org.us.x42.kyork.idcard;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
+import android.nfc.tech.IsoDep;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.nfc.tech.IsoDep;
-
 import android.util.Log;
 import android.widget.TextView;
 
-import org.us.x42.kyork.idcard.data.CardDataFormat;
-
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class CardCommunicateActivity extends AppCompatActivity {
-    private static final String LOG_TAG = CardCommunicateActivity.class.getSimpleName();
+public class CardWriteActivity extends AppCompatActivity {
+    private static final String LOG_TAG = CardWriteActivity.class.getSimpleName();
     private NfcAdapter mAdapter;
 
     private PendingIntent scanIntent;
     private IntentFilter[] scanFilter;
     private String[][] scanTechs;
+
+    private CardJob mJob;
 
     private TextView mStatusText;
     private Handler mHandler;
@@ -40,6 +38,14 @@ public class CardCommunicateActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_card_communicate);
+
+        Intent launchIntent = getIntent();
+        mJob = (CardJob)launchIntent.getParcelableExtra("CARD_DATA");
+        if (mJob == null) {
+            setResult(Activity.RESULT_CANCELED);
+            finish();
+            return;
+        }
 
         mAdapter = NfcAdapter.getDefaultAdapter(this);
 
@@ -90,7 +96,7 @@ public class CardCommunicateActivity extends AppCompatActivity {
 
             Log.i(LOG_TAG, "got tag BANANAS");
 
-            new NfcCommunicateTask(tagFromIntent, this.mHandler).execute(new byte[]{});
+            new NfcCommunicateTask(tagFromIntent, this.mHandler, mJob).execute(new byte[]{});
         }
     }
 
@@ -98,10 +104,12 @@ public class CardCommunicateActivity extends AppCompatActivity {
         Tag mTag;
         IsoDep mTagTech;
         Handler destHandler;
+        CardJob mJob;
 
-        NfcCommunicateTask(Tag tag, Handler msgDest) {
+        NfcCommunicateTask(Tag tag, Handler msgDest, CardJob job) {
             this.mTag = tag;
             this.destHandler = msgDest;
+            this.mJob = job;
         }
 
         byte[] sendAndLog(byte cmdId, byte[] data) throws Exception {
@@ -161,12 +169,19 @@ public class CardCommunicateActivity extends AppCompatActivity {
                 this.publishProgress("Connected...");
 
                 // Select application
-                byte[] response;
+                byte[] response, args;
 
-                response = sendAndLog(SELECT_APPLICATION, new byte[] { 0, 0, 0 });
-                // Authenticate
-                response = sendAndLog(GET_KEY_SETTINGS, null);
+                args = new byte[3];
+                args[0] = (byte) ((mJob.appId & 0xFF0000) >> 16);
+                args[1] = (byte) ((mJob.appId & 0xFF00) >> 8);
+                args[2] = (byte) (mJob.appId & 0xFF);
+                response = sendAndLog(CardJob.SELECT_APPLICATION, args);
 
+                // Perform each thing
+
+                for (CardJob.CardOp op : mJob.commands) {
+                    sendAndLog(op.getCommandId(), op.encode());
+                }
 
                 Log.i(LOG_TAG, "sleeping");
                 Thread.sleep(2*1000);

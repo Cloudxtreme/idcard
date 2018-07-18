@@ -13,12 +13,18 @@ import android.util.Log;
 import android.widget.TextView;
 
 
+import com.codebutler.farebot.card.RawCard;
+import com.codebutler.farebot.card.desfire.DesfireCard;
+import com.codebutler.farebot.card.desfire.DesfireTagReader;
+import com.codebutler.farebot.card.desfire.raw.RawDesfireCard;
+
+import org.us.x42.kyork.idcard.data.CardDataFormat;
+
 import java.io.IOException;
 import java.util.Objects;
 
 public class CardCommunicateActivity extends AppCompatActivity {
-    private static final String LOG_TAG = CardCommunicateActivity.getClass().getSimpleName();
-
+    private static final String LOG_TAG = CardCommunicateActivity.class.getSimpleName();
     private NfcAdapter mAdapter;
 
     private PendingIntent scanIntent;
@@ -71,20 +77,26 @@ public class CardCommunicateActivity extends AppCompatActivity {
     }
 
     static class GetCardInfoRunnable implements Runnable {
-        IsoDep mTag;
+        Tag mTag;
 
         GetCardInfoRunnable(Tag tag) {
-            this.mTag = IsoDep.get(tag);
+            this.mTag = tag;
         }
 
         @Override
         public void run() {
             Log.i(LOG_TAG, "started thread, connecting to tag");
             try {
-                mTag.connect();
-                mTag.transceive()
+                RawDesfireCard rawCard = new DesfireTagReader(mTag.getId(), mTag).readTag();
+                if (rawCard.isUnauthorized()) {
+                    Log.e(LOG_TAG, "Card not authorized");
+                }
 
-            } catch (IOException e) {
+                DesfireCard card = rawCard.parse();
+
+                Log.i(LOG_TAG, "reached end of code");
+
+            } catch (Exception e) {
                 Log.e(LOG_TAG, "Exception while talking to tag", e);
             }
         }

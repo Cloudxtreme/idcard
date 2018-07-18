@@ -1,5 +1,6 @@
 package org.us.x42.kyork.idcard;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -29,6 +30,14 @@ public class SetupActivity extends AppCompatActivity {
         });
 
         Button clickButton = (Button) findViewById(R.id.nfc_test_button);
+        clickButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(SetupActivity.this, CardCommunicateActivity.class);
+                intent.putExtra("CARD_PAYLOAD", "1234");
+                startActivity(intent);
+            }
+        });
     }
 
     @Override

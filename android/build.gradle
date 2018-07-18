@@ -2,6 +2,12 @@
 
 buildscript {
     ext.kotlin_version = '1.2.31'
+    ext.vers = [
+            compileSdkVersion: 27,
+            targetSdkVersion: 27,
+            minSdkVersion: 19,
+            buildToolsVersion: '27.0.3'
+    ]
 
     repositories {
         mavenLocal()
@@ -57,7 +63,16 @@ subprojects {
     }
 }
 
-apply from: 'farebot/dependencies.gradle'
+apply from: 'dependencies.gradle'
+
+ext {
+    vers = [
+            compileSdkVersion: 27,
+            targetSdkVersion : 27,
+            minSdkVersion    : 19,
+            buildToolsVersion: '27.0.3'
+    ]
+}
 
 task clean(type: Delete) {
     delete rootProject.buildDir

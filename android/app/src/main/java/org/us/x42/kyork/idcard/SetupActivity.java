@@ -61,4 +61,11 @@ public class SetupActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    public void onClick(View v) {
+        if (v == findViewById(R.id.nfc_test_button)) {
+            throw new RuntimeException("reached");
+        }
+        throw new RuntimeException("if returned false");
+    }
 }

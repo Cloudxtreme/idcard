@@ -1,8 +1,8 @@
 include ':app'
 
-include ':farebot-base'
-project(':farebot-base').projectDir = new File('farebot/farebot-base')
-include ':farebot-card'
-project(':farebot-card').projectDir = new File('farebot/farebot-card')
-include ':farebot-card-desfire'
-project(':farebot-card-desfire').projectDir = new File('farebot/farebot-card-desfire')
+//include ':farebot-base'
+//project(':farebot-base').projectDir = new File('farebot/farebot-base')
+//include ':farebot-card'
+//project(':farebot-card').projectDir = new File('farebot/farebot-card')
+//include ':farebot-card-desfire'
+//project(':farebot-card-desfire').projectDir = new File('farebot/farebot-card-desfire')

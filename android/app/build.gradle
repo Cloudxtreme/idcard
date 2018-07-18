@@ -32,9 +32,9 @@ dependencies {
 
     api 'com.google.code.findbugs:jsr305:2.0.1'
 
-    implementation project(':farebot-card-desfire')
-    implementation project(':farebot-card')
-    implementation project(':farebot-base')
+//    implementation project(':farebot-card-desfire')
+//    implementation project(':farebot-card')
+//    implementation project(':farebot-base')
 }
 repositories {
     mavenCentral()

@@ -3,5 +3,6 @@
     <!-- desfires use IsoDep -->
     <tech-list>
         <tech>android.nfc.tech.IsoDep</tech>
+        <tech>android.nfc.tech.NfcA</tech>
     </tech-list>
 </resources>

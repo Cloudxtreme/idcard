@@ -59,8 +59,10 @@ public class CardCommunicateActivity extends AppCompatActivity {
                     } else {
                         if (msg.obj instanceof String) {
                             mStatusText.setText((String) msg.obj);
+                        } else if (msg.obj instanceof Integer) {
+                            mStatusText.setText((Integer) msg.obj);
                         } else {
-                            Log.i(LOG_TAG, "wtf did i just get in that Message: " + msg.obj.toString());
+                            Log.i(LOG_TAG, "wtf did i just get in that Message: " + msg.obj.getClass().getName() + " " + msg.obj.toString());
                         }
                     }
                 }
@@ -106,10 +108,14 @@ public class CardCommunicateActivity extends AppCompatActivity {
             StringBuilder sb = new StringBuilder();
             sb.append("Sending command [");
             sb.append((int)cmdId);
-            sb.append("] data [ ");
-            for (byte d : data) {
-                sb.append((int) d);
-                sb.append(' ');
+            if (data == null) {
+                sb.append("] [no data");
+            } else {
+                sb.append("] data [ ");
+                for (byte d : data) {
+                    sb.append((int) d);
+                    sb.append(' ');
+                }
             }
             sb.append("]");
 
@@ -117,6 +123,7 @@ public class CardCommunicateActivity extends AppCompatActivity {
 
             try {
                 byte[] response = this.sendRequest(cmdId, data);
+                sb = new StringBuilder();
                 sb.append("Command response: [ ");;
                 for (byte d : response) {
                     sb.append((int) d);
@@ -127,7 +134,7 @@ public class CardCommunicateActivity extends AppCompatActivity {
 
                 return response;
             } catch (Exception e) {
-                Log.d(LOG_TAG,"Got exception", e);
+                Log.d(LOG_TAG,"Command exception", e);
                 throw e;
             }
         }
@@ -153,8 +160,12 @@ public class CardCommunicateActivity extends AppCompatActivity {
                 mTagTech.connect();
                 this.publishProgress("Connected...");
 
+                // Select application
+                byte[] response;
+
+                response = sendAndLog(SELECT_APPLICATION, new byte[] { 0, 0, 0 });
                 // Authenticate
-                byte[] response = sendAndLog((byte)0x0a, new byte[] { 0 });
+                response = sendAndLog(GET_KEY_SETTINGS, null);
 
 
                 Log.i(LOG_TAG, "sleeping");
@@ -236,6 +247,7 @@ public class CardCommunicateActivity extends AppCompatActivity {
         }
     }
 
+    private static final byte AUTHENTICATE = (byte) 0x0A;
     private static final byte GET_MANUFACTURING_DATA = (byte) 0x60;
     private static final byte GET_APPLICATION_DIRECTORY = (byte) 0x6A;
     private static final byte GET_ADDITIONAL_FRAME = (byte) 0xAF;
@@ -245,6 +257,8 @@ public class CardCommunicateActivity extends AppCompatActivity {
     private static final byte GET_VALUE = (byte) 0x6C;
     private static final byte GET_FILES = (byte) 0x6F;
     private static final byte GET_FILE_SETTINGS = (byte) 0xF5;
+    private static final byte CHANGE_KEY_SETTINGS = (byte) 0x54;
+    private static final byte GET_KEY_SETTINGS = (byte) 0x45;
 
     // Status codes (Section 3.4)
     private static final byte OPERATION_OK = (byte) 0x00;

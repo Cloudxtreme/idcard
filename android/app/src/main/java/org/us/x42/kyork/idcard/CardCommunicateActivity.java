@@ -163,9 +163,9 @@ public class CardCommunicateActivity extends AppCompatActivity {
                 // Select application
                 byte[] response;
 
-                response = sendAndLog(SELECT_APPLICATION, new byte[] { 0, 0, 0 });
+                response = sendAndLog(CardJob.SELECT_APPLICATION, new byte[] { 0, 0, 0 });
                 // Authenticate
-                response = sendAndLog(GET_KEY_SETTINGS, null);
+                response = sendAndLog(CardJob.GET_KEY_SETTINGS, null);
 
 
                 Log.i(LOG_TAG, "sleeping");
@@ -198,7 +198,7 @@ public class CardCommunicateActivity extends AppCompatActivity {
                 if (status == OPERATION_OK) {
                     break;
                 } else if (status == ADDITIONAL_FRAME) {
-                    recvBuffer = mTagTech.transceive(wrapMessage(GET_ADDITIONAL_FRAME, null));
+                    recvBuffer = mTagTech.transceive(wrapMessage(CardJob.GET_ADDITIONAL_FRAME, null));
                 } else if (status == PERMISSION_DENIED) {
                     throw new IllegalArgumentException("Permission denied");
                 } else if (status == AUTHENTICATION_ERROR) {

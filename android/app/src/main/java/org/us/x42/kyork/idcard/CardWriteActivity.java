@@ -213,7 +213,7 @@ public class CardWriteActivity extends AppCompatActivity {
                 if (status == OPERATION_OK) {
                     break;
                 } else if (status == ADDITIONAL_FRAME) {
-                    recvBuffer = mTagTech.transceive(wrapMessage(GET_ADDITIONAL_FRAME, null));
+                    recvBuffer = mTagTech.transceive(wrapMessage(CardJob.GET_ADDITIONAL_FRAME, null));
                 } else if (status == PERMISSION_DENIED) {
                     throw new IllegalArgumentException("Permission denied");
                 } else if (status == AUTHENTICATION_ERROR) {

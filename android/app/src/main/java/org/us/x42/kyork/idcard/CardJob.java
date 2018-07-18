@@ -58,8 +58,12 @@ public class CardJob implements Parcelable {
 
             cmdId = in.readByte();
             dataLen = in.readInt();
-            data = new byte[dataLen];
-            in.readByteArray(data);
+            if (dataLen == -1) {
+                data = null;
+            } else {
+                data = new byte[dataLen];
+                in.readByteArray(data);
+            }
             this.commands[i] = new CardOpRaw(cmdId, data);
         }
     }
@@ -78,8 +82,12 @@ public class CardJob implements Parcelable {
             byte cmdId = command.getCommandId();
             byte[] data = command.encode();
             dest.writeByte(cmdId);
-            dest.writeInt(data.length);
-            dest.writeByteArray(data);
+            if (data == null) {
+                dest.writeInt(-1);
+            } else {
+                dest.writeInt(data.length);
+                dest.writeByteArray(data);
+            }
         }
     }
 

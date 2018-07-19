@@ -34,17 +34,26 @@ public class IntraProfileActivity extends AppCompatActivity {
             //Populate UI info with card data
         }
         if (api.isCached(login)) {
-            ImageView bmImage = findViewById(R.id.user_picture);
-            Picasso.get().load("https://cdn.intra.42.fr/users/medium_" + login + ".jpg").into(bmImage);
-
             TextView fullNameText = findViewById(R.id.full_name);
             fullNameText.setText(api.getFullName(login));
 
             TextView titleText = findViewById(R.id.title);
-            String title = "(" + api.getTitle(login) + ")";
+            String title = api.getTitle(login);
             titleText.setText(title);
 
+            ImageView bmImage = findViewById(R.id.user_picture);
+            Picasso.get().load(api.getImageURL(login)).into(bmImage);
+            bmImage.setVisibility(View.VISIBLE);
+
             JSONArray cursus_users = api.getCursusArray(login);
+
+            TextView cursusHeader = findViewById(R.id.cursus_header);
+            TextView levelHeader = findViewById(R.id.level_header);
+            TextView gradeHeader = findViewById(R.id.grade_header);
+            cursusHeader.setVisibility(View.VISIBLE);
+            levelHeader.setVisibility(View.VISIBLE);
+            gradeHeader.setVisibility(View.VISIBLE);
+
             TextView cursusText = findViewById(R.id.cursus);
             TextView levelText = findViewById(R.id.level);
             TextView gradeText = findViewById(R.id.grade);
@@ -118,6 +127,33 @@ public class IntraProfileActivity extends AppCompatActivity {
         this.fetchUser(login, false, null);
     }
 
+    private void resetUI() {
+        TextView fullNameText = findViewById(R.id.full_name);
+        fullNameText.setText("");
+        TextView titleText = findViewById(R.id.title);
+        titleText.setText("");
+        ImageView bmImage = findViewById(R.id.user_picture);
+        bmImage.setVisibility(View.INVISIBLE);
+        TextView cursusHeader = findViewById(R.id.cursus_header);
+        TextView levelHeader = findViewById(R.id.level_header);
+        TextView gradeHeader = findViewById(R.id.grade_header);
+        cursusHeader.setVisibility(View.INVISIBLE);
+        levelHeader.setVisibility(View.INVISIBLE);
+        gradeHeader.setVisibility(View.INVISIBLE);
+        TextView cursusText = findViewById(R.id.cursus);
+        TextView levelText = findViewById(R.id.level);
+        TextView gradeText = findViewById(R.id.grade);
+        cursusText.setText("");
+        levelText.setText("");
+        gradeText.setText("");
+        TextView accountTypeText = findViewById(R.id.account_type);
+        accountTypeText.setText("");
+        TextView coalitionText = findViewById(R.id.coalition);
+        coalitionText.setText("");
+        TextView phoneText = findViewById(R.id.phone);
+        phoneText.setText("");
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -125,10 +161,11 @@ public class IntraProfileActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Intent launchIntent = getIntent();
+        this.resetUI();
 
         final IDCard idcard;
         final String login;
+        Intent launchIntent = getIntent();
         if (launchIntent.hasExtra("idcard")) {
             idcard = launchIntent.getParcelableExtra("idcard");
             login = idcard.fileUserInfo.getLogin();
@@ -146,6 +183,7 @@ public class IntraProfileActivity extends AppCompatActivity {
         refreshButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                IntraProfileActivity.this.resetUI();
                 IntraProfileActivity.this.fetchUser(login, idcard);
             }
         });

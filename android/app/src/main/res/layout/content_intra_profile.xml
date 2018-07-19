@@ -5,8 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="org.us.x42.kyork.idcard.SetupActivity"
-    tools:showIn="@layout/display_data">
+    tools:context="org.us.x42.kyork.idcard.IntraProfileActivity"
+    tools:showIn="@layout/activity_intra_profile">
 
     <TextView
         android:id="@+id/login_label"

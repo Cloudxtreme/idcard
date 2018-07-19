@@ -148,7 +148,7 @@ public class CardWriteActivity extends AppCompatActivity {
             try {
                 byte[] response = this.sendRequest(cmdId, data);
                 sb = new StringBuilder();
-                sb.append("Command response: [ ");;
+                sb.append("Command response: [ ");
                 for (byte d : response) {
                     sb.append((int) d);
                     sb.append(' ');

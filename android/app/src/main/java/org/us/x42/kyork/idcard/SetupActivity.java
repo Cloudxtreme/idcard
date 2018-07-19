@@ -27,10 +27,10 @@ public class SetupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setup);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -45,7 +45,7 @@ public class SetupActivity extends AppCompatActivity {
         final EditText payload_edittext = findViewById(R.id.setup_payload_editText);
         final TextView errorText = findViewById(R.id.errorText);
 
-        Button clickButton = (Button) findViewById(R.id.nfc_test_button);
+        Button clickButton = findViewById(R.id.nfc_test_button);
         clickButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

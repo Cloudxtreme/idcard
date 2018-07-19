@@ -23,5 +23,9 @@
     </string-array>
     <string name="error_not_valid_hex_bytes">Error: content not valid hex bytes</string>
     <string name="error_cmdid_out_of_range">Error: cmdId must be hex byte (00-FF)</string>
+    <string name="title_activity_intra_profile">IntraProfileActivity</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="launch_setup">Launch Setup</string>
+    <string name="launch_intraprofile">Launch IntraProfile</string>
 
 </resources>

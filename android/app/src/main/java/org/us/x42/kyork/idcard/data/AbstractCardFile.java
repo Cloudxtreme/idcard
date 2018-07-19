@@ -42,6 +42,18 @@ public abstract class AbstractCardFile implements CardFile {
     }
 
     /**
+     * Read a little-endian 24-bit value from the file.
+     *
+     * @param offset Byte offset.
+     * @return LE24 value.
+     */
+    protected int readLE24(int offset) {
+        return ((rawContent[offset] & 0xFF) |
+                ((rawContent[offset + 1] & 0xFF) << 8) |
+                ((rawContent[offset + 2] & 0xFF) << 16));
+    }
+
+    /**
      * Read a little-endian 32-bit value from the file.
      *
      * @param offset Byte offset.

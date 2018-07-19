@@ -5,8 +5,6 @@ import android.nfc.tech.IsoDep;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import org.us.x42.kyork.idcard.CardJob;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -14,8 +12,11 @@ import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
+import javax.crypto.ShortBufferException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+//import com.nxp.nfclib.desfire.DESFireEV1;
 
 public class DESFireCard {
     private static final String LOG_TAG = DESFireCard.class.getSimpleName();
@@ -61,7 +62,17 @@ public class DESFireCard {
         args[0] = (byte) ((appID & 0xFF0000) >> 16);
         args[1] = (byte) ((appID & 0xFF00) >> 8);
         args[2] = (byte) (appID & 0xFF);
-        sendRequest(CardJob.SELECT_APPLICATION, args);
+        sendRequest(DESFireProtocol.SELECT_APPLICATION, args);
+    }
+
+    public DESFirePlainFile readPlainFile(byte fileID) throws Exception {
+        byte[] settingsReply = this.sendRequest(DESFireProtocol.GET_FILE_SETTINGS, new byte[] { fileID });
+        byte fileType = settingsReply[0];
+        byte commSettings = settingsReply[1];
+        short accessRights = (short)((short)settingsReply[2] | ((short)settingsReply[3] << 8));
+        if (settingsReply[0] == DESFireProtocol.FILETYPE_STANDARD || settingsReply[0] == DESFireProtocol.FILETYPE_BACKUP) {
+
+        }
     }
 
     /**
@@ -70,6 +81,24 @@ public class DESFireCard {
      */
     public void resetEncryption() {
         mSessionCipher = null;
+    }
+
+    private byte[] cipherDesFullBlocks(Cipher cipher, byte[] input) throws Exception {
+        if (input.length % 8 != 0) throw new IllegalArgumentException("cipherDesFullBlocks: input not multiple of 8 bytes");
+
+            return cipher.doFinal(input);
+            /*
+            byte[] output = new byte[input.length];
+            int outputUsedBytes = cipher.update(input, 0, input.length, output, 0);
+            outputUsedBytes += cipher.doFinal(input, input.length, 0, output, outputUsedBytes);
+            if (outputUsedBytes != output.length) {
+                throw new ShortBufferException("doFinal() failed to fill output buffer");
+            }
+            return output;
+        } catch (ShortBufferException e) {
+            throw new RuntimeException("Unexpected ShortBufferException (this is a code bug)", e);
+        }
+        */
     }
 
     /**
@@ -83,14 +112,17 @@ public class DESFireCard {
      */
     public void establishAuthentication(byte keyId, byte key[]) throws Exception {
         final SecretKey initialKey = new SecretKeySpec(key, "DESede");
-        final IvParameterSpec iv = new IvParameterSpec(new byte[8]);
-        final Cipher setupCipherDecrypt = Cipher.getInstance("DESede/CBC/ZeroBytePadding");
-        setupCipherDecrypt.init(Cipher.DECRYPT_MODE, initialKey, iv);
+        final IvParameterSpec blankIV = new IvParameterSpec(new byte[8]);
+        final Cipher setupCipher = Cipher.getInstance("DESede/CBC/NoPadding");
+        setupCipher.init(Cipher.DECRYPT_MODE, initialKey, blankIV);
 
         byte[] rndBReply = sendPartialRequest((byte) 0x0A, new byte[]{keyId});
-        byte[] rndBActual = setupCipherDecrypt.update(rndBReply);
         Log.i(LOG_TAG, "Challenge B from card: " + stringifyByteArray(rndBReply));
+        byte[] rndBActual = cipherDesFullBlocks(setupCipher, rndBReply);
         Log.i(LOG_TAG, "Decrypted RndB: " + stringifyByteArray(rndBActual));
+
+//        Class.forName("com.nxp.nfclib.desfire.DESFireEV1");
+//        new DESFireEV1(null);
 
         byte[] rndA = new byte[8];
         SecureRandom rnd = new SecureRandom();
@@ -101,12 +133,17 @@ public class DESFireCard {
         midData.write(rndBActual, 1, 7);
         midData.write(rndBActual, 0, 1);
         Log.i(LOG_TAG, "A+B' challenge to card: " + stringifyByteArray(midData.toByteArray()));
-        byte[] midReply = setupCipherDecrypt.update(midData.toByteArray());
+
+        IvParameterSpec midIV = new IvParameterSpec(rndBReply);
+        setupCipher.init(Cipher.DECRYPT_MODE, initialKey, midIV);
+        byte[] midReply = cipherDesFullBlocks(setupCipher, midData.toByteArray());
         Log.i(LOG_TAG, "A+B' encrypted: " + stringifyByteArray(midReply));
 
         byte[] finalReply = sendRequest(ADDITIONAL_FRAME, midReply);
+        // ----- this is where it's crashing
         Log.i(LOG_TAG, "Challenge A' from card: " + stringifyByteArray(finalReply));
-        byte[] rotatedA = setupCipherDecrypt.update(finalReply);
+        setupCipher.init(Cipher.DECRYPT_MODE, initialKey, blankIV);
+        byte[] rotatedA = cipherDesFullBlocks(setupCipher, finalReply);
         Log.i(LOG_TAG, "Decrypted A' from card: " + stringifyByteArray(rotatedA));
         byte temp = rotatedA[0];
         System.arraycopy(rotatedA, 1, rotatedA, 0, 7);
@@ -123,7 +160,7 @@ public class DESFireCard {
         System.arraycopy(rndBActual, 4, sessionKey, 12, 4);
         this.mSessionCipher = Cipher.getInstance("DESede/CBC/ZeroBytePadding");
         final SecretKey sessionKeySpec = new SecretKeySpec(sessionKey, "DESede");
-        mSessionCipher.init(Cipher.DECRYPT_MODE, sessionKeySpec, iv);
+        mSessionCipher.init(Cipher.DECRYPT_MODE, sessionKeySpec, blankIV);
         Log.i(LOG_TAG, "established session key");
     }
 
@@ -145,7 +182,7 @@ public class DESFireCard {
             if (status == OPERATION_OK) {
                 break;
             } else if (status == ADDITIONAL_FRAME) {
-                recvBuffer = mTagTech.transceive(wrapMessage(CardJob.GET_ADDITIONAL_FRAME, null));
+                recvBuffer = mTagTech.transceive(wrapMessage(DESFireProtocol.GET_ADDITIONAL_FRAME, null));
             } else if (status == PERMISSION_DENIED) {
                 throw new CardException(status, "Permission denied");
             } else if (status == AUTHENTICATION_ERROR) {

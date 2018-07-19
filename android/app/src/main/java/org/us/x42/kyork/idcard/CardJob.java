@@ -16,19 +16,6 @@ public class CardJob implements Parcelable {
     public static final byte[] ENC_KEY_NULL = decodeHex("00000000000000000000000000000000");
     public static final byte[] ENC_KEY_ANDROID_PUBLIC = decodeHex("5BF8127E692E3F65CF8B78C79762E27A");
 
-    public static final byte AUTHENTICATE = (byte) 0x0A;
-    public static final byte GET_MANUFACTURING_DATA = (byte) 0x60;
-    public static final byte GET_APPLICATION_DIRECTORY = (byte) 0x6A;
-    public static final byte GET_ADDITIONAL_FRAME = (byte) 0xAF;
-    public static final byte SELECT_APPLICATION = (byte) 0x5A;
-    public static final byte READ_DATA = (byte) 0xBD;
-    public static final byte READ_RECORD = (byte) 0xBB;
-    public static final byte GET_VALUE = (byte) 0x6C;
-    public static final byte GET_FILES = (byte) 0x6F;
-    public static final byte GET_FILE_SETTINGS = (byte) 0xF5;
-    public static final byte CHANGE_KEY_SETTINGS = (byte) 0x54;
-    public static final byte GET_KEY_SETTINGS = (byte) 0x45;
-
     public int appId;
     public byte keyId;
     public byte[] encKey;

@@ -16,11 +16,9 @@ import android.nfc.tech.IsoDep;
 import android.util.Log;
 import android.widget.TextView;
 
-import org.us.x42.kyork.idcard.data.CardDataFormat;
+import org.us.x42.kyork.idcard.desfire.DESFireProtocol;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
 public class CardCommunicateActivity extends AppCompatActivity {
@@ -163,9 +161,9 @@ public class CardCommunicateActivity extends AppCompatActivity {
                 // Select application
                 byte[] response;
 
-                response = sendAndLog(CardJob.SELECT_APPLICATION, new byte[] { 0, 0, 0 });
+                response = sendAndLog(DESFireProtocol.SELECT_APPLICATION, new byte[] { 0, 0, 0 });
                 // Authenticate
-                response = sendAndLog(CardJob.GET_KEY_SETTINGS, null);
+                response = sendAndLog(DESFireProtocol.GET_KEY_SETTINGS, null);
 
 
                 Log.i(LOG_TAG, "sleeping");
@@ -198,7 +196,7 @@ public class CardCommunicateActivity extends AppCompatActivity {
                 if (status == OPERATION_OK) {
                     break;
                 } else if (status == ADDITIONAL_FRAME) {
-                    recvBuffer = mTagTech.transceive(wrapMessage(CardJob.GET_ADDITIONAL_FRAME, null));
+                    recvBuffer = mTagTech.transceive(wrapMessage(DESFireProtocol.GET_ADDITIONAL_FRAME, null));
                 } else if (status == PERMISSION_DENIED) {
                     throw new IllegalArgumentException("Permission denied");
                 } else if (status == AUTHENTICATION_ERROR) {

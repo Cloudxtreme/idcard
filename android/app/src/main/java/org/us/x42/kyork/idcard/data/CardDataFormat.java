@@ -93,9 +93,7 @@ public class CardDataFormat {
             return getRawContent()[0xd];
         }
 
-        public short getPiscineDMYCompressed() {
-            return readLE16(0xe);
-        }
+        public int getPiscineDMYCompressed() { return readLE24(0xe); }
 
         /**
          * Get the end-date of the piscine card.
@@ -104,14 +102,13 @@ public class CardDataFormat {
          * @throws IOException If there is non-zero malformed data
          */
         public Date getPiscineEndDate() throws IOException {
-            short dmy = getPiscineDMYCompressed();
+            int dmy = getPiscineDMYCompressed();
             if (dmy == 0) {
                 return null;
             }
             int day = (dmy) & 0x1F;
             int month = (dmy >> 5) & 0xF;
-            int year = (dmy >> 5 >> 4) & 0x1FF;
-            year += 1900;
+            int year = (dmy >> 9);
             if (day < 1 || day > 31) throw new IOException("Card has malformed data (Piscine DMY Day)");
             if (month < 1 || month > 12) throw new IOException("Card has malformed data (Piscine DMY Month)");
 
@@ -122,8 +119,10 @@ public class CardDataFormat {
             return cal.getTime();
         }
 
-        public long getCardSerialVerify() {
-            return readLE64(0x10);
+        public byte[] getCardSerialVerify() {
+            return getSlice(0x11, 0x18);
         }
+
+        public long getLastUpdated() { return readLE64(0x18); }
     }
 }

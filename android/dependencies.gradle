@@ -6,12 +6,13 @@ ext {
             buildToolsVersion: '27.0.3'
     ]
 
-    def supportVersion       = '26.1.0'
+    def supportVersion       = '27.1.1'
 
     libs = [
+            supportAnnotations:       "com.android.support:support-annotations:${supportVersion}",
             supportAppcompat:         "com.android.support:appcompat-v7:${supportVersion}",
             supportConstraint:        "com.android.support.constraint:constraint-layout:1.1.2",
             supportDesign:            "com.android.support:design:${supportVersion}",
-            guava:                    'com.google.guava:guava:24.1-android',
+            guava:                    "com.google.guava:guava:24.1-android",
     ]
 }

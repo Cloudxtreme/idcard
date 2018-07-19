@@ -17,7 +17,19 @@ import android.util.Log;
 import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Objects;
+
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class CardWriteActivity extends AppCompatActivity {
     private static final String LOG_TAG = CardWriteActivity.class.getSimpleName();
@@ -108,6 +120,8 @@ public class CardWriteActivity extends AppCompatActivity {
         Handler destHandler;
         CardJob mJob;
 
+        Cipher mSessionCipher;
+
         NfcCommunicateTask(Tag tag, Handler msgDest, CardJob job) {
             this.mTag = tag;
             this.destHandler = msgDest;
@@ -180,7 +194,9 @@ public class CardWriteActivity extends AppCompatActivity {
 
                 // Authenticated
                 if (this.mJob.encKey != null) {
-                    response = sendAndLog(CardJob.AUTHENTICATE, new byte[] { this.mJob.keyId });
+                    if (!startEncryption(this.mJob.keyId, this.mJob.encKey)) {
+                        throw new SecurityException("NFC - Failed to authenticate");
+                    }
                 }
                 // Perform each thing
 
@@ -198,6 +214,76 @@ public class CardWriteActivity extends AppCompatActivity {
             }
 
             return null;
+        }
+
+        private boolean startEncryption(byte keyId, byte[] key) {
+            final SecretKey initialKey = new SecretKeySpec(key, "DESede");
+            final IvParameterSpec iv = new IvParameterSpec(new byte[8]);
+            try {
+                final Cipher setupCipherDecrypt = Cipher.getInstance("DESede/CBC/ZeroBytePadding");
+                setupCipherDecrypt.init(Cipher.DECRYPT_MODE, initialKey, iv);
+
+                byte[] rndBReply = sendPartialRequest((byte)0x0A, new byte[] { keyId });
+                byte[] rndBActual = setupCipherDecrypt.doFinal(rndBReply);
+
+                byte[] rndA = new byte[8];
+                SecureRandom rnd = new SecureRandom();
+                rnd.nextBytes(rndA);
+
+                ByteArrayOutputStream midData = new ByteArrayOutputStream();
+                midData.write(rndA, 0, 8);
+                midData.write(rndBActual, 1, 7);
+                midData.write(rndBActual, 7, 1);
+                byte[] midReply = setupCipherDecrypt.doFinal(midData.toByteArray());
+
+                byte[] finalReply = sendRequest(ADDITIONAL_FRAME, midReply);
+                byte[] rotatedA = setupCipherDecrypt.doFinal(finalReply);
+                byte temp = rotatedA[0];
+                System.arraycopy(rotatedA, 1, rotatedA, 0, 7);
+                rotatedA[7] = temp;
+
+                if (!MessageDigest.isEqual(rndA, rotatedA)) {
+                    return false;
+                }
+
+                byte[] sessionKey = new byte[16];
+                System.arraycopy(rndA, 0, sessionKey, 0, 4);
+                System.arraycopy(rndBActual, 0, sessionKey, 4, 4);
+                System.arraycopy(rndA, 4, sessionKey, 8, 4);
+                System.arraycopy(rndBActual, 4, sessionKey, 12, 4);
+                this.mSessionCipher =
+
+                return true;
+            } catch (Exception e) {
+                Log.e(LOG_TAG, "Exception performing crypto authentication", e);
+                e.printStackTrace();
+            }
+        }
+
+        private byte[] sendPartialRequest(byte command, byte[] parameters) throws Exception {
+            // like sendRequest but without the ADDITIONAL_FRAME loop
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+            byte[] recvBuffer = mTagTech.transceive(wrapMessage(command, parameters));
+
+            if (recvBuffer[recvBuffer.length - 2] != (byte) 0x91) {
+                throw new Exception("Invalid response");
+            }
+
+            output.write(recvBuffer, 0, recvBuffer.length - 2);
+
+            byte status = recvBuffer[recvBuffer.length - 1];
+            if (status == ADDITIONAL_FRAME) {
+                return output.toByteArray();
+            } else if (status == OPERATION_OK) {
+                throw new IllegalStateException("Got OK, expected ADDITIONAL_FRAME");
+            } else if (status == PERMISSION_DENIED) {
+                throw new IllegalArgumentException("Permission denied");
+            } else if (status == AUTHENTICATION_ERROR) {
+                throw new IllegalArgumentException("Authentication error");
+            } else {
+                throw new Exception("Unknown status code: " + Integer.toHexString(status & 0xFF));
+            }
         }
 
         private byte[] sendRequest(byte command, byte[] parameters) throws Exception {

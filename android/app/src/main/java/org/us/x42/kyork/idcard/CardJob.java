@@ -12,9 +12,9 @@ public class CardJob implements Parcelable {
 
     // Encryption key values.
     public static final byte[] ENC_KEY_NONE = null;
-    public static final byte[] ENC_KEY_MASTER_TEST = decodeHex("EE7D54123E4349058AC318B18197405728CC82D5C4A3C9D8");
-    public static final byte[] ENC_KEY_NULL = decodeHex("000000000000000000000000000000000000000000000000");
-    public static final byte[] ENC_KEY_ANDROID_PUBLIC = decodeHex("BEEC8A3E031C969BC7ADC092F5F4DA02D1BF6427E9B6B54C");
+    public static final byte[] ENC_KEY_MASTER_TEST = decodeHex("FBCE1357BAC06934167B1987DF09CFAF");
+    public static final byte[] ENC_KEY_NULL = decodeHex("00000000000000000000000000000000");
+    public static final byte[] ENC_KEY_ANDROID_PUBLIC = decodeHex("5BF8127E692E3F65CF8B78C79762E27A");
 
     public static final byte AUTHENTICATE = (byte) 0x0A;
     public static final byte GET_MANUFACTURING_DATA = (byte) 0x60;

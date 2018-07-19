@@ -26,15 +26,6 @@ public class SetupActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
         final Spinner appid_spinner = findViewById(R.id.appid_spinner);
         final Spinner keyid_spinner = findViewById(R.id.keyid_spinner);
         final EditText cmd_id_edittext = findViewById(R.id.setup_cmdid_text);

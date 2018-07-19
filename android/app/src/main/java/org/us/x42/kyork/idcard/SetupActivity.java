@@ -14,11 +14,44 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.ImageView;
+import java.net.URL;
+import android.graphics.BitmapFactory;
+import java.io.IOException;
 
 import com.google.common.io.BaseEncoding;
 
 public class SetupActivity extends AppCompatActivity {
 
+    // testing other page that displays card owner's information
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.display_data);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        ImageView bmImage = findViewById(R.id.user_picture);
+
+//        Picasso.get().load("http://i.imgur.com/DvpvklR.png").into(imageView);
+        // can't gradle
+
+//        Glide.with(this).load("http://i.imgur.com/DvpvklR.png").into(imageView);
+        // can't gradle
+
+
+        try {
+            bmImage.setImageBitmap(BitmapFactory.decodeStream((new URL("http://i.imgur.com/DvpvklR.png")).openConnection() .getInputStream()));
+        } catch (IOException e) {
+
+        }
+        // this just crashes
+
+
+
+
+    }
+/*
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -115,7 +148,7 @@ public class SetupActivity extends AppCompatActivity {
             }
         });
     }
-
+*/
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.

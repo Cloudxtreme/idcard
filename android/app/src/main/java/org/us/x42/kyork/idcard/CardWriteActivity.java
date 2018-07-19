@@ -12,21 +12,17 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Objects;
 
 import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -45,7 +41,9 @@ public class CardWriteActivity extends AppCompatActivity {
     private Handler mHandler;
 
     private static final int MSG_ID_NFC_STATUS = 23;
+    private static final int MSG_ID_DONE = 4;
     public static final String CARD_PAYLOAD = "CARD_PAYLOAD";
+    public static final String CARD_RESULT = "CARD_RESULT";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +83,11 @@ public class CardWriteActivity extends AppCompatActivity {
                             Log.i(LOG_TAG, "wtf did i just get in that Message: " + msg.obj.getClass().getName() + " " + msg.obj.toString());
                         }
                     }
+                } else if (msg.what == MSG_ID_DONE) {
+                    Intent returnData = new Intent(Intent.ACTION_VIEW);
+                    returnData.putExtra(CARD_RESULT, (Parcelable)msg.obj);
+                    setResult(RESULT_OK, returnData);
+                    finish();
                 }
             }
         };
@@ -128,33 +131,28 @@ public class CardWriteActivity extends AppCompatActivity {
             this.mJob = job;
         }
 
-        byte[] sendAndLog(byte cmdId, byte[] data) throws Exception {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Sending command [");
-            sb.append((int)cmdId);
+        private static String stringifyByteArray(byte[] data) {
             if (data == null) {
-                sb.append("] [no data");
-            } else {
-                sb.append("] data [ ");
-                for (byte d : data) {
-                    sb.append((int) d);
-                    sb.append(' ');
-                }
+                return "(null)";
             }
-            sb.append("]");
 
-            Log.d(LOG_TAG, sb.toString());
+            StringBuilder sb = new StringBuilder();
+            sb.append('[');
+            sb.append(' ');
+            for (byte d : data) {
+                sb.append((int) d);
+                sb.append(' ');
+            }
+            sb.append(']');
+            return sb.toString();
+        }
+
+        byte[] sendAndLog(byte cmdId, byte[] data) throws Exception {
+            Log.d(LOG_TAG, "Sending command " + cmdId + " - " + stringifyByteArray(data));
 
             try {
                 byte[] response = this.sendRequest(cmdId, data);
-                sb = new StringBuilder();
-                sb.append("Command response: [ ");;
-                for (byte d : response) {
-                    sb.append((int) d);
-                    sb.append(' ');
-                }
-                sb.append("]");
-                Log.d(LOG_TAG, sb.toString());
+                Log.d(LOG_TAG, "Command response: " + stringifyByteArray(response));
 
                 return response;
             } catch (Exception e) {
@@ -168,15 +166,7 @@ public class CardWriteActivity extends AppCompatActivity {
             Log.i(LOG_TAG, "started task, connecting to tag");
             try {
                 byte[] tagId = mTag.getId();
-
-                StringBuilder sb = new StringBuilder();
-                sb.append("Tag ID: [");
-                for (byte aResponse : tagId) {
-                    sb.append((int) aResponse);
-                    sb.append(' ');
-                }
-                sb.append("]");
-                Log.i(LOG_TAG, sb.toString());
+                Log.i(LOG_TAG, "Tag ID: " + stringifyByteArray(tagId));
 
                 mTagTech = IsoDep.get(mTag);
 
@@ -205,9 +195,8 @@ public class CardWriteActivity extends AppCompatActivity {
                 }
 
                 Log.i(LOG_TAG, "sleeping");
+                Message.obtain(this.destHandler, MSG_ID_NFC_STATUS, R.string.nfc_done).sendToTarget();
                 Thread.sleep(2*1000);
-                Log.i(LOG_TAG, "reached end");
-
             } catch (Exception e) {
                 Log.e(LOG_TAG, "Exception while talking to tag", e);
                 this.publishProgress(e.getMessage());
@@ -225,6 +214,8 @@ public class CardWriteActivity extends AppCompatActivity {
 
                 byte[] rndBReply = sendPartialRequest((byte)0x0A, new byte[] { keyId });
                 byte[] rndBActual = setupCipherDecrypt.doFinal(rndBReply);
+                Log.i(LOG_TAG, "Challenge B from card: " + stringifyByteArray(rndBReply));
+                Log.i(LOG_TAG, "Decrypted RndB: " + stringifyByteArray(rndBActual));
 
                 byte[] rndA = new byte[8];
                 SecureRandom rnd = new SecureRandom();
@@ -233,11 +224,15 @@ public class CardWriteActivity extends AppCompatActivity {
                 ByteArrayOutputStream midData = new ByteArrayOutputStream();
                 midData.write(rndA, 0, 8);
                 midData.write(rndBActual, 1, 7);
-                midData.write(rndBActual, 7, 1);
+                midData.write(rndBActual, 0, 1);
+                Log.i(LOG_TAG, "A+B' challenge to card: " + stringifyByteArray(midData.toByteArray()));
                 byte[] midReply = setupCipherDecrypt.doFinal(midData.toByteArray());
+                Log.i(LOG_TAG, "A+B' encrypted: " + stringifyByteArray(midReply));
 
                 byte[] finalReply = sendRequest(ADDITIONAL_FRAME, midReply);
+                Log.i(LOG_TAG, "Challenge A' from card: " + stringifyByteArray(finalReply));
                 byte[] rotatedA = setupCipherDecrypt.doFinal(finalReply);
+                Log.i(LOG_TAG, "Decrypted A' from card: " + stringifyByteArray(rotatedA));
                 byte temp = rotatedA[0];
                 System.arraycopy(rotatedA, 1, rotatedA, 0, 7);
                 rotatedA[7] = temp;
@@ -352,7 +347,8 @@ public class CardWriteActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(byte[] bytes) {
             super.onPostExecute(bytes);
-            Message.obtain(this.destHandler, MSG_ID_NFC_STATUS, R.string.nfc_done).sendToTarget();
+            // TODO(kyork): return a result?
+            Message.obtain(this.destHandler, MSG_ID_DONE, (Parcelable)null).sendToTarget();
         }
     }
 

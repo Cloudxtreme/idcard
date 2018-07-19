@@ -55,7 +55,7 @@ public class CardJob implements Parcelable {
         this.appId = in.readInt();
         boolean hasEncKey = in.readByte() == 1;
         if (hasEncKey) {
-            this.encKey = new byte[24];
+            this.encKey = new byte[16];
             in.readByteArray(encKey);
         }
         int numCommands = in.readInt();

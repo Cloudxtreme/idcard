@@ -88,7 +88,7 @@ public class DESFireCard {
         setupCipherDecrypt.init(Cipher.DECRYPT_MODE, initialKey, iv);
 
         byte[] rndBReply = sendPartialRequest((byte) 0x0A, new byte[]{keyId});
-        byte[] rndBActual = setupCipherDecrypt.doFinal(rndBReply);
+        byte[] rndBActual = setupCipherDecrypt.update(rndBReply);
         Log.i(LOG_TAG, "Challenge B from card: " + stringifyByteArray(rndBReply));
         Log.i(LOG_TAG, "Decrypted RndB: " + stringifyByteArray(rndBActual));
 
@@ -101,12 +101,12 @@ public class DESFireCard {
         midData.write(rndBActual, 1, 7);
         midData.write(rndBActual, 0, 1);
         Log.i(LOG_TAG, "A+B' challenge to card: " + stringifyByteArray(midData.toByteArray()));
-        byte[] midReply = setupCipherDecrypt.doFinal(midData.toByteArray());
+        byte[] midReply = setupCipherDecrypt.update(midData.toByteArray());
         Log.i(LOG_TAG, "A+B' encrypted: " + stringifyByteArray(midReply));
 
         byte[] finalReply = sendRequest(ADDITIONAL_FRAME, midReply);
         Log.i(LOG_TAG, "Challenge A' from card: " + stringifyByteArray(finalReply));
-        byte[] rotatedA = setupCipherDecrypt.doFinal(finalReply);
+        byte[] rotatedA = setupCipherDecrypt.update(finalReply);
         Log.i(LOG_TAG, "Decrypted A' from card: " + stringifyByteArray(rotatedA));
         byte temp = rotatedA[0];
         System.arraycopy(rotatedA, 1, rotatedA, 0, 7);

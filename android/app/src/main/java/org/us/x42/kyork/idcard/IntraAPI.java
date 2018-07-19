@@ -52,13 +52,10 @@ public class IntraAPI {
     private void generateToken() throws IOException, JSONException {
         URL url = new URL("https://api.intra.42.fr/oauth/token");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        String data = "client_id=" + UID;
-        data += "&client_secret=" + SECRET;
-        data += "&grant_type=client_credentials";
         conn.setRequestMethod("POST");
 
         OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
-        writer.write(data);
+        writer.write("grant_type=client_credentials&client_id=" + UID + "&client_secret=" + SECRET);
         writer.flush();
         writer.close();
 

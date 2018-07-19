@@ -4,8 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/mybg"
     tools:context="org.us.x42.kyork.idcard.SetupActivity">
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/fractal_background"
+        android:scaleType="centerCrop"
+        android:contentDescription="@null" />
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"

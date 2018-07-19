@@ -18,7 +18,7 @@ function mkrmln() {
 }
 function mkrmrln() {
 	mkdir -p $1
-	rm -f $2
+	rm -rf $2
 	ln -s $1 $2
 }
 

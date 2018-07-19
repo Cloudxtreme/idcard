@@ -4,176 +4,109 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="org.us.x42.kyork.idcard.IntraProfileActivity"
     tools:showIn="@layout/activity_intra_profile">
 
     <TextView
-        android:id="@+id/login_label"
+        android:id="@+id/phone"
+        android:layout_width="wrap_content"
+        android:layout_height="21dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:text="Phone: 1-800-THE-THOR"
+        android:textColor="#FFFFFF"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/account_type" />
+
+    <TextView
+        android:id="@+id/full_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="25dp"
-        android:text="Login"
+        android:layout_marginTop="20dp"
+        android:text="Mr. Thor"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/name_label"
+        android:id="@+id/login"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="25dp"
-        android:text="Name"
+        android:layout_marginTop="20dp"
+        android:text="Login: xloginx"
+        android:textColor="#FFFFFF"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/login_label" />
+        app:layout_constraintTop_toBottomOf="@+id/user_picture" />
 
     <TextView
-        android:id="@+id/user_id_label"
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="176dp"
+        android:layout_marginTop="20dp"
+        android:text="Title: xtitlex"
+        android:textColor="#FFFFFF"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/user_picture" />
+
+    <TextView
+        android:id="@+id/level"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="25dp"
-        android:text="User ID"
+        android:layout_marginTop="20dp"
+        android:text="Level: -42"
+        android:textColor="#FFFFFF"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/name_label" />
+        app:layout_constraintTop_toBottomOf="@+id/login" />
 
     <TextView
-        android:id="@+id/campus_id_label"
+        android:id="@+id/grade"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="176dp"
+        android:layout_marginTop="20dp"
+        android:text="Grade: cad00t"
+        android:textColor="#FFFFFF"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title" />
+
+    <TextView
+        android:id="@+id/account_type"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="25dp"
-        android:text="Campus ID"
+        android:layout_marginTop="20dp"
+        android:text="Type: b00calian"
+        android:textColor="#FFFFFF"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/user_id_label" />
+        app:layout_constraintTop_toBottomOf="@+id/level" />
 
     <TextView
-        android:id="@+id/account_type_label"
+        android:id="@+id/coalition"
         android:layout_width="wrap_content"
-        android:layout_height="21dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="25dp"
-        android:text="Account Type"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="176dp"
+        android:layout_marginTop="20dp"
+        android:text="Coalition: La Aleeance"
+        android:textColor="#FFFFFF"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/campus_id_label" />
-
-    <TextView
-        android:id="@+id/piscine_date_label"
-        android:layout_width="wrap_content"
-        android:layout_height="21dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="25dp"
-        android:text="Piscine Date"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/account_type_label" />
-
-    <TextView
-        android:id="@+id/card_serial_label"
-        android:layout_width="wrap_content"
-        android:layout_height="21dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="25dp"
-        android:text="Card Serial"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/piscine_date_label" />
-
-    <TextView
-        android:id="@+id/last_update_timestamp_label"
-        android:layout_width="wrap_content"
-        android:layout_height="21dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="25dp"
-        android:text="Last Update"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/card_serial_label" />
-
-    <TextView
-        android:id="@+id/login_value"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="154dp"
-        android:layout_marginTop="25dp"
-        android:text="apuel"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/name_value"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="113dp"
-        android:layout_marginTop="25dp"
-        android:text="Andres Puel"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/login_value" />
-
-    <TextView
-        android:id="@+id/user_id_value"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="140dp"
-        android:layout_marginTop="24dp"
-        android:text="424242"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/name_value" />
-
-    <TextView
-        android:id="@+id/campus_id_value"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="135dp"
-        android:layout_marginTop="25dp"
-        android:text="Fremont"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/user_id_value" />
-
-    <TextView
-        android:id="@+id/account_type_value"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="139dp"
-        android:layout_marginTop="25dp"
-        android:text="Student"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/campus_id_value" />
-
-    <TextView
-        android:id="@+id/piscine_date_value"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="133dp"
-        android:layout_marginTop="29dp"
-        android:text="Oct2017"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/account_type_value" />
-
-    <TextView
-        android:id="@+id/card_serial_value"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="161dp"
-        android:layout_marginTop="26dp"
-        android:text="no u"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/piscine_date_value" />
-
-    <TextView
-        android:id="@+id/last_update_timestamp_value"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="161dp"
-        android:layout_marginTop="28dp"
-        android:text="no u"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/card_serial_value" />
+        app:layout_constraintTop_toBottomOf="@+id/grade" />
 
     <ImageView
         android:id="@+id/user_picture"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:srcCompat="@mipmap/ic_launcher"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="388dp" />
+        android:layout_width="344dp"
+        android:layout_height="210dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:scaleType="fitStart"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/full_name"
+        app:srcCompat="@mipmap/ic_launcher" />
 
 </android.support.constraint.ConstraintLayout>

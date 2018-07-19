@@ -251,12 +251,15 @@ public class CardWriteActivity extends AppCompatActivity {
                 System.arraycopy(rndBActual, 0, sessionKey, 4, 4);
                 System.arraycopy(rndA, 4, sessionKey, 8, 4);
                 System.arraycopy(rndBActual, 4, sessionKey, 12, 4);
-                this.mSessionCipher =
-
+                this.mSessionCipher = Cipher.getInstance("DESede/CBC/ZeroBytePadding");
+                final SecretKey sessionKeySpec = new SecretKeySpec(sessionKey, "DESede");
+                mSessionCipher.init(Cipher.DECRYPT_MODE, sessionKeySpec, iv);
+                Log.i(LOG_TAG, "established session key");
                 return true;
             } catch (Exception e) {
                 Log.e(LOG_TAG, "Exception performing crypto authentication", e);
                 e.printStackTrace();
+                return false;
             }
         }
 

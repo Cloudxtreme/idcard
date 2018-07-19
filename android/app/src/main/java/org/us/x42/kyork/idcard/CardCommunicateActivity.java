@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
+import android.nfc.tech.NfcA;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
@@ -32,6 +33,8 @@ public class CardCommunicateActivity extends AppCompatActivity {
     private TextView mStatusText;
     private Handler mHandler;
 
+    private boolean taskStarted;
+
     private static final int MSG_ID_NFC_STATUS = 23;
 
     @Override
@@ -44,7 +47,7 @@ public class CardCommunicateActivity extends AppCompatActivity {
         scanIntent = PendingIntent.getActivity(
                 this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
         scanFilter = new IntentFilter[] { new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED) };
-        scanTechs = new String[][] { new String[] { IsoDep.class.getName() } };
+        scanTechs = new String[][] { new String[] { IsoDep.class.getName(), NfcA.class.getName() } };
 
         mStatusText = findViewById(R.id.communicate_text);
 
@@ -83,12 +86,16 @@ public class CardCommunicateActivity extends AppCompatActivity {
     @Override
     public void onNewIntent(Intent intent) {
         if (Objects.equals(intent.getAction(), NfcAdapter.ACTION_TECH_DISCOVERED)) {
+            // TODO the lifecycle of this is fucked up, need to fix
+            // create -> onResume() -> scan enabled -> card detected -> onPause() -> onNewIntent() -> onResume()
+            setIntent(intent);
             // is an NDEF tag
             Tag tagFromIntent = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 
             Log.i(LOG_TAG, "got tag BANANAS");
 
             new NfcCommunicateTask(tagFromIntent, this.mHandler).execute(new byte[]{});
+            taskStarted = true;
         }
     }
 

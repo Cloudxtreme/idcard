@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
+import android.nfc.tech.NfcA;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -68,7 +69,7 @@ public class CardWriteActivity extends AppCompatActivity {
         scanIntent = PendingIntent.getActivity(
                 this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
         scanFilter = new IntentFilter[]{new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED)};
-        scanTechs = new String[][]{new String[]{IsoDep.class.getName()}};
+        scanTechs = new String[][] { new String[] { IsoDep.class.getName(), NfcA.class.getName() } };
 
         mStatusText = findViewById(R.id.communicate_text);
         mLoading = findViewById(R.id.card_communicate_progress);

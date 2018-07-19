@@ -33,6 +33,7 @@ public class CardDataFormat {
     public static final FileFormatInfo[] files = {
             new FileFormatInfo(FileMetadata.class, 0x1, 16, false),
             new FileFormatInfo(FileUserInfo.class, 0x2, 32, true),
+            new FileFormatInfo(FileSignatures.class, 0x7, 68 * 5, false),
     };
 
     public static class FileDoorPermissions extends AbstractCardFile {

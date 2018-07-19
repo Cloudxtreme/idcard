@@ -73,6 +73,7 @@ public class DESFireCard {
         if (settingsReply[0] == DESFireProtocol.FILETYPE_STANDARD || settingsReply[0] == DESFireProtocol.FILETYPE_BACKUP) {
 
         }
+        return null;
     }
 
     /**

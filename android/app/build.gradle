@@ -20,12 +20,14 @@ android {
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
+//    implementation fileTree(include: ['*.jar'], dir: 'libs')
+
     implementation libs.supportAppcompat
     implementation libs.supportConstraint
     implementation libs.supportDesign
 
     implementation libs.guava
+    implementation 'net.i2p.crypto:eddsa:0.3.0'
 
     implementation 'com.android.support.constraint:constraint-layout:1.1.2'
     testImplementation 'junit:junit:4.12'

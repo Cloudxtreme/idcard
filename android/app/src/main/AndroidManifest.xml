@@ -25,8 +25,7 @@
         <activity
             android:name=".SetupActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar">
-        </activity>
+            android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity android:name=".CardCommunicateActivity">
             <intent-filter>
                 <action android:name="android.nfc.action.TECH_DISCOVERED" />
@@ -41,6 +40,7 @@
             android:name=".IntraProfileActivity"
             android:label="@string/title_activity_intra_profile"
             android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".IncomingScanActivity"></activity>
     </application>
 
 </manifest>

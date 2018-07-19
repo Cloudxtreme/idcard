@@ -12,84 +12,89 @@
         android:id="@+id/nfc_test_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="150dp"
         android:layout_marginTop="8dp"
         android:text="@string/run_nfc_test"
-        app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/errorText" />
 
     <Spinner
         android:id="@+id/appid_spinner"
         android:layout_width="200dp"
         android:layout_height="32dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginStart="150dp"
+        android:layout_marginTop="20dp"
         android:entries="@array/nfc_appid_items"
+        android:popupBackground="#9BA1B2"
         android:prompt="@string/nfc_appid_label"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:theme="@style/mySpinnerItemStyle"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Spinner
         android:id="@+id/keyid_spinner"
+        android:theme="@style/mySpinnerItemStyle"
         android:layout_width="200dp"
         android:layout_height="32dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="150dp"
         android:layout_marginTop="16dp"
         android:entries="@array/nfc_keyid_items"
+        android:popupBackground="#9BA1B2"
         android:prompt="@string/nfc_keyid_label"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/keyid_label"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/appid_spinner" />
 
     <TextView
         android:id="@+id/appid_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
         android:text="@string/nfc_appid_label"
-        app:layout_constraintEnd_toStartOf="@+id/appid_spinner"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/appid_spinner" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/keyid_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
         android:text="@string/nfc_keyid_label"
-        app:layout_constraintEnd_toStartOf="@+id/keyid_spinner"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/keyid_spinner" />
+        app:layout_constraintTop_toBottomOf="@+id/appid_label" />
 
     <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="25dp"
         android:text="@string/payload"
-        app:layout_constraintEnd_toStartOf="@+id/setup_payload_editText"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/setup_payload_editText"
+        app:layout_constraintTop_toBottomOf="@+id/textView4"
         tools:text="Payload" />
 
     <EditText
         android:id="@+id/setup_payload_editText"
         android:layout_width="215dp"
         android:layout_height="72dp"
+        android:layout_marginStart="150dp"
         android:layout_marginTop="16dp"
-        android:digits="0123456789 ABCDEF
-"
+        android:digits="0123456789 ABCDEF"
         android:ems="10"
         android:inputType="textCapCharacters"
-        app:layout_constraintRight_toRightOf="parent"
+        android:textColor="#FFFFFF"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/setup_cmdid_text" />
 
     <TextView
@@ -100,6 +105,8 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:textAppearance="@style/TextAppearance.Design.Error"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.468"
         app:layout_constraintStart_toStartOf="parent"
@@ -109,25 +116,26 @@
         android:id="@+id/setup_cmdid_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
+        android:layout_marginStart="150dp"
         android:layout_marginTop="8dp"
-        android:digits="0123456789 ABCDEF
-"
+        android:digits="0123456789 ABCDEF"
         android:ems="10"
         android:inputType="textCapCharacters"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textColor="#FFFFFF"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/keyid_spinner" />
 
     <TextView
         android:id="@+id/textView4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="25dp"
         android:text="Command ID"
-        app:layout_constraintEnd_toStartOf="@+id/setup_cmdid_text"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/setup_cmdid_text" />
+        app:layout_constraintTop_toBottomOf="@+id/keyid_label" />
 
 </android.support.constraint.ConstraintLayout>

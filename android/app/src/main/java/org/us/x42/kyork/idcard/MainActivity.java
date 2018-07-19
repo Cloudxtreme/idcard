@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -32,7 +33,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, IntraProfileActivity.class);
-                intent.putExtra("login", "ashih");
+                EditText loginTextbox = (EditText) findViewById(R.id.login_textbox);
+                String login = loginTextbox.getText().toString().toLowerCase();
+                if (login.equals(""))
+                    login = "ashih";
+                intent.putExtra("login", login);
                 startActivity(intent);
             }
         });

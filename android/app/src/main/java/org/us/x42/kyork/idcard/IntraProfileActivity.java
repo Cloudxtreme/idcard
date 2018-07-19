@@ -4,7 +4,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
@@ -14,6 +19,8 @@ import org.json.JSONObject;
 import org.us.x42.kyork.idcard.data.IDCard;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class IntraProfileActivity extends AppCompatActivity {
@@ -24,6 +31,8 @@ public class IntraProfileActivity extends AppCompatActivity {
 
     }
 
+    String login = "mlu";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,7 +42,7 @@ public class IntraProfileActivity extends AppCompatActivity {
 
         Intent launchIntent = getIntent();
         IDCard idcard = null;
-        String login = "mlu";
+        //String login = "mlu";
         if (launchIntent.hasExtra("idcard")) {
             idcard = launchIntent.getParcelableExtra("idcard");
             login = idcard.fileUserInfo.getLogin();
@@ -41,6 +50,34 @@ public class IntraProfileActivity extends AppCompatActivity {
         else if (launchIntent.hasExtra("login")) {
             login = launchIntent.getStringExtra("login");
         }
+
+        // REFRESH BUTTON
+        Button refreshButton = (Button) findViewById(R.id.refresh_button);
+        refreshButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(IntraProfileActivity.this, IntraProfileActivity.class);
+                intent.putExtra("login", login);
+                startActivity(intent);
+            }
+        });
+
+        // CURSUS DROPDOWN
+        Spinner cursusDropdown = findViewById(R.id.cursus_spinner);
+
+        // populate dropdown initially
+        List<String> spinnerArray =  new ArrayList<String>();
+        spinnerArray.add("item1");
+        spinnerArray.add("item2");
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, spinnerArray);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        cursusDropdown.setAdapter(adapter);
+
+
+
+
+
+
         boolean shouldReload = launchIntent.getBooleanExtra("shouldReload", false);
 
         if (api == null)
@@ -74,8 +111,8 @@ public class IntraProfileActivity extends AppCompatActivity {
             TextView fullNameText = findViewById(R.id.full_name);
             fullNameText.setText("Name: " + api.getFullName(login));
 
-            TextView loginText = findViewById(R.id.login);
-            loginText.setText("Login: " + login);
+//            TextView loginText = findViewById(R.id.login);
+//            loginText.setText("Login: " + login);
 
             TextView titleText = findViewById(R.id.title);
             titleText.setText("Title: " + api.getTitle(login));

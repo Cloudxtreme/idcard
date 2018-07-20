@@ -72,7 +72,8 @@ public class IntraProfileActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 WriteCardTask task = data.getParcelableExtra(CardWriteActivity.CARD_JOB_PARAMS);
 
-                Log.i("WriteCardTask", "Got here!");
+
+                Log.i("WriteCardTask", task.getErrorString(this));
             }
             Log.i("WriteCardTask", "RESULT => " + resultCode);
         }
@@ -267,6 +268,7 @@ public class IntraProfileActivity extends AppCompatActivity {
                         IDCard id = new IDCard();
                         id.fileUserInfo = new FileUserInfo(new byte[CardDataFormat.FORMAT_USERINFO.expectedSize]);
                         id.fileDoorPermissions = new FileDoorPermissions(new byte[CardDataFormat.FORMAT_DOORPERMS.expectedSize]);
+                        id.fileSignatures = new FileSignatures(new byte[CardDataFormat.FORMAT_SIGNATURES.expectedSize]);
 
                         id.fileUserInfo.setLogin(login);
                         id.fileUserInfo.setIntraUserID(user.getInt("id"));
@@ -314,6 +316,10 @@ public class IntraProfileActivity extends AppCompatActivity {
                             }
                         }
                         */
+
+                        id.fileUserInfo.getDirtyRanges().add(new int[] { 0, id.fileUserInfo.getExpectedFileSize() });
+                        id.fileDoorPermissions.getDirtyRanges().add(new int[] { 0, id.fileDoorPermissions.getExpectedFileSize() });
+
                         IntraProfileActivity.this.beginWriteTask(id);
                     }
                     catch (JSONException e) {

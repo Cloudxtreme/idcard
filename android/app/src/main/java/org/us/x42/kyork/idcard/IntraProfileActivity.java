@@ -91,6 +91,9 @@ public class IntraProfileActivity extends AppCompatActivity {
             TextView levelText = findViewById(R.id.level);
             TextView gradeText = findViewById(R.id.grade);
 
+            float dens = getResources().getDisplayMetrics().density;
+            System.out.println(" *****************DEBUG dens = " + dens);
+
             StringBuilder cursusNames = new StringBuilder();
             StringBuilder cursusLevels = new StringBuilder();
             StringBuilder cursusGrades = new StringBuilder();
@@ -109,7 +112,8 @@ public class IntraProfileActivity extends AppCompatActivity {
                             View view = this.getLayoutInflater().inflate(R.layout.level_bar, (ViewGroup)levelHeader.getParent());
                             progressBar = view.findViewWithTag("Unused");
                             progressBar.setTag("Used");
-                            progressBar.setY(progressBar.getY() + (i * 33)); //There's got to be a better way to get this height lol
+                            //progressBar.setY(progressBar.getY() + (i * 33)); //There's got to be a better way to get this height lol
+                            progressBar.setY(progressBar.getY() + (i * 150 / dens));
                             this.progressBars.add(progressBar);
                         }
                         progressBar.setProgress((int)(progressBar.getMax() * (level - (int)level)));

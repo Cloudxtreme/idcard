@@ -4,14 +4,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -26,36 +24,22 @@ import org.us.x42.kyork.idcard.data.IDCard;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 
 public class IntraProfileActivity extends AppCompatActivity {
     private static IntraAPI api = null;
 
     private List<ProgressBar> progressBars = new ArrayList<ProgressBar>();
+    private MenuItem.OnMenuItemClickListener refreshCallback;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_setup, menu);
+        MenuItem refresh = menu.findItem(R.id.refresh);
+        refresh.setOnMenuItemClickListener(this.refreshCallback);
         return true;
     }
-
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-
-    }
-
 
     @Override
     protected void onActivityResult (int requestCode, int resultCode, Intent data) {
@@ -91,12 +75,12 @@ public class IntraProfileActivity extends AppCompatActivity {
             TextView levelText = findViewById(R.id.level);
             TextView gradeText = findViewById(R.id.grade);
 
-            float dens = getResources().getDisplayMetrics().density;
-            System.out.println(" *****************DEBUG dens = " + dens);
-
             StringBuilder cursusNames = new StringBuilder();
             StringBuilder cursusLevels = new StringBuilder();
             StringBuilder cursusGrades = new StringBuilder();
+
+            float dens = getResources().getDisplayMetrics().density;
+
             if (cursus_users != null) {
                 try {
                     for (int i = 0; i < cursus_users.length(); i++) {
@@ -112,14 +96,13 @@ public class IntraProfileActivity extends AppCompatActivity {
                             View view = this.getLayoutInflater().inflate(R.layout.level_bar, (ViewGroup)levelHeader.getParent());
                             progressBar = view.findViewWithTag("Unused");
                             progressBar.setTag("Used");
-                            //progressBar.setY(progressBar.getY() + (i * 33)); //There's got to be a better way to get this height lol
                             progressBar.setY(progressBar.getY() + (i * 16.5f * dens));
                             this.progressBars.add(progressBar);
                         }
-                        progressBar.setProgress((int)(progressBar.getMax() * (level - (int)level)));
+                        progressBar.setProgress((int)(progressBar.getMax() * (level % 1.0)));
                         progressBar.setVisibility(View.VISIBLE);
 
-                        cursusLevels.append(Double.toString(level)).append("\n");
+                        cursusLevels.append(String.format(Locale.US, "%.2f", level)).append("\n");
                         String grade = cursus_user.getString("grade");
                         if (!grade.equals("null"))
                             cursusGrades.append(grade).append("\n");
@@ -131,6 +114,7 @@ public class IntraProfileActivity extends AppCompatActivity {
                     e.printStackTrace(System.err);
                 }
             }
+
             cursusText.setText(cursusNames.toString());
             levelText.setText(cursusLevels);
             gradeText.setText(cursusGrades);
@@ -234,14 +218,14 @@ public class IntraProfileActivity extends AppCompatActivity {
             idcard = null;
         }
 
-        Button refreshButton = findViewById(R.id.refresh_button);
-        refreshButton.setOnClickListener(new View.OnClickListener() {
+        this.refreshCallback = new MenuItem.OnMenuItemClickListener() {
             @Override
-            public void onClick(View view) {
+            public boolean onMenuItemClick(MenuItem item) {
                 IntraProfileActivity.this.resetUI();
                 IntraProfileActivity.this.fetchUser(login, idcard);
+                return true;
             }
-        });
+        };
 
         boolean shouldReload = launchIntent.getBooleanExtra("shouldReload", false);
 

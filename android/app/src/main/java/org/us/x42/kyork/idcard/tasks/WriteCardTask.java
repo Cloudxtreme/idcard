@@ -75,6 +75,8 @@ public class WriteCardTask extends CardNFCTask {
                 throw e;
             }
 
+            mCard.establishAuthentication((byte)0, CardJob.ENC_KEY_NULL);
+
             // Write files
             for (AbstractCardFile f : files) {
                 if (!f.isDirty()) continue;
@@ -101,7 +103,7 @@ public class WriteCardTask extends CardNFCTask {
             return null;
         } catch (DESFireCard.CardException e) {
             setError("Card communication error: " + e.getStatusCode().toString());
-        } catch (IOException e) {
+        } catch (Exception e) {
             setError(e.getClass().getName() + ": " + e.getLocalizedMessage());
         }
         return null;
@@ -147,7 +149,10 @@ public class WriteCardTask extends CardNFCTask {
         if (errorStringResource != 0) {
             return context.getResources().getString(errorStringResource);
         }
-        return errorString;
+        if (errorString != null) {
+            return errorString;
+        }
+        return "";
     }
 
 }

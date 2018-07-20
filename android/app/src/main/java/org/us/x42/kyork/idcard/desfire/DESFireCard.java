@@ -14,6 +14,7 @@ import java.net.ProtocolException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -94,24 +95,22 @@ public class DESFireCard {
             throw new IllegalArgumentException("NotImplemented");
         }
 
-        // TODO encrypt content if necessary
         byte[] commandBytes = new byte[content.length + 7];
         commandBytes[0] = fileID;
         PackUtil.writeLE24(commandBytes, 1, offset);
         PackUtil.writeLE24(commandBytes, 4, content.length);
-        System.arraycopy(content, 0, commandBytes, 7, content.length);
+        System.arraycopy(content, 0, commandBytes, 7, content.length); // TODO encrypt content if necessary
         int bytesWritten = 0;
 
         while (bytesWritten < commandBytes.length) {
             byte[] subCmdBytes;
-            if (commandBytes.length - bytesWritten > 59) {
-                subCmdBytes = new byte[59];
-                System.arraycopy(commandBytes, bytesWritten, subCmdBytes, 0, 59);
-            } else if (commandBytes.length < 59) {
+            if (commandBytes.length - bytesWritten > 48) {
+                subCmdBytes = new byte[48];
+                System.arraycopy(commandBytes, bytesWritten, subCmdBytes, 0, 48);
+            } else if (bytesWritten == 0 && commandBytes.length < 48) {
                 subCmdBytes = commandBytes;
             } else {
-                subCmdBytes = new byte[commandBytes.length - bytesWritten];
-                System.arraycopy(commandBytes, bytesWritten, subCmdBytes, 0, subCmdBytes.length);
+                subCmdBytes = Arrays.copyOfRange(commandBytes, bytesWritten, commandBytes.length);
             }
 
             if (bytesWritten == 0) {

@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -23,19 +22,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.us.x42.kyork.idcard.data.CardDataFormat;
 import org.us.x42.kyork.idcard.data.FileDoorPermissions;
-import org.us.x42.kyork.idcard.data.FileMetadata;
 import org.us.x42.kyork.idcard.data.FileSignatures;
 import org.us.x42.kyork.idcard.data.FileUserInfo;
 import org.us.x42.kyork.idcard.data.IDCard;
-import org.us.x42.kyork.idcard.desfire.DESFireProtocol;
-import org.us.x42.kyork.idcard.tasks.CommandTestTask;
 import org.us.x42.kyork.idcard.tasks.WriteCardTask;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -71,7 +64,6 @@ public class IntraProfileActivity extends AppCompatActivity {
         if (requestCode == NFC_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 WriteCardTask task = data.getParcelableExtra(CardWriteActivity.CARD_JOB_PARAMS);
-
 
                 Log.i("WriteCardTask", task.getErrorString(this));
             }
@@ -318,7 +310,7 @@ public class IntraProfileActivity extends AppCompatActivity {
                         */
 
                         id.fileUserInfo.getDirtyRanges().add(new int[] { 0, id.fileUserInfo.getExpectedFileSize() });
-                        id.fileDoorPermissions.getDirtyRanges().add(new int[] { 0, id.fileDoorPermissions.getExpectedFileSize() });
+//                        id.fileDoorPermissions.getDirtyRanges().add(new int[] { 0, id.fileDoorPermissions.getExpectedFileSize() });
 
                         IntraProfileActivity.this.beginWriteTask(id);
                     }

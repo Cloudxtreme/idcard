@@ -8,6 +8,7 @@ public final class DESFireProtocol {
     public static final byte AUTHENTICATE = (byte) 0x0A;
     public static final byte GET_MANUFACTURING_DATA = (byte) 0x60;
     public static final byte GET_APPLICATION_DIRECTORY = (byte) 0x6A;
+    public static final byte GET_FREE_SPACE = (byte) 0x6E;
     public static final byte GET_ADDITIONAL_FRAME = (byte) 0xAF;
     public static final byte SELECT_APPLICATION = (byte) 0x5A;
     public static final byte WRITE_DATA = (byte) 0x3D;
@@ -26,6 +27,7 @@ public final class DESFireProtocol {
     public static final byte CHANGE_KEY_SETTINGS = (byte) 0x54;
     public static final byte GET_KEY_SETTINGS = (byte) 0x45;
     public static final byte ADDITIONAL_FRAME = (byte) 0xAF;
+    public static final byte FORMAT_PICC = (byte) 0xFC;
 
     public static final byte FILETYPE_STANDARD = 0;
     public static final byte FILETYPE_BACKUP = 1;

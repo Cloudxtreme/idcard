@@ -14,8 +14,9 @@ public class CommandTestTask extends CardNFCTask {
     private byte cmdId;
     private byte[] cmdData;
 
-    private int errorCode;
+    private int errorCode = -2;
     private byte[] responseData;
+    private String errorString;
 
     public CommandTestTask(int appId, byte keyId, byte[] encKey, byte cmdId, byte[] cmdData) {
         this.appId = appId;
@@ -35,17 +36,13 @@ public class CommandTestTask extends CardNFCTask {
                 mCard.establishAuthentication(this.keyId, this.encKey);
             }
 
-            try {
-                responseData = mCard.sendRequest(cmdId, cmdData);
-            } catch (DESFireCard.CardException e) {
-                responseData = new byte[0];
-                errorCode = e.getErrorCode();
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            responseData = mCard.sendRequest(cmdId, cmdData);
+            errorCode = 0;
+        } catch (DESFireCard.CardException e) {
+            errorCode = e.getErrorCode();
         } catch (Exception e) {
-            e.printStackTrace();
+            errorString = e.getClass().getName() + " " + e.getMessage();
+            errorCode = -1;
         }
         return null;
     }
@@ -66,10 +63,13 @@ public class CommandTestTask extends CardNFCTask {
         }
         byte hasResponse = in.readByte();
         if (hasResponse != 0) {
-            this.errorCode = in.readInt();
-            int responseLength = in.readInt();
-            responseData = new byte[responseLength];
-            in.readByteArray(responseData);
+            if (hasResponse == 2) {
+                int responseLength = in.readInt();
+                responseData = new byte[responseLength];
+                in.readByteArray(responseData);
+            }
+            errorCode = in.readInt();
+            errorString = in.readString();
         }
     }
 
@@ -95,13 +95,19 @@ public class CommandTestTask extends CardNFCTask {
             parcel.writeInt(cmdData.length);
             parcel.writeByteArray(cmdData);
         }
-        if (responseData == null) {
+        if (errorCode == -2) {
+            // haven't run the task yet
             parcel.writeByte((byte)0);
-        } else {
+        } else if (responseData == null) {
             parcel.writeByte((byte)1);
             parcel.writeInt(errorCode);
+            parcel.writeString(errorString);
+        } else {
+            parcel.writeByte((byte)2);
             parcel.writeInt(responseData.length);
             parcel.writeByteArray(responseData);
+            parcel.writeInt(errorCode);
+            parcel.writeString(errorString);
         }
     }
 
@@ -118,5 +124,6 @@ public class CommandTestTask extends CardNFCTask {
     };
 
     public int getErrorCode() { return errorCode; }
+    public String getErrorString() { return errorString; }
     public byte[] getResponseData() { return responseData; }
 }

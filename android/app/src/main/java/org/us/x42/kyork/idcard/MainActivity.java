@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, CardWriteActivity.class);
                 intent.putExtra(CardWriteActivity.CARD_JOB_TYPE, "ProvisionBlankCardTask");
-                ProvisionBlankCardTask task = new ProvisionBlankCardTask(1);
+                ProvisionBlankCardTask task = new ProvisionBlankCardTask(false);
                 intent.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
                 startActivityForResult(intent, REQUEST_ID_PROVISION);
             }
@@ -64,16 +64,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ID_PROVISION) {
-            ProvisionBlankCardTask result = data.getParcelableExtra(CardWriteActivity.CARD_JOB_PARAMS);
+            if (resultCode == RESULT_OK) {
+                ProvisionBlankCardTask result = data.getParcelableExtra(CardWriteActivity.CARD_JOB_PARAMS);
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(R.string.provision_result_title);
-            if (result.getErrorString() == null || result.getErrorString().isEmpty()) {
-                builder.setMessage(R.string.provision_result_success);
-            } else {
-                builder.setMessage("Error: " + result.getErrorString());
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle(R.string.provision_result_title);
+                if (result.getErrorString() == null || result.getErrorString().isEmpty()) {
+                    builder.setMessage(R.string.provision_result_success);
+                } else {
+                    builder.setMessage("Error: " + result.getErrorString());
+                }
+                builder.create().show();
             }
-            builder.create().show();
         }
     }
 }

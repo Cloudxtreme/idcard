@@ -18,6 +18,7 @@ import android.widget.TextView;
 
 import com.google.common.io.BaseEncoding;
 
+import org.us.x42.kyork.idcard.desfire.DESFireProtocol;
 import org.us.x42.kyork.idcard.tasks.CommandTestTask;
 
 import java.util.ArrayList;
@@ -125,17 +126,30 @@ public class SetupActivity extends AppCompatActivity {
 
                 if (task.getErrorCode() != 0) {
                     sb.append("Card returned error: ");
-                    sb.append(Integer.toHexString(task.getErrorCode()));
+                    if (task.getErrorCode() != -1) {
+                        DESFireProtocol.StatusCode code = DESFireProtocol.StatusCode.byId((byte)task.getErrorCode());
+                        if (code == DESFireProtocol.StatusCode.UNKNOWN_ERROR_CODE) {
+                            sb.append(String.format("%02X", task.getErrorCode()));
+                        } else {
+                            sb.append(code.toString());
+                        }
+                    } else {
+                        sb.append(task.getErrorString());
+                    }
                 } else {
                     byte[] responseData = task.getResponseData();
-                    sb.append("Result: ").append(responseData.length).append("\n");
-                    for (int i = 0; i < responseData.length; i++) {
-                        sb.append(String.format("%02X ", responseData[i]));
-                        if (i % 8 == 7) {
-                            sb.append('\n');
-                        } else if (i % 2 == 1) {
-                            sb.append(' ');
+                    if (responseData != null) {
+                        sb.append("Result: ").append(responseData.length).append(" bytes\n");
+                        for (int i = 0; i < responseData.length; i++) {
+                            sb.append(String.format("%02X ", responseData[i]));
+                            if (i % 8 == 7) {
+                                sb.append('\n');
+                            } else if (i % 2 == 1) {
+                                sb.append(' ');
+                            }
                         }
+                    } else {
+                        sb.append("(Success, no result)");
                     }
                 }
 

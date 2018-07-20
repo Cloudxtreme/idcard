@@ -17,12 +17,12 @@ import java.util.List;
 
 public class ProvisionBlankCardTask extends CardNFCTask {
     private static final String LOG_TAG = ProvisionBlankCardTask.class.getSimpleName();
-    private int currentStep;
+    private boolean piccFormat;
     private long provisioningDate;
     private String errorString;
 
-    public ProvisionBlankCardTask(int resumeFromStep) {
-        currentStep = resumeFromStep;
+    public ProvisionBlankCardTask(boolean piccFormat) {
+        this.piccFormat = piccFormat;
     }
 
     private void setError(String prefix, Throwable t) {
@@ -46,7 +46,11 @@ public class ProvisionBlankCardTask extends CardNFCTask {
 
             // TODO - if app list contains Card42, abort
 
-            if (!hasApp(appListResponse, CardJob.APP_ID_CARD42)) {
+            if (piccFormat) {
+                mCard.sendRequest(DESFireProtocol.FORMAT_PICC, null);
+            }
+
+            if (piccFormat || !hasApp(appListResponse, CardJob.APP_ID_CARD42)) {
                 // CreateApplication
                 try {
                     Log.i(LOG_TAG, "Creating application");
@@ -140,7 +144,9 @@ public class ProvisionBlankCardTask extends CardNFCTask {
     }
 
     private ProvisionBlankCardTask(Parcel in) {
-        currentStep = in.readInt();
+        if (in.readByte() == 0x4C) {
+            piccFormat = true;
+        }
         provisioningDate = in.readLong();
         errorString = in.readString();
     }
@@ -152,7 +158,11 @@ public class ProvisionBlankCardTask extends CardNFCTask {
 
     @Override
     public void writeToParcel(Parcel parcel, int i) {
-        parcel.writeInt(currentStep);
+        if (piccFormat) {
+            parcel.writeByte((byte)0x4C);
+        } else {
+            parcel.writeByte((byte)0);
+        }
         parcel.writeLong(provisioningDate);
         parcel.writeString(errorString);
     }

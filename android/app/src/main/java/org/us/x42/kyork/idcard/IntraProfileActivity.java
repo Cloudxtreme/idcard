@@ -32,12 +32,15 @@ public class IntraProfileActivity extends AppCompatActivity {
 
     private List<ProgressBar> progressBars = new ArrayList<ProgressBar>();
     private MenuItem.OnMenuItemClickListener refreshCallback;
+    private MenuItem.OnMenuItemClickListener writeCallback;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_setup, menu);
         MenuItem refresh = menu.findItem(R.id.refresh);
         refresh.setOnMenuItemClickListener(this.refreshCallback);
+        MenuItem write = menu.findItem(R.id.write);
+        write.setOnMenuItemClickListener(this.writeCallback);
         return true;
     }
 
@@ -223,6 +226,18 @@ public class IntraProfileActivity extends AppCompatActivity {
             public boolean onMenuItemClick(MenuItem item) {
                 IntraProfileActivity.this.resetUI();
                 IntraProfileActivity.this.fetchUser(login, idcard);
+                return true;
+            }
+        };
+
+        this.writeCallback = new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                try {
+                    IntraProfileActivity.api.queryUser(login, true);
+                } catch (IOException | JSONException e) {
+                    e.printStackTrace(System.err);
+                }
                 return true;
             }
         };

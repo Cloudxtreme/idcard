@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -39,6 +40,7 @@ public class IntraProfileActivity extends AppCompatActivity {
     private static final int NFC_REQUEST_CODE = 3;
 
     private List<ProgressBar> progressBars = new ArrayList<ProgressBar>();
+    private TextView levelHeader;
     private MenuItem.OnMenuItemClickListener refreshCallback;
     private MenuItem.OnMenuItemClickListener writeCallback;
 
@@ -64,8 +66,19 @@ public class IntraProfileActivity extends AppCompatActivity {
         if (requestCode == NFC_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 WriteCardTask task = data.getParcelableExtra(CardWriteActivity.CARD_JOB_PARAMS);
-
-                Log.i("WriteCardTask", task.getErrorString(this));
+                String err = task.getErrorString(this);
+                if (err.isEmpty()) {
+                    String userLogin = task.getCard().fileUserInfo.getLogin();
+                    Snackbar statusBar = Snackbar.make(levelHeader,
+                            String.format(this.getResources().getString(R.string.writecard_success), userLogin),
+                            Snackbar.LENGTH_LONG);
+                    statusBar.show();
+                    Log.i("WriteCardTask", "success");
+                } else {
+                    Snackbar statusBar = Snackbar.make(levelHeader, err, Snackbar.LENGTH_LONG);
+                    statusBar.show();
+                    Log.i("WriteCardTask", err);
+                }
             }
             Log.i("WriteCardTask", "RESULT => " + resultCode);
         }
@@ -88,7 +101,6 @@ public class IntraProfileActivity extends AppCompatActivity {
             bmImage.setVisibility(View.VISIBLE);
 
             TextView cursusHeader = findViewById(R.id.cursus_header);
-            TextView levelHeader = findViewById(R.id.level_header);
             TextView gradeHeader = findViewById(R.id.grade_header);
             cursusHeader.setVisibility(View.VISIBLE);
             levelHeader.setVisibility(View.VISIBLE);
@@ -196,7 +208,7 @@ public class IntraProfileActivity extends AppCompatActivity {
         ImageView bmImage = findViewById(R.id.user_picture);
         bmImage.setVisibility(View.INVISIBLE);
         TextView cursusHeader = findViewById(R.id.cursus_header);
-        TextView levelHeader = findViewById(R.id.level_header);
+        // levelHeader = findViewById(R.id.level_header);
         TextView gradeHeader = findViewById(R.id.grade_header);
         cursusHeader.setVisibility(View.INVISIBLE);
         levelHeader.setVisibility(View.INVISIBLE);
@@ -223,6 +235,7 @@ public class IntraProfileActivity extends AppCompatActivity {
         setContentView(R.layout.activity_intra_profile);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        levelHeader = findViewById(R.id.level_header);
 
         this.resetUI();
 
@@ -231,7 +244,10 @@ public class IntraProfileActivity extends AppCompatActivity {
         Intent launchIntent = getIntent();
         if (launchIntent.hasExtra("idcard")) {
             idcard = launchIntent.getParcelableExtra("idcard");
-            login = idcard.fileUserInfo.getLogin();
+            if (idcard.fileUserInfo != null)
+                login = idcard.fileUserInfo.getLogin();
+            else
+                throw new IllegalArgumentException("Missing FileUserInfo on IDCard");
         }
         else if (launchIntent.hasExtra("login")) {
             login = launchIntent.getStringExtra("login");
@@ -241,6 +257,8 @@ public class IntraProfileActivity extends AppCompatActivity {
             login = "mlu";
             idcard = null;
         }
+
+        if (login.isEmpty())
 
         this.refreshCallback = new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -257,10 +275,19 @@ public class IntraProfileActivity extends AppCompatActivity {
                 JSONObject user = IntraProfileActivity.api.cachedUser(login);
                 if (user != null) {
                     try {
-                        IDCard id = new IDCard();
-                        id.fileUserInfo = new FileUserInfo(new byte[CardDataFormat.FORMAT_USERINFO.expectedSize]);
-                        id.fileDoorPermissions = new FileDoorPermissions(new byte[CardDataFormat.FORMAT_DOORPERMS.expectedSize]);
-                        id.fileSignatures = new FileSignatures(new byte[CardDataFormat.FORMAT_SIGNATURES.expectedSize]);
+                        IDCard id = idcard;
+
+                        if (id == null)
+                            id = new IDCard();
+
+                        if (id.fileUserInfo == null)
+                            id.fileUserInfo = new FileUserInfo(new byte[CardDataFormat.FORMAT_USERINFO.expectedSize]);
+
+                        if (id.fileDoorPermissions == null)
+                            id.fileDoorPermissions = new FileDoorPermissions(new byte[CardDataFormat.FORMAT_DOORPERMS.expectedSize]);
+
+                        if (id.fileSignatures == null)
+                            id.fileSignatures = new FileSignatures(new byte[CardDataFormat.FORMAT_SIGNATURES.expectedSize]);
 
                         id.fileUserInfo.setLogin(login);
                         id.fileUserInfo.setIntraUserID(user.getInt("id"));

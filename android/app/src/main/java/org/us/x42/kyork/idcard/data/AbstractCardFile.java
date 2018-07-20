@@ -1,12 +1,14 @@
 package org.us.x42.kyork.idcard.data;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Base class for card file format classes. Provides integer decoding utility functions.
  */
 public abstract class AbstractCardFile implements CardFile {
     private byte[] rawContent;
+    private List<int[]> dirtyRanges;
 
     public AbstractCardFile(byte[] content) {
         rawContent = content;
@@ -17,13 +19,37 @@ public abstract class AbstractCardFile implements CardFile {
         return rawContent;
     }
 
-    protected byte[] getSlice(int start, int end) {
+    public byte[] getSlice(int start, int end) {
         return Arrays.copyOfRange(rawContent, start, end);
     }
 
-    protected void setSlice(int offset, byte[] data, int start, int end) {
-        for (int i = 0; start + i < end; i++)
-            rawContent[offset + i] = data[start + i];
+    protected void setSlice(int offset, byte[] data, int start, int size) {
+        System.arraycopy(data, start, rawContent, offset, size);
+    }
+
+    /**
+     * Sets the entire file as dirty (needs to be written to the card).
+     */
+    protected void setDirty() {
+        this.dirtyRanges.add(new int[] { 0, getExpectedFileSize() });
+    }
+
+    /**
+     * Set a range of the file as dirty (needs to be written to the card).
+     *
+     * @param offset file offset
+     * @param size data size
+     */
+    protected void setDirty(int offset, int size) {
+        this.dirtyRanges.add(new int[] { offset, size });
+    }
+
+    public List<int[]> getDirtyRanges() {
+        return this.dirtyRanges;
+    }
+
+    public boolean isDirty() {
+        return !this.dirtyRanges.isEmpty();
     }
 
     /**

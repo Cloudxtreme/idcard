@@ -5,7 +5,13 @@ import android.os.Parcelable;
 
 import com.google.common.io.BaseEncoding;
 
-public class CardJob implements Parcelable {
+import org.us.x42.kyork.idcard.data.AbstractCardFile;
+import org.us.x42.kyork.idcard.desfire.DESFireCard;
+import org.us.x42.kyork.idcard.desfire.DESFireProtocol;
+
+import java.io.IOException;
+
+public class CardJob {
     // DESFire Application ID values.
     public static final int APP_ID_NULL = 0;
     public static final int APP_ID_CARD42 = 0xFB9852;
@@ -16,119 +22,11 @@ public class CardJob implements Parcelable {
     public static final byte[] ENC_KEY_NULL = decodeHex("00000000000000000000000000000000");
     public static final byte[] ENC_KEY_ANDROID_PUBLIC = decodeHex("5BF8127E692E3F65CF8B78C79762E27A");
 
-    public int appId;
-    public byte keyId;
-    public byte[] encKey;
-    public CardOp[] commands;
-
-    public CardJob(int appId, CardOp... commands) {
-        this.appId = appId;
-        this.keyId = 0xE;
-        this.encKey = null;
-        this.commands = commands;
-    }
-
-    public CardJob(int appId, byte keyId, byte[] encKey, CardOp... commands) {
-        this.appId = appId;
-        this.keyId = keyId;
-        this.encKey = encKey;
-        this.commands = commands;
-    }
-
-    /// ===============
-    // Parcel Implementation
-
-    private CardJob(Parcel in) {
-        this.appId = in.readInt();
-        boolean hasEncKey = in.readByte() == 1;
-        if (hasEncKey) {
-            this.encKey = new byte[16];
-            in.readByteArray(encKey);
-        }
-        int numCommands = in.readInt();
-        this.commands = new CardOp[numCommands];
-        for (int i = 0; i < this.commands.length; i++) {
-            byte cmdId;
-            int dataLen;
-            byte[] data;
-
-            cmdId = in.readByte();
-            dataLen = in.readInt();
-            if (dataLen == -1) {
-                data = null;
-            } else {
-                data = new byte[dataLen];
-                in.readByteArray(data);
-            }
-            this.commands[i] = new CardOpRaw(cmdId, data);
-        }
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(this.appId);
-        if (this.encKey != null) {
-            dest.writeByte((byte)1);
-            dest.writeByteArray(this.encKey);
-        } else {
-            dest.writeByte((byte)0);
-        }
-        dest.writeInt(this.commands.length);
-        for (CardOp command : this.commands) {
-            byte cmdId = command.getCommandId();
-            byte[] data = command.encode();
-            dest.writeByte(cmdId);
-            if (data == null) {
-                dest.writeInt(-1);
-            } else {
-                dest.writeInt(data.length);
-                dest.writeByteArray(data);
-            }
-        }
-    }
-
-    public static final Creator<CardJob> CREATOR = new Creator<CardJob>() {
-        @Override
-        public CardJob createFromParcel(Parcel in) {
-            return new CardJob(in);
-        }
-
-        @Override
-        public CardJob[] newArray(int size) {
-            return new CardJob[size];
-        }
-    };
-
-    @Override
-    public int describeContents() { return 0; }
-
-    // End Parcel Implementation
-    /// ===============
-
     public interface CardOp {
-        byte getCommandId();
-        byte[] encode();
+        void execute(DESFireCard card) throws IOException;
     }
 
-    public static class CardOpRaw implements CardOp {
-        private byte cmdId;
-        private byte[] data;
-
-        public CardOpRaw(byte cmdId, byte[] data) {
-            this.cmdId = cmdId;
-            this.data = data;
-        }
-
-        @Override
-        public byte getCommandId() {
-            return cmdId;
-        }
-
-        @Override
-        public byte[] encode() {
-            return data;
-        }
-    }
+    // Gutted, replaced by tasks.CommandTestTask
 
     private static byte[] decodeHex(String hex) {
         return BaseEncoding.base16().decode(hex);

@@ -6,6 +6,8 @@ import java.util.Date;
  * File 0x1 on the card. Metadata, type of card (e.g. is this actually a card or is it something else?)
  */
 public class FileMetadata extends AbstractCardFile {
+    public static final byte FILE_ID = (byte)0x01;
+
     public static final short DEVICE_TYPE_ID = 0x4944;
     public static final short DEVICE_TYPE_TICKET = 0x544b;
     public static final short DEVICE_TYPE_DOOR = 0x444f;
@@ -17,7 +19,7 @@ public class FileMetadata extends AbstractCardFile {
 
     @Override
     public int getFileID() {
-        return 0x01;
+        return FILE_ID;
     }
 
     @Override

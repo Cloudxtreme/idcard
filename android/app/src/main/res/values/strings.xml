@@ -27,5 +27,6 @@
     <string name="title_activity_main">MainActivity</string>
     <string name="launch_setup">Launch Setup</string>
     <string name="launch_intraprofile">Launch IntraProfile</string>
+    <string name="nfc_test_results">Results</string>
 
 </resources>

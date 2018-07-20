@@ -78,6 +78,7 @@ public class IncomingScanActivity extends AppCompatActivity {
 
         @Override
         protected IDCard doInBackground(Tag... tags) {
+
             return null;
         }
     }

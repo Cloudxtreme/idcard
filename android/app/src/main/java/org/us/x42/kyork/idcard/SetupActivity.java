@@ -2,6 +2,7 @@ package org.us.x42.kyork.idcard;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -17,7 +18,16 @@ import android.widget.TextView;
 
 import com.google.common.io.BaseEncoding;
 
+import org.us.x42.kyork.idcard.tasks.CommandTestTask;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class SetupActivity extends AppCompatActivity {
+
+    private static final int NFC_REQUEST_CODE = 3;
+
+    private TextView resultText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +41,7 @@ public class SetupActivity extends AppCompatActivity {
         final EditText cmd_id_edittext = findViewById(R.id.setup_cmdid_text);
         final EditText payload_edittext = findViewById(R.id.setup_payload_editText);
         final TextView errorText = findViewById(R.id.errorText);
+        resultText = findViewById(R.id.nfc_test_results_box);
 
         Button clickButton = findViewById(R.id.nfc_test_button);
         clickButton.setOnClickListener(new View.OnClickListener() {
@@ -93,18 +104,44 @@ public class SetupActivity extends AppCompatActivity {
                 } else {
                     data = BaseEncoding.base16().decode(inputText);
                 }
+                errorText.setText("");
 
                 Intent intent = new Intent(SetupActivity.this, CardWriteActivity.class);
-                CardJob job;
-                if (encKey == null) {
-                    job = new CardJob(appId, new CardJob.CardOpRaw(cmdId, data));
-                } else {
-                    job = new CardJob(appId, keyId, encKey, new CardJob.CardOpRaw(cmdId, data));
-                }
-                intent.putExtra(CardWriteActivity.CARD_PAYLOAD, job);
-                startActivity(intent);
+                intent.putExtra(CardWriteActivity.CARD_JOB_TYPE, "CommandTestTask");
+                CommandTestTask task = new CommandTestTask(appId, keyId, encKey, cmdId, data);
+                intent.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
+                startActivityForResult(intent, NFC_REQUEST_CODE);
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == NFC_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                CommandTestTask task = data.getParcelableExtra(CardWriteActivity.CARD_JOB_PARAMS);
+                StringBuilder sb = new StringBuilder();
+
+                if (task.getErrorCode() != 0) {
+                    sb.append("Card returned error: ");
+                    sb.append(Integer.toHexString(task.getErrorCode()));
+                } else {
+                    byte[] responseData = task.getResponseData();
+                    sb.append("Result: ").append(responseData.length).append("\n");
+                    for (int i = 0; i < responseData.length; i++) {
+                        sb.append(String.format("%02X ", responseData[i]));
+                        if (i % 8 == 7) {
+                            sb.append('\n');
+                        } else if (i % 2 == 1) {
+                            sb.append(' ');
+                        }
+                    }
+                }
+
+                resultText.setText(sb);
+            }
+        }
     }
 
     @Override

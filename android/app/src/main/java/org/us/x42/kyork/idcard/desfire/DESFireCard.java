@@ -5,6 +5,8 @@ import android.nfc.tech.IsoDep;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import org.us.x42.kyork.idcard.PackUtil;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -12,7 +14,6 @@ import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
-import javax.crypto.ShortBufferException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -25,12 +26,6 @@ public class DESFireCard {
     private IsoDep mTagTech;
     private Cipher mSessionCipher;
 
-    // Status codes (Section 3.4)
-    public static final byte OPERATION_OK = (byte) 0x00;
-    public static final byte PERMISSION_DENIED = (byte) 0x9D;
-    public static final byte AUTHENTICATION_ERROR = (byte) 0xAE;
-    public static final byte ADDITIONAL_FRAME = (byte) 0xAF;
-
     public static class CardException extends IOException {
         private int errorCode;
 
@@ -39,9 +34,15 @@ public class DESFireCard {
             this.errorCode = errorCode;
         }
 
+        public CardException(DESFireProtocol.StatusCode code, String message) {
+            super(code.toString() + ": " + message);
+            this.errorCode = code.getValue();
+        }
+
         public int getErrorCode() {
             return errorCode;
         }
+        public DESFireProtocol.StatusCode getStatusCode() { return DESFireProtocol.StatusCode.byId((byte)errorCode); }
     }
 
     public DESFireCard(Tag tag) {
@@ -59,21 +60,60 @@ public class DESFireCard {
 
     public void selectApplication(int appID) throws IOException {
         byte[] args = new byte[3];
-        args[0] = (byte) ((appID & 0xFF0000) >> 16);
-        args[1] = (byte) ((appID & 0xFF00) >> 8);
-        args[2] = (byte) (appID & 0xFF);
+        PackUtil.writeBE24(args, 0, appID);
         sendRequest(DESFireProtocol.SELECT_APPLICATION, args);
     }
 
-    public DESFirePlainFile readPlainFile(byte fileID) throws Exception {
+    public byte[] readFullFile(byte fileID, int expectedLength) throws IOException {
         byte[] settingsReply = this.sendRequest(DESFireProtocol.GET_FILE_SETTINGS, new byte[] { fileID });
         byte fileType = settingsReply[0];
         byte commSettings = settingsReply[1];
         short accessRights = (short)((short)settingsReply[2] | ((short)settingsReply[3] << 8));
-        if (settingsReply[0] == DESFireProtocol.FILETYPE_STANDARD || settingsReply[0] == DESFireProtocol.FILETYPE_BACKUP) {
 
+        if (commSettings != DESFireProtocol.FileEncryptionMode.PLAIN.getValue()) {
+            throw new IllegalArgumentException("NotImplemented");
         }
-        return null;
+
+        byte[] fileRequest = new byte[7];
+        fileRequest[0] = fileID;
+        PackUtil.writeBE24(fileRequest, 1, 0); // TODO(kyork): check LE/BE
+        PackUtil.writeBE24(fileRequest, 4, expectedLength);
+
+        return this.sendRequest(DESFireProtocol.READ_DATA, fileRequest);
+    }
+
+    public void writeToFile(DESFireProtocol.FileEncryptionMode mode, byte fileID, byte[] content, int offset) throws IOException {
+        if (mode != DESFireProtocol.FileEncryptionMode.PLAIN) {
+            throw new IllegalArgumentException("NotImplemented");
+        }
+
+        // TODO encrypt content if necessary
+        byte[] commandBytes = new byte[content.length + 7];
+        commandBytes[0] = fileID;
+        PackUtil.writeLE24(commandBytes, 1, offset);
+        PackUtil.writeLE24(commandBytes, 4, content.length);
+        System.arraycopy(content, 0, commandBytes, 7, content.length);
+        int bytesWritten = 0;
+
+        while (bytesWritten < commandBytes.length) {
+            byte[] subCmdBytes;
+            if (commandBytes.length - bytesWritten > 59) {
+                subCmdBytes = new byte[59];
+                System.arraycopy(commandBytes, bytesWritten, subCmdBytes, 0, 59);
+            } else if (commandBytes.length < 59) {
+                subCmdBytes = commandBytes;
+            } else {
+                subCmdBytes = new byte[commandBytes.length - bytesWritten];
+                System.arraycopy(commandBytes, bytesWritten, subCmdBytes, 0, subCmdBytes.length);
+            }
+
+            if (bytesWritten == 0) {
+                this.sendPartialRequest(DESFireProtocol.WRITE_DATA, subCmdBytes);
+            } else {
+                this.sendPartialRequest(DESFireProtocol.GET_ADDITIONAL_FRAME, subCmdBytes);
+            }
+            bytesWritten += subCmdBytes.length;
+        }
     }
 
     /**
@@ -140,7 +180,7 @@ public class DESFireCard {
         byte[] midReply = cipherDesFullBlocks(setupCipher, midData.toByteArray());
         Log.i(LOG_TAG, "A+B' encrypted: " + stringifyByteArray(midReply));
 
-        byte[] finalReply = sendRequest(ADDITIONAL_FRAME, midReply);
+        byte[] finalReply = sendRequest(DESFireProtocol.ADDITIONAL_FRAME, midReply);
         // ----- this is where it's crashing
         Log.i(LOG_TAG, "Challenge A' from card: " + stringifyByteArray(finalReply));
         setupCipher.init(Cipher.DECRYPT_MODE, initialKey, blankIV);
@@ -151,7 +191,7 @@ public class DESFireCard {
         rotatedA[7] = temp;
 
         if (!MessageDigest.isEqual(rndA, rotatedA)) {
-            throw new CardException(AUTHENTICATION_ERROR, "host: Card failed authentication");
+            throw new CardException(DESFireProtocol.StatusCode.AUTHENTICATION_ERROR, "host: Card failed authentication");
         }
 
         byte[] sessionKey = new byte[16];
@@ -159,15 +199,16 @@ public class DESFireCard {
         System.arraycopy(rndBActual, 0, sessionKey, 4, 4);
         System.arraycopy(rndA, 4, sessionKey, 8, 4);
         System.arraycopy(rndBActual, 4, sessionKey, 12, 4);
-        this.mSessionCipher = Cipher.getInstance("DESede/CBC/ZeroBytePadding");
+        this.mSessionCipher = Cipher.getInstance("DESede/CBC/NoPadding");
         final SecretKey sessionKeySpec = new SecretKeySpec(sessionKey, "DESede");
         mSessionCipher.init(Cipher.DECRYPT_MODE, sessionKeySpec, blankIV);
         Log.i(LOG_TAG, "established session key");
     }
 
-    public byte[] sendRequest(byte command, byte[] parameters) throws IOException, CardException {
+    public byte[] sendRequest(byte command, byte[] parameters) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
+        Log.i(LOG_TAG, "Sending command " + command + ": " + stringifyByteArray(parameters));
         byte[] recvBuffer = mTagTech.transceive(wrapMessage(command, parameters));
 
         while (true) {
@@ -180,44 +221,41 @@ public class DESFireCard {
             output.write(recvBuffer, 0, recvBuffer.length - 2);
 
             byte status = recvBuffer[recvBuffer.length - 1];
-            if (status == OPERATION_OK) {
+            if (status == 0) {
                 break;
-            } else if (status == ADDITIONAL_FRAME) {
+            } else if (status == DESFireProtocol.ADDITIONAL_FRAME) {
                 recvBuffer = mTagTech.transceive(wrapMessage(DESFireProtocol.GET_ADDITIONAL_FRAME, null));
-            } else if (status == PERMISSION_DENIED) {
-                throw new CardException(status, "Permission denied");
-            } else if (status == AUTHENTICATION_ERROR) {
-                throw new CardException(status, "Authentication error");
             } else {
-                throw new CardException(status, "Unknown status code: " + Integer.toHexString(status & 0xFF));
+                DESFireProtocol.StatusCode st = DESFireProtocol.StatusCode.byId(status);
+                Log.i(LOG_TAG, "Card returned error " + String.format("%02X", command) + ": " + st.toString());
+                throw new CardException(st, "command ID " + String.format("%02X", command));
             }
         }
 
-        return output.toByteArray();
+        byte[] result = output.toByteArray();
+        Log.i(LOG_TAG, "Response to command " + command + ": " + stringifyByteArray(result));
+        return result;
     }
 
-    private byte[] sendPartialRequest(byte command, byte[] parameters) throws Exception {
+    private byte[] sendPartialRequest(byte command, byte[] parameters) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         byte[] recvBuffer = mTagTech.transceive(wrapMessage(command, parameters));
 
         if (recvBuffer[recvBuffer.length - 2] != (byte) 0x91) {
-            throw new Exception("Invalid response");
+            throw new CardException(-1, "Invalid framing response");
         }
 
         output.write(recvBuffer, 0, recvBuffer.length - 2);
 
         byte status = recvBuffer[recvBuffer.length - 1];
-        if (status == ADDITIONAL_FRAME) {
+        if (status == 0) {
             return output.toByteArray();
-        } else if (status == OPERATION_OK) {
+        } else if (status == DESFireProtocol.StatusCode.OPERATION_OK.getValue()) {
             return output.toByteArray();
-        } else if (status == PERMISSION_DENIED) {
-            throw new CardException(status, "Permission denied");
-        } else if (status == AUTHENTICATION_ERROR) {
-            throw new CardException(status, "Authentication error");
         } else {
-            throw new CardException(status, "Unknown status code: " + Integer.toHexString(status & 0xFF));
+            DESFireProtocol.StatusCode st = DESFireProtocol.StatusCode.byId(status);
+            throw new CardException(st, "command ID " + String.format("%02X", command));
         }
     }
 

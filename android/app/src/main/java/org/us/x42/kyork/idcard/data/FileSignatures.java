@@ -52,12 +52,13 @@ public class FileSignatures extends AbstractCardFile {
         EdDSAPublicKey debugPublic = new EdDSAPublicKey(new EdDSAPublicKeySpec(debugSigner.getA(), EdDSANamedCurveTable.getByName("Ed25519")));
 
         knownSigners.put(0x545354, new EdDSAPublicKey(new EdDSAPublicKeySpec(
-                BaseEncoding.base16().decode("302A300506032B65700321002D34E2D9DE7E03A916CF04A5F4CB05355BB65C9C49A4C29D9239247193A8AC27"),
+                debugPublic.getA(), //BaseEncoding.base16().decode("302A300506032B65700321002D34E2D9DE7E03A916CF04A5F4CB05355BB65C9C49A4C29D9239247193A8AC27"),
                 EdDSANamedCurveTable.getByName("Ed25519"))));
         // TODO - replace with production signer
     }
 
     /**
+     * Checks the signature on file contents.
      *
      * @param fileID ID of the file to validate
      * @param fullFileContent file to validate
@@ -92,6 +93,36 @@ public class FileSignatures extends AbstractCardFile {
         }
     }
 
+    /**
+     * Sign the given file content with the debug key.
+     *
+     * @param fullFileContent file content to sign
+     * @return signature bytes with debug key
+     */
+    public static byte[] signForDebug(byte[] fullFileContent) {
+        try {
+            Signature sigEngine = Signature.getInstance("NONEwithEdDSA", "EdDSA");
+            EdDSAPrivateKey privKey = debugSigner;
+
+            sigEngine.initSign(privKey);
+            sigEngine.setParameter(EdDSAEngine.ONE_SHOT_MODE);
+            try {
+                sigEngine.update(fullFileContent);
+                return sigEngine.sign();
+            } catch (SignatureException e) {
+                throw new RuntimeException("failed to sign data", e);
+            }
+        } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException | InvalidAlgorithmParameterException e) {
+            throw new RuntimeException("failed to initialize signature code", e);
+        }
+    }
+
+    /**
+     * Saves a new signature to the file.
+     * @param fileID file ID this signature is for
+     * @param keyID Ed25519 key ID that signed it
+     * @param signature the signature bytes
+     */
     public void setSignature(byte fileID, int keyID, byte[] signature) {
         for (int i = 0; i < MAX_SIGNATURE_COUNT; i++) {
             int offset = i * SIGNATURE_LENGTH;
@@ -99,10 +130,12 @@ public class FileSignatures extends AbstractCardFile {
             if (sigFileID != fileID && sigFileID != 0) continue;
 
             // either a matching entry or empty entry
-            byte[] newSignature = new byte[68];
-            newSignature[0] = fileID;
-            // writeLE24(newSignature, 1, keyID);
-            // TODO(kyork)
+            getRawContent()[offset] = fileID;
+            writeLE24(offset + 1, keyID);
+            setSlice(offset + 4, signature, 0, 64);
+
+            setDirty(offset, 68);
+            return;
         }
     }
 }

@@ -79,15 +79,16 @@ public class IntraAPI {
         return (this.users.containsKey(login));
     }
 
-    public void queryUser(String login, boolean useCached) throws IOException, JSONException {
+    public JSONObject queryUser(String login, boolean useCached) throws IOException, JSONException {
         if (useCached) {
             JSONObject user = this.users.get(login);
             if (user != null)
-                return;
+                return user;
         }
 
         JSONObject user = new JSONObject(this.apiCall("/v2/users/" + login));
         this.users.put(login, user);
+        return user;
     }
 
     /* - [JSON Getters for User Data] ------------------------------------------- */

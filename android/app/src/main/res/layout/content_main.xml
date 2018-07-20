@@ -30,12 +30,12 @@
          />
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/launch_provisioning"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="8dp"
-        android:text="Button"
+        android:text="@string/provision_blank_card"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/launch_intraprofile"
         />
@@ -48,7 +48,7 @@
         android:layout_marginTop="8dp"
         android:text="Button"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button3"
+        app:layout_constraintTop_toBottomOf="@+id/launch_provisioning"
          />
 
     <EditText

@@ -28,5 +28,8 @@
     <string name="launch_setup">Launch Setup</string>
     <string name="launch_intraprofile">Launch IntraProfile</string>
     <string name="nfc_test_results">Results</string>
+    <string name="provision_blank_card">Provision blank card</string>
+    <string name="provision_result_title">Card Provisioning Result</string>
+    <string name="provision_result_success">Card provisioning success</string>
 
 </resources>

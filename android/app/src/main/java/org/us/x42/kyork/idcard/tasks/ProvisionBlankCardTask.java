@@ -84,8 +84,10 @@ public class ProvisionBlankCardTask extends CardNFCTask {
                     switch (info.fileType) {
                         case DESFireProtocol.FILETYPE_STANDARD:
                             mCard.sendRequest(DESFireProtocol.CREATE_STDDATA_FILE, createFileData);
+                            break;
                         case DESFireProtocol.FILETYPE_BACKUP:
                             mCard.sendRequest(DESFireProtocol.CREATE_BACKUP_FILE, createFileData);
+                            break;
                     }
                 } catch (DESFireCard.CardException e) {
                     if (e.getErrorCode() == DESFireProtocol.StatusCode.DUPLICATE_ERROR.getValue()) {
@@ -166,4 +168,8 @@ public class ProvisionBlankCardTask extends CardNFCTask {
             return new ProvisionBlankCardTask[size];
         }
     };
+
+    // Result Getters
+
+    public String getErrorString() { return errorString; }
 }

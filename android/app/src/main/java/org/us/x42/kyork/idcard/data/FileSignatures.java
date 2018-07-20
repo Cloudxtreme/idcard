@@ -1,5 +1,6 @@
 package org.us.x42.kyork.idcard.data;
 
+import android.os.Parcel;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -26,6 +27,22 @@ public class FileSignatures extends AbstractCardFile {
     public FileSignatures(byte[] content) {
         super(content);
     }
+
+    protected FileSignatures(Parcel parcel) {
+        super(parcel);
+    }
+
+    public static final Creator<FileSignatures> CREATOR = new Creator<FileSignatures>() {
+        @Override
+        public FileSignatures createFromParcel(Parcel in) {
+            return new FileSignatures(in);
+        }
+
+        @Override
+        public FileSignatures[] newArray(int size) {
+            return new FileSignatures[size];
+        }
+    };
 
     @Override
     public int getFileID() {

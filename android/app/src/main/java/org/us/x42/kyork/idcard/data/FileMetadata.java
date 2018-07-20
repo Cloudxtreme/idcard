@@ -1,5 +1,7 @@
 package org.us.x42.kyork.idcard.data;
 
+import android.os.Parcel;
+
 import java.util.Date;
 
 /**
@@ -13,9 +15,23 @@ public class FileMetadata extends AbstractCardFile {
     public static final short DEVICE_TYPE_DOOR = 0x444f;
     public static final short DEVICE_TYPE_CANTINA = 0x4341;
 
-    public FileMetadata(byte[] content) {
-        super(content);
+    public FileMetadata(byte[] content) { super(content); }
+
+    protected FileMetadata(Parcel parcel) {
+        super(parcel);
     }
+
+    public static final Creator<FileMetadata> CREATOR = new Creator<FileMetadata>() {
+        @Override
+        public FileMetadata createFromParcel(Parcel in) {
+            return new FileMetadata(in);
+        }
+
+        @Override
+        public FileMetadata[] newArray(int size) {
+            return new FileMetadata[size];
+        }
+    };
 
     @Override
     public int getFileID() {

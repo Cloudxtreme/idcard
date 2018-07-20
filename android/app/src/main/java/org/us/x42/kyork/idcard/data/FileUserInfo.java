@@ -1,5 +1,7 @@
 package org.us.x42.kyork.idcard.data;
 
+import android.os.Parcel;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Calendar;
@@ -10,6 +12,22 @@ public class FileUserInfo extends AbstractCardFile {
     public FileUserInfo(byte[] content) {
         super(content);
     }
+
+    protected FileUserInfo(Parcel parcel) {
+        super(parcel);
+    }
+
+    public static final Creator<FileUserInfo> CREATOR = new Creator<FileUserInfo>() {
+        @Override
+        public FileUserInfo createFromParcel(Parcel in) {
+            return new FileUserInfo(in);
+        }
+
+        @Override
+        public FileUserInfo[] newArray(int size) {
+            return new FileUserInfo[size];
+        }
+    };
 
     @Override
     public int getFileID() {

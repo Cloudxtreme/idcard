@@ -1,17 +1,45 @@
 package org.us.x42.kyork.idcard.data;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * Base class for card file format classes. Provides integer decoding utility functions.
  */
-public abstract class AbstractCardFile implements CardFile {
+public abstract class AbstractCardFile implements CardFile, Parcelable {
     private byte[] rawContent;
-    private List<int[]> dirtyRanges;
+    private List<int[]> dirtyRanges = new ArrayList<>();
 
     public AbstractCardFile(byte[] content) {
         rawContent = content;
+    }
+
+    protected AbstractCardFile(Parcel parcel) {
+        this.rawContent = new byte[parcel.readInt()];
+        parcel.readByteArray(rawContent);
+        int length = parcel.readInt();
+        for (int i = 0; i < length; i++)
+            this.dirtyRanges.add(new int[] { parcel.readInt(), parcel.readInt() });
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(this.rawContent.length);
+        dest.writeByteArray(this.rawContent);
+        dest.writeInt(this.dirtyRanges.size());
+        for (int[] dirtyRange : dirtyRanges) {
+            dest.writeInt(dirtyRange[0]);
+            dest.writeInt(dirtyRange[1]);
+        }
     }
 
     @Override

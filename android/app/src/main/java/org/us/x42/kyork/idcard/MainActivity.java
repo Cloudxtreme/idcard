@@ -52,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, CardWriteActivity.class);
-                intent.putExtra(CardWriteActivity.CARD_JOB_TYPE, "ProvisionBlankCardTask");
                 ProvisionBlankCardTask task = new ProvisionBlankCardTask(false);
                 intent.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
                 startActivityForResult(intent, REQUEST_ID_PROVISION);

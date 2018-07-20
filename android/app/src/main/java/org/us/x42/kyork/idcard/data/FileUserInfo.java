@@ -6,6 +6,7 @@ import org.us.x42.kyork.idcard.PackUtil;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -57,20 +58,49 @@ public class FileUserInfo extends AbstractCardFile {
         }
     }
 
+    public void setLogin(String login) {
+        byte[] string = login.getBytes(Charset.forName("UTF-8"));
+        int i;
+        i = 0;
+        while (i < string.length && string[i] != 0) {
+            i++;
+        }
+        setSlice(0, string, 0, i);
+    }
+
     public int getIntraUserID() {
         return readLE32(0x8);
     }
 
-    public byte getCampusID() {
-        return getRawContent()[0xc];
-    }
+    public void setIntraUserID(int id) { writeLE32(0x8, id); }
+
+    public byte getCampusID() { return getRawContent()[0xc]; }
+
+    public void setCampusID(byte id) { getRawContent()[0xc] = id; }
 
     public byte getAccountType() {
         return getRawContent()[0xd];
     }
 
+    public void setAccountType(byte type) { getRawContent()[0xd] = type; }
+
     public int getPiscineDMYCompressed() {
         return readLE24(0xe);
+    }
+
+    public void setPiscineEndDate(Date date) {
+        TimeZone tz = TimeZone.getTimeZone("America/Los_Angeles");
+        Calendar cal = Calendar.getInstance(tz);
+
+        cal.clear();
+        cal.setTime(date);
+        int dmy = cal.get(Calendar.YEAR);
+        dmy <<= 4;
+        dmy |= cal.get(Calendar.MONTH);
+        dmy <<= 5;
+        dmy |= cal.get(Calendar.DAY_OF_MONTH);
+
+        writeLE24(0xe, dmy);
     }
 
     /**
@@ -101,6 +131,10 @@ public class FileUserInfo extends AbstractCardFile {
 
     public long getCardSerialRepeat() {
         return PackUtil.readLE56(getRawContent(), 0x11);
+    }
+
+    public void setCardSerialRepeat(long serial) {
+        PackUtil.writeLE56(getRawContent(), 0x11, serial);
     }
 
     public long getLastUpdated() {

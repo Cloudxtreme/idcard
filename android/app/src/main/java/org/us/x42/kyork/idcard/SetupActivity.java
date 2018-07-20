@@ -108,7 +108,6 @@ public class SetupActivity extends AppCompatActivity {
                 errorText.setText("");
 
                 Intent intent = new Intent(SetupActivity.this, CardWriteActivity.class);
-                intent.putExtra(CardWriteActivity.CARD_JOB_TYPE, "CommandTestTask");
                 CommandTestTask task = new CommandTestTask(appId, keyId, encKey, cmdId, data);
                 intent.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
                 startActivityForResult(intent, NFC_REQUEST_CODE);
@@ -160,24 +159,8 @@ public class SetupActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_setup, menu);
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     public void onClick(View v) {

@@ -79,6 +79,8 @@ public class IntraAPI {
         return (this.users.containsKey(login));
     }
 
+    public JSONObject cachedUser(String login) { return this.users.get(login); }
+
     public JSONObject queryUser(String login, boolean useCached) throws IOException, JSONException {
         if (useCached) {
             JSONObject user = this.users.get(login);

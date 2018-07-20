@@ -33,7 +33,6 @@ public class CardWriteActivity extends AppCompatActivity {
     private TextView mStatusText;
     private Handler mHandler;
 
-    public static final String CARD_JOB_TYPE = "org.us.x42.kyork.idcard.CARD_JOB_TYPE";
     public static final String CARD_JOB_PARAMS = "org.us.x42.kyork.idcard.CARD_JOB_PARAMS";
 
     @Override

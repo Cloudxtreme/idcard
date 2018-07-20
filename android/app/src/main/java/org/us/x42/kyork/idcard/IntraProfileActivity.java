@@ -1,23 +1,22 @@
 package org.us.x42.kyork.idcard;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.RequestCreator;
-import com.squareup.picasso.Transformation;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,8 +25,6 @@ import org.us.x42.kyork.idcard.data.IDCard;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 
 
@@ -94,44 +91,42 @@ public class IntraProfileActivity extends AppCompatActivity {
             TextView levelText = findViewById(R.id.level);
             TextView gradeText = findViewById(R.id.grade);
 
-            String cursusNames = "";
-            String cursusLevels = "";
-            String cursusGrades = "";
+            StringBuilder cursusNames = new StringBuilder();
+            StringBuilder cursusLevels = new StringBuilder();
+            StringBuilder cursusGrades = new StringBuilder();
             if (cursus_users != null) {
                 try {
                     for (int i = 0; i < cursus_users.length(); i++) {
                         JSONObject cursus_user = cursus_users.getJSONObject(i);
                         JSONObject cursus = cursus_user.getJSONObject("cursus");
-                        cursusNames += cursus.getString("name") + "\n";
+                        cursusNames.append(cursus.getString("name")).append("\n");
 
                         double level = cursus_user.getDouble("level");
                         ProgressBar progressBar;
                         if (i < this.progressBars.size())
                             progressBar = this.progressBars.get(i);
                         else {
-                            //View view = LayoutInflater.from(this).inflate(R.id.level_bar0, null);
-                            //progressBar.setIndeterminate(true);
-                            //RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(200,100);
-                            //params.addRule(RelativeLayout.CENTER_IN_PARENT);
-                            //this.addContentView(progressBar, params);
-                            //this.progressBars.add(progressBar);
+                            View view = this.getLayoutInflater().inflate(R.layout.level_bar, (ViewGroup)levelHeader.getParent());
+                            progressBar = view.findViewById(R.id.level_progress);
+                            progressBar.setY(progressBar.getY() + (i * 20));
+                            this.progressBars.add(progressBar);
                         }
-                        //progressBar.setProgress((int)(progressBar.getMax() * (level % 1.0)));
-                        //progressBar.setVisibility(View.VISIBLE);
+                        progressBar.setProgress((int)(progressBar.getMax() * (level - (int)level)));
+                        progressBar.setVisibility(View.VISIBLE);
 
-                        cursusLevels += Double.toString(level) + "\n";
+                        cursusLevels.append(Double.toString(level)).append("\n");
                         String grade = cursus_user.getString("grade");
                         if (!grade.equals("null"))
-                            cursusGrades += grade + "\n";
+                            cursusGrades.append(grade).append("\n");
                         else
-                            cursusGrades += "Novice\n";
+                            cursusGrades.append("Novice\n");
                     }
                 }
                 catch (JSONException e) {
                     e.printStackTrace(System.err);
                 }
             }
-            cursusText.setText(cursusNames);
+            cursusText.setText(cursusNames.toString());
             levelText.setText(cursusLevels);
             gradeText.setText(cursusGrades);
 
@@ -152,18 +147,19 @@ public class IntraProfileActivity extends AppCompatActivity {
             public void run() {
                 try {
                     api.queryUser(login, false);
-                } catch (IOException | JSONException e) {
+                }
+                catch (IOException | JSONException e) {
                     e.printStackTrace(System.err);
                 }
 
                 if (updateUI) {
                     new Handler(Looper.getMainLooper()).post(
-                            new Runnable() {
-                                @Override
-                                public void run() {
-                                    IntraProfileActivity.this.populateUI(login, idcard);
-                                }
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                IntraProfileActivity.this.populateUI(login, idcard);
                             }
+                        }
                     );
                 }
             }
@@ -193,8 +189,10 @@ public class IntraProfileActivity extends AppCompatActivity {
         levelHeader.setVisibility(View.INVISIBLE);
         gradeHeader.setVisibility(View.INVISIBLE);
         TextView cursusText = findViewById(R.id.cursus);
+        TextView levelText = findViewById(R.id.level);
         TextView gradeText = findViewById(R.id.grade);
         cursusText.setText("");
+        levelText.setText("");
         gradeText.setText("");
         for (ProgressBar progressBar : this.progressBars)
             progressBar.setVisibility(View.INVISIBLE);
@@ -213,8 +211,6 @@ public class IntraProfileActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        ProgressBar progressBar = findViewById(R.id.level_bar0);
-        this.progressBars.add(progressBar);
         this.resetUI();
 
         final IDCard idcard;

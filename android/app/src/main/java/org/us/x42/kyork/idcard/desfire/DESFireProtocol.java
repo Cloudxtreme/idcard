@@ -1,5 +1,7 @@
 package org.us.x42.kyork.idcard.desfire;
 
+import org.us.x42.kyork.idcard.PackUtil;
+
 /**
  * Contains protocol constants.
  */
@@ -41,6 +43,7 @@ public final class DESFireProtocol {
         NO_CHANGES(0xC),
         OUT_OF_MEMORY(0xE),
         INTEGRITY_ERROR(0x1E),
+        NO_SUCH_KEY(0x40),
         LENGTH_ERROR(0x7E),
         PERMISSION_DENIED(0x9D),
         APPLICATION_NOT_FOUND(0xA0),
@@ -123,5 +126,9 @@ public final class DESFireProtocol {
         private byte value;
         FileEncryptionMode(int value) { this.value = (byte)value; }
         public byte getValue() { return value; }
+    }
+
+    public static long getSerial(byte[] manufacturingData) {
+        return PackUtil.readLE56(manufacturingData, 14);
     }
 }

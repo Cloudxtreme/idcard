@@ -9,19 +9,20 @@ public class IDCard implements Parcelable {
     public FileDoorPermissions fileDoorPermissions;
     public FileSignatures fileSignatures;
 
-    public IDCard() { }
+    public IDCard() {
+    }
 
-    protected IDCard(Parcel parcel) {
+    private IDCard(Parcel parcel) {
         boolean[] values = new boolean[4];
         parcel.readBooleanArray(values);
         if (values[0])
-            this.fileMetadata = FileMetadata.CREATOR.createFromParcel(parcel);
+            this.fileMetadata = parcel.readParcelable(IDCard.class.getClassLoader());
         if (values[1])
-            this.fileUserInfo = FileUserInfo.CREATOR.createFromParcel(parcel);
+            this.fileUserInfo = parcel.readParcelable(IDCard.class.getClassLoader());
         if (values[2])
-            this.fileDoorPermissions = FileDoorPermissions.CREATOR.createFromParcel(parcel);
+            this.fileDoorPermissions = parcel.readParcelable(IDCard.class.getClassLoader());
         if (values[3])
-            this.fileSignatures = FileSignatures.CREATOR.createFromParcel(parcel);
+            this.fileSignatures = parcel.readParcelable(IDCard.class.getClassLoader());
     }
 
     public static final Creator<IDCard> CREATOR = new Creator<IDCard>() {
@@ -43,19 +44,23 @@ public class IDCard implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeBooleanArray(new boolean[] {
+        dest.writeBooleanArray(new boolean[]{
                 this.fileMetadata != null,
                 this.fileUserInfo != null,
                 this.fileDoorPermissions != null,
                 this.fileSignatures != null
         });
-        if (this.fileMetadata != null)
-            this.fileMetadata.writeToParcel(dest, flags);
-        if (this.fileUserInfo != null)
-            this.fileUserInfo.writeToParcel(dest, flags);
-        if (this.fileDoorPermissions != null)
-            this.fileDoorPermissions.writeToParcel(dest, flags);
-        if (this.fileSignatures != null)
-            this.fileSignatures.writeToParcel(dest, flags);
+        if (this.fileMetadata != null) {
+            dest.writeParcelable(this.fileMetadata, 0);
+        }
+        if (this.fileUserInfo != null) {
+            dest.writeParcelable(this.fileUserInfo, 0);
+        }
+        if (this.fileDoorPermissions != null) {
+            dest.writeParcelable(this.fileDoorPermissions, 0);
+        }
+        if (this.fileSignatures != null) {
+            dest.writeParcelable(this.fileSignatures, 0);
+        }
     }
 }

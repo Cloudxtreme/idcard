@@ -58,8 +58,8 @@ public class ProvisionBlankCardTask extends CardNFCTask {
                     PackUtil.writeBE24(createApplicationData, 0, CardJob.APP_ID_CARD42);
                     // ChangeKey = E
                     // Free access / not frozen = F
-                    createApplicationData[4] = (byte)0xEF;
-                    createApplicationData[5] = 5; // Number of keys
+                    createApplicationData[3] = (byte)0xEF;
+                    createApplicationData[4] = 5; // Number of keys
                     mCard.sendRequest(DESFireProtocol.CREATE_APPLICATION, createApplicationData);
                 } catch (DESFireCard.CardException e) {
                     if (e.getErrorCode() == DESFireProtocol.StatusCode.DUPLICATE_ERROR.getValue()) {

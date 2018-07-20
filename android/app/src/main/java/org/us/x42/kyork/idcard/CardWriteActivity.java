@@ -12,16 +12,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.us.x42.kyork.idcard.tasks.CardNFCTask;
-import org.us.x42.kyork.idcard.tasks.CommandTestTask;
 
-import java.util.List;
 import java.util.Objects;
 
 public class CardWriteActivity extends AppCompatActivity {
@@ -36,7 +32,6 @@ public class CardWriteActivity extends AppCompatActivity {
 
     private TextView mStatusText;
     private Handler mHandler;
-    private ProgressBar mLoading;
 
     public static final String CARD_JOB_TYPE = "org.us.x42.kyork.idcard.CARD_JOB_TYPE";
     public static final String CARD_JOB_PARAMS = "org.us.x42.kyork.idcard.CARD_JOB_PARAMS";
@@ -54,27 +49,19 @@ public class CardWriteActivity extends AppCompatActivity {
         scanTechs = new String[][] { new String[] { IsoDep.class.getName(), NfcA.class.getName() } };
 
         mStatusText = findViewById(R.id.communicate_text);
-        mLoading = findViewById(R.id.card_communicate_progress);
 
         mHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == CardNFCTask.MSG_ID_NFC_STATUS) {
-                    int msgInt = 0;
                     if (msg.arg1 != 0) {
                         mStatusText.setText(msg.arg1);
-                        msgInt = msg.arg1;
                     } else if (msg.obj instanceof Integer) {
                         mStatusText.setText((Integer) msg.obj);
-                        msgInt = (Integer) msg.obj;
                     } else if (msg.obj instanceof String) {
                         mStatusText.setText((String) msg.obj);
                     } else {
-                        Log.i(LOG_TAG, "wtf did i just get in that Message: " + msg.obj.getClass().getName() + " " + msg.obj.toString());
-                    }
-
-                    if (msgInt == R.string.nfc_done) {
-                        mLoading.setProgress(100);
+                        Log.i(LOG_TAG, "unrecognized Message payload: " + msg.obj.getClass().getName() + " " + msg.obj.toString());
                     }
                 } else if (msg.what == CardNFCTask.MSG_ID_NFC_DONE) {
                     // Operation complete

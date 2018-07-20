@@ -98,7 +98,8 @@ public class ReadCardTask extends CardNFCTask {
                 } else if (e.getStatusCode() == DESFireProtocol.StatusCode.AUTHENTICATION_ERROR) {
                     setError(R.string.incomingscan_err_validate_sig);
                 }
-                return null;
+                // return null;
+                setError(0);
             }
 
             // Done

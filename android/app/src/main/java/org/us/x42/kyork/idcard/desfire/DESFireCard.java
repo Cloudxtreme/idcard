@@ -10,6 +10,7 @@ import org.us.x42.kyork.idcard.PackUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.ProtocolException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -76,11 +77,14 @@ public class DESFireCard {
         if (commSettings != DESFireProtocol.FileEncryptionMode.PLAIN.getValue()) {
             throw new IllegalArgumentException("NotImplemented");
         }
+        if (fileType != DESFireProtocol.FILETYPE_STANDARD && fileType != DESFireProtocol.FILETYPE_BACKUP) {
+            throw new IllegalArgumentException("Wrong file type");
+        }
 
         byte[] fileRequest = new byte[7];
         fileRequest[0] = fileID;
-        PackUtil.writeBE24(fileRequest, 1, 0); // TODO(kyork): check LE/BE
-        PackUtil.writeBE24(fileRequest, 4, expectedLength);
+        PackUtil.writeLE24(fileRequest, 1, 0); // TODO(kyork): check LE/BE
+        PackUtil.writeLE24(fileRequest, 4, expectedLength);
 
         return this.sendRequest(DESFireProtocol.READ_DATA, fileRequest);
     }

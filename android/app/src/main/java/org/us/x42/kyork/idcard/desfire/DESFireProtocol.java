@@ -19,6 +19,8 @@ public final class DESFireProtocol {
     public static final byte GET_VALUE = (byte) 0x6C;
     public static final byte GET_FILES = (byte) 0x6F;
     public static final byte GET_FILE_SETTINGS = (byte) 0xF5;
+    public static final byte COMMIT_TRANSACTION = (byte) 0xC7;
+    public static final byte ABORT_TRANSACTION = (byte) 0xA7;
     public static final byte CREATE_APPLICATION = (byte) 0xCA;
     public static final byte CHANGE_FILE_SETTINGS = (byte) 0x5F;
     public static final byte CREATE_BACKUP_FILE = (byte) 0xCB;
@@ -30,6 +32,7 @@ public final class DESFireProtocol {
     public static final byte GET_KEY_SETTINGS = (byte) 0x45;
     public static final byte ADDITIONAL_FRAME = (byte) 0xAF;
     public static final byte FORMAT_PICC = (byte) 0xFC;
+
 
     public static final byte FILETYPE_STANDARD = 0;
     public static final byte FILETYPE_BACKUP = 1;

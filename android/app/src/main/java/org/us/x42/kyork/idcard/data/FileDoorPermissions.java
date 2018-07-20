@@ -3,6 +3,8 @@ package org.us.x42.kyork.idcard.data;
 import android.os.Parcel;
 
 public class FileDoorPermissions extends AbstractCardFile {
+    public static final byte FILE_ID = (byte)0x04;
+
     public FileDoorPermissions(byte[] content) {
         super(content);
     }

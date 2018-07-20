@@ -31,6 +31,8 @@ import java.util.HashMap;
  * TODO(kyork): Switch to production server keys once it exists
  */
 public class FileSignatures extends AbstractCardFile {
+    public static final byte FILE_ID = (byte)0x07;
+
     public FileSignatures(byte[] content) {
         super(content);
     }

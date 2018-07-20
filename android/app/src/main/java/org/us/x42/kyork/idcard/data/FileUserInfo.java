@@ -11,6 +11,8 @@ import java.util.Date;
 import java.util.TimeZone;
 
 public class FileUserInfo extends AbstractCardFile {
+    public static final byte FILE_ID = (byte)0x02;
+
     public FileUserInfo(byte[] content) {
         super(content);
     }

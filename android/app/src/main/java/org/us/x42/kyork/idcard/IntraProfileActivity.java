@@ -107,8 +107,9 @@ public class IntraProfileActivity extends AppCompatActivity {
                             progressBar = this.progressBars.get(i);
                         else {
                             View view = this.getLayoutInflater().inflate(R.layout.level_bar, (ViewGroup)levelHeader.getParent());
-                            progressBar = view.findViewById(R.id.level_progress);
-                            progressBar.setY(progressBar.getY() + (i * 20));
+                            progressBar = view.findViewWithTag("Unused");
+                            progressBar.setTag("Used");
+                            progressBar.setY(progressBar.getY() + (i * 33)); //There's got to be a better way to get this height lol
                             this.progressBars.add(progressBar);
                         }
                         progressBar.setProgress((int)(progressBar.getMax() * (level - (int)level)));

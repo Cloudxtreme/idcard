@@ -4,13 +4,16 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
@@ -21,10 +24,14 @@ import org.json.JSONObject;
 import org.us.x42.kyork.idcard.data.IDCard;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class IntraProfileActivity extends AppCompatActivity {
     private static IntraAPI api = null;
+
+    private List<ProgressBar> progressBars = new ArrayList<ProgressBar>();
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -68,7 +75,7 @@ public class IntraProfileActivity extends AppCompatActivity {
             titleText.setText(title);
 
             ImageView bmImage = findViewById(R.id.user_picture);
-            Picasso.get().load(api.getImageURL(login)).into(bmImage);
+            Picasso.get().load(api.getImageURL(login)).fit().centerInside().noFade().into(bmImage);
             bmImage.setVisibility(View.VISIBLE);
 
             JSONArray cursus_users = api.getCursusArray(login);
@@ -84,28 +91,42 @@ public class IntraProfileActivity extends AppCompatActivity {
             TextView levelText = findViewById(R.id.level);
             TextView gradeText = findViewById(R.id.grade);
 
-            String cursusNames = "";
-            String cursusLevels = "";
-            String cursusGrades = "";
+            StringBuilder cursusNames = new StringBuilder();
+            StringBuilder cursusLevels = new StringBuilder();
+            StringBuilder cursusGrades = new StringBuilder();
             if (cursus_users != null) {
                 try {
                     for (int i = 0; i < cursus_users.length(); i++) {
                         JSONObject cursus_user = cursus_users.getJSONObject(i);
                         JSONObject cursus = cursus_user.getJSONObject("cursus");
-                        cursusNames += cursus.getString("name") + "\n";
-                        cursusLevels += Double.toString(cursus_user.getDouble("level")) + "\n";
+                        cursusNames.append(cursus.getString("name")).append("\n");
+
+                        double level = cursus_user.getDouble("level");
+                        ProgressBar progressBar;
+                        if (i < this.progressBars.size())
+                            progressBar = this.progressBars.get(i);
+                        else {
+                            View view = this.getLayoutInflater().inflate(R.layout.level_bar, (ViewGroup)levelHeader.getParent());
+                            progressBar = view.findViewById(R.id.level_progress);
+                            progressBar.setY(progressBar.getY() + (i * 20));
+                            this.progressBars.add(progressBar);
+                        }
+                        progressBar.setProgress((int)(progressBar.getMax() * (level - (int)level)));
+                        progressBar.setVisibility(View.VISIBLE);
+
+                        cursusLevels.append(Double.toString(level)).append("\n");
                         String grade = cursus_user.getString("grade");
                         if (!grade.equals("null"))
-                            cursusGrades += grade + "\n";
+                            cursusGrades.append(grade).append("\n");
                         else
-                            cursusGrades += "Novice\n";
+                            cursusGrades.append("Novice\n");
                     }
                 }
                 catch (JSONException e) {
                     e.printStackTrace(System.err);
                 }
             }
-            cursusText.setText(cursusNames);
+            cursusText.setText(cursusNames.toString());
             levelText.setText(cursusLevels);
             gradeText.setText(cursusGrades);
 
@@ -126,18 +147,19 @@ public class IntraProfileActivity extends AppCompatActivity {
             public void run() {
                 try {
                     api.queryUser(login, false);
-                } catch (IOException | JSONException e) {
+                }
+                catch (IOException | JSONException e) {
                     e.printStackTrace(System.err);
                 }
 
                 if (updateUI) {
                     new Handler(Looper.getMainLooper()).post(
-                            new Runnable() {
-                                @Override
-                                public void run() {
-                                    IntraProfileActivity.this.populateUI(login, idcard);
-                                }
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                IntraProfileActivity.this.populateUI(login, idcard);
                             }
+                        }
                     );
                 }
             }
@@ -172,6 +194,8 @@ public class IntraProfileActivity extends AppCompatActivity {
         cursusText.setText("");
         levelText.setText("");
         gradeText.setText("");
+        for (ProgressBar progressBar : this.progressBars)
+            progressBar.setVisibility(View.INVISIBLE);
         TextView accountTypeText = findViewById(R.id.account_type);
         accountTypeText.setText("");
         TextView coalitionText = findViewById(R.id.coalition);

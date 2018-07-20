@@ -36,7 +36,7 @@ public class IncomingScanActivity extends AppCompatActivity {
             needForegroundScan = true;
         } else {
             needForegroundScan = false;
-
+            // launch task here
         }
     }
 
@@ -62,6 +62,7 @@ public class IncomingScanActivity extends AppCompatActivity {
     public void onNewIntent(Intent intent) {
         if (Objects.equals(intent.getAction(), NfcAdapter.ACTION_TECH_DISCOVERED)) {
             setIntent(intent);
+            // launch task here
         }
     }
 

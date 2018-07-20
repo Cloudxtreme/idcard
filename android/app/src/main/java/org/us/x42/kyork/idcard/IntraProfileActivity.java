@@ -2,13 +2,18 @@ package org.us.x42.kyork.idcard;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.us.x42.kyork.idcard.data.IDCard;
@@ -24,83 +29,59 @@ public class IntraProfileActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_intra_profile);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        Intent launchIntent = getIntent();
-        IDCard idcard = null;
-        String login = "mlu";
-        if (launchIntent.hasExtra("idcard")) {
-            idcard = launchIntent.getParcelableExtra("idcard");
-            login = idcard.fileUserInfo.getLogin();
+    private void populateUI(String login, IDCard idcard) {
+        if (idcard != null) {
+            //Populate UI info with card data
         }
-        else if (launchIntent.hasExtra("login")) {
-            login = launchIntent.getStringExtra("login");
-        }
-        boolean shouldReload = launchIntent.getBooleanExtra("shouldReload", false);
-
-        if (api == null)
-            api = new IntraAPI();
-
-        if (shouldReload || !api.isCached(login)) {
-            final String _login = login;
-            Thread request = new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        api.queryUser(_login, false);
-                    } catch (IOException | JSONException e) {
-                        e.printStackTrace(System.err);
-                    }
-                }
-            };
-            request.start();
-
-            try {
-                request.join(); //Temporary, ideally while this thread runs, the ui should be doing something else
-            } catch (InterruptedException e) {
-                e.printStackTrace(System.err);
-            }
-        }
-
         if (api.isCached(login)) {
-            ImageView bmImage = findViewById(R.id.user_picture);
-            Picasso.get().load("https://cdn.intra.42.fr/users/medium_" + login + ".jpg").into(bmImage);
-
             TextView fullNameText = findViewById(R.id.full_name);
-            fullNameText.setText("Name: " + api.getFullName(login));
-
-            TextView loginText = findViewById(R.id.login);
-            loginText.setText("Login: " + login);
+            fullNameText.setText(api.getFullName(login));
 
             TextView titleText = findViewById(R.id.title);
-            titleText.setText("Title: " + api.getTitle(login));
+            String title = api.getTitle(login);
+            titleText.setText(title);
 
-            JSONObject cursus = api.getCursus(login, "42");
+            ImageView bmImage = findViewById(R.id.user_picture);
+            Picasso.get().load(api.getImageURL(login)).into(bmImage);
+            bmImage.setVisibility(View.VISIBLE);
 
+            JSONArray cursus_users = api.getCursusArray(login);
+
+            TextView cursusHeader = findViewById(R.id.cursus_header);
+            TextView levelHeader = findViewById(R.id.level_header);
+            TextView gradeHeader = findViewById(R.id.grade_header);
+            cursusHeader.setVisibility(View.VISIBLE);
+            levelHeader.setVisibility(View.VISIBLE);
+            gradeHeader.setVisibility(View.VISIBLE);
+
+            TextView cursusText = findViewById(R.id.cursus);
             TextView levelText = findViewById(R.id.level);
-            levelText.setText("Level: 0");
-            if (cursus != null) {
-                try {
-                    levelText.setText("Level: " + cursus.getString("level"));
-                } catch (JSONException e) {
-                    e.printStackTrace(System.err);
-                }
-            }
-
             TextView gradeText = findViewById(R.id.grade);
-            gradeText.setText("Grade: Novice");
-            if (cursus != null) {
+
+            String cursusNames = "";
+            String cursusLevels = "";
+            String cursusGrades = "";
+            if (cursus_users != null) {
                 try {
-                    gradeText.setText("Grade: " + cursus.getString("grade"));
-                } catch (JSONException e) {
+                    for (int i = 0; i < cursus_users.length(); i++) {
+                        JSONObject cursus_user = cursus_users.getJSONObject(i);
+                        JSONObject cursus = cursus_user.getJSONObject("cursus");
+                        cursusNames += cursus.getString("name") + "\n";
+                        cursusLevels += Double.toString(cursus_user.getDouble("level")) + "\n";
+                        String grade = cursus_user.getString("grade");
+                        if (!grade.equals("null"))
+                            cursusGrades += grade + "\n";
+                        else
+                            cursusGrades += "Novice\n";
+                    }
+                }
+                catch (JSONException e) {
                     e.printStackTrace(System.err);
                 }
             }
+            cursusText.setText(cursusNames);
+            levelText.setText(cursusLevels);
+            gradeText.setText(cursusGrades);
 
             TextView accountTypeText = findViewById(R.id.account_type);
             accountTypeText.setText("Type: null");
@@ -111,5 +92,110 @@ public class IntraProfileActivity extends AppCompatActivity {
             TextView phoneText = findViewById(R.id.phone);
             phoneText.setText("Phone: " + api.getPhone(login));
         }
+    }
+
+    private void fetchUser(final String login, final boolean updateUI, final IDCard idcard) {
+        Thread request = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    api.queryUser(login, false);
+                } catch (IOException | JSONException e) {
+                    e.printStackTrace(System.err);
+                }
+
+                if (updateUI) {
+                    new Handler(Looper.getMainLooper()).post(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    IntraProfileActivity.this.populateUI(login, idcard);
+                                }
+                            }
+                    );
+                }
+            }
+        };
+        request.start();
+    }
+
+    private void fetchUser(final String login, final IDCard idcard) {
+        this.fetchUser(login, true, idcard);
+    }
+
+    private void fetchUser(final String login) {
+        this.fetchUser(login, false, null);
+    }
+
+    private void resetUI() {
+        TextView fullNameText = findViewById(R.id.full_name);
+        fullNameText.setText("");
+        TextView titleText = findViewById(R.id.title);
+        titleText.setText("");
+        ImageView bmImage = findViewById(R.id.user_picture);
+        bmImage.setVisibility(View.INVISIBLE);
+        TextView cursusHeader = findViewById(R.id.cursus_header);
+        TextView levelHeader = findViewById(R.id.level_header);
+        TextView gradeHeader = findViewById(R.id.grade_header);
+        cursusHeader.setVisibility(View.INVISIBLE);
+        levelHeader.setVisibility(View.INVISIBLE);
+        gradeHeader.setVisibility(View.INVISIBLE);
+        TextView cursusText = findViewById(R.id.cursus);
+        TextView levelText = findViewById(R.id.level);
+        TextView gradeText = findViewById(R.id.grade);
+        cursusText.setText("");
+        levelText.setText("");
+        gradeText.setText("");
+        TextView accountTypeText = findViewById(R.id.account_type);
+        accountTypeText.setText("");
+        TextView coalitionText = findViewById(R.id.coalition);
+        coalitionText.setText("");
+        TextView phoneText = findViewById(R.id.phone);
+        phoneText.setText("");
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_intra_profile);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        this.resetUI();
+
+        final IDCard idcard;
+        final String login;
+        Intent launchIntent = getIntent();
+        if (launchIntent.hasExtra("idcard")) {
+            idcard = launchIntent.getParcelableExtra("idcard");
+            login = idcard.fileUserInfo.getLogin();
+        }
+        else if (launchIntent.hasExtra("login")) {
+            login = launchIntent.getStringExtra("login");
+            idcard = null;
+        }
+        else {
+            login = "mlu";
+            idcard = null;
+        }
+
+        Button refreshButton = findViewById(R.id.refresh_button);
+        refreshButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                IntraProfileActivity.this.resetUI();
+                IntraProfileActivity.this.fetchUser(login, idcard);
+            }
+        });
+
+        boolean shouldReload = launchIntent.getBooleanExtra("shouldReload", false);
+
+        if (api == null)
+            api = new IntraAPI();
+
+        if (shouldReload || !api.isCached(login))
+            this.fetchUser(login, idcard);
+        else
+            this.populateUI(login, idcard);
     }
 }

@@ -139,6 +139,31 @@ public class IntraAPI {
         return title;
     }
 
+    public String getImageURL(String login) {
+        try {
+            JSONObject user = this.users.get(login);
+            if (user != null)
+                return user.getString("image_url");
+        }
+        catch (JSONException e) {
+            e.printStackTrace(System.err);
+        }
+        return (null);
+    }
+
+    public JSONArray getCursusArray(String login) {
+        try {
+            JSONObject user = this.users.get(login);
+            if (user != null)
+                return user.getJSONArray("cursus_users");
+        }
+        catch (JSONException e) {
+            e.printStackTrace(System.err);
+        }
+
+        return null;
+    }
+
     public JSONObject getCursus(String login, String cursus_name) {
         try {
             JSONObject user = this.users.get(login);

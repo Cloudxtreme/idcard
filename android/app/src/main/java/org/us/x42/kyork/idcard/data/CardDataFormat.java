@@ -16,12 +16,12 @@ public class CardDataFormat {
      */
     public static final class FileFormatInfo {
         public final Class<? extends CardFile> dfnClass;
-        public final int fileID;
+        public final byte fileID;
         public final int expectedSize;
         public final boolean isSigned;
         public final byte fileType;
 
-        FileFormatInfo(Class<? extends CardFile> dfnClass, int fileID, int expectedSize, boolean isSigned,
+        FileFormatInfo(Class<? extends CardFile> dfnClass, byte fileID, int expectedSize, boolean isSigned,
                        byte fileType) {
             this.dfnClass = dfnClass;
             this.fileID = fileID;
@@ -31,9 +31,17 @@ public class CardDataFormat {
         }
     }
 
+    public static final FileFormatInfo FORMAT_METADATA =
+            new FileFormatInfo(FileMetadata.class, (byte)0x1, 16, false, DESFireProtocol.FILETYPE_STANDARD);
+    public static final FileFormatInfo FORMAT_USERINFO =
+            new FileFormatInfo(FileUserInfo.class, (byte)0x2, 32, true, DESFireProtocol.FILETYPE_BACKUP);
+    // cantina file..?
+    public static final FileFormatInfo FORMAT_DOORPERMS =
+            new FileFormatInfo(FileDoorPermissions.class, (byte)0x4, 64, true, DESFireProtocol.FILETYPE_BACKUP);
+    public static final FileFormatInfo FORMAT_SIGNATURES =
+            new FileFormatInfo(FileSignatures.class, (byte)0x7, 68 * 5, false, DESFireProtocol.FILETYPE_STANDARD);
+
     public static final FileFormatInfo[] files = {
-            new FileFormatInfo(FileMetadata.class, 0x1, 16, false, DESFireProtocol.FILETYPE_STANDARD),
-            new FileFormatInfo(FileUserInfo.class, 0x2, 32, true, DESFireProtocol.FILETYPE_BACKUP),
-            new FileFormatInfo(FileSignatures.class, 0x7, 68 * 5, false, DESFireProtocol.FILETYPE_STANDARD),
+            FORMAT_METADATA, FORMAT_USERINFO, FORMAT_DOORPERMS, FORMAT_SIGNATURES,
     };
 }

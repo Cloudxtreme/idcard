@@ -2,6 +2,8 @@ package org.us.x42.kyork.idcard.data;
 
 import android.os.Parcel;
 
+import org.us.x42.kyork.idcard.PackUtil;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Calendar;
@@ -95,8 +97,8 @@ public class FileUserInfo extends AbstractCardFile {
         return cal.getTime();
     }
 
-    public byte[] getCardSerialVerify() {
-        return getSlice(0x11, 0x18);
+    public long getCardSerialRepeat() {
+        return PackUtil.readLE56(getRawContent(), 0x11);
     }
 
     public long getLastUpdated() {

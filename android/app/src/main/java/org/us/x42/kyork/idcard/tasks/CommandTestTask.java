@@ -4,10 +4,11 @@ import android.os.Parcel;
 
 import org.us.x42.kyork.idcard.desfire.DESFireCard;
 
-import java.io.IOException;
 import java.util.List;
 
 public class CommandTestTask extends CardNFCTask {
+    private static final String LOG_TAG = CommandTestTask.class.getSimpleName();
+
     private int appId;
     private byte keyId;
     private byte[] encKey;

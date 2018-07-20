@@ -12,7 +12,10 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+import org.us.x42.kyork.idcard.data.CardDataFormat;
 import org.us.x42.kyork.idcard.data.IDCard;
+import org.us.x42.kyork.idcard.tasks.CardNFCTask;
+import org.us.x42.kyork.idcard.tasks.ReadCardTask;
 
 import java.util.Objects;
 
@@ -20,6 +23,8 @@ public class IncomingScanActivity extends AppCompatActivity {
     private static final String LOG_TAG = IncomingScanActivity.class.getSimpleName();
     private boolean needForegroundScan;
     private NfcAdapter mAdapter;
+    private CardNFCTask mTask;
+    private Handler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +41,8 @@ public class IncomingScanActivity extends AppCompatActivity {
             needForegroundScan = true;
         } else {
             needForegroundScan = false;
-            // launch task here
+            mTask = new ReadCardTask();
+            mTask.setTagAndHandler(tag, null);
         }
     }
 

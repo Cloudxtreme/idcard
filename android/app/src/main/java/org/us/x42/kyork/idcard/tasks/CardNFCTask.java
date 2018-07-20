@@ -4,30 +4,36 @@ import android.nfc.Tag;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Parcel;
 import android.os.Parcelable;
 
 import org.us.x42.kyork.idcard.R;
 import org.us.x42.kyork.idcard.desfire.DESFireCard;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-
 
 /**
  * Abstract base class for NFC Card AsyncTasks.
  */
 public abstract class CardNFCTask extends AsyncTask<Object, String, List<Object>> implements Parcelable {
+    /**
+     * The Android tag. Must be set before calling execute() (see {@link #setTagAndHandler(Tag, Handler)}).
+     */
     protected Tag mTag;
+    /**
+     * The message Handler. Must be set before calling execute() (see {@link #setTagAndHandler(Tag, Handler)}).
+     */
     protected Handler mHandler;
 
+    /**
+     * The DESFireCard. Initialize by calling {@link #setUpCard()}.
+     */
     protected DESFireCard mCard;
 
     public static final int MSG_ID_NFC_STATUS = 23;
     public static final int MSG_ID_NFC_DONE = 24;
 
-    protected CardNFCTask() {
+    CardNFCTask() {
     }
 
     /**
@@ -38,6 +44,11 @@ public abstract class CardNFCTask extends AsyncTask<Object, String, List<Object>
     public void setTagAndHandler(Tag tag, Handler handler) {
         this.mTag = tag;
         this.mHandler = handler;
+    }
+
+    public void setUpCard() throws IOException {
+        mCard = new DESFireCard(mTag);
+        mCard.connect();
     }
 
     public static String stringifyByteArray(byte[] data) {
@@ -84,11 +95,6 @@ public abstract class CardNFCTask extends AsyncTask<Object, String, List<Object>
     protected void onPostExecute(List<Object> result) {
         super.onPostExecute(result);
         Message.obtain(this.mHandler, MSG_ID_NFC_DONE).sendToTarget();
-    }
-
-    protected void setUpCard() throws IOException {
-        mCard = new DESFireCard(mTag);
-        mCard.connect();
     }
 
     abstract protected List<Object> doInBackground(Object... params);

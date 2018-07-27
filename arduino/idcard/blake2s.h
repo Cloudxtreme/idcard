@@ -15,6 +15,10 @@
 
 # include <stdint.h>
 
+# define t_u32 uint32_t
+# define t_u8 uint8_t
+# define t_s8 int8_t
+
 # define BLAKE2S_BLOCK_SIZE 64
 # define BLAKE2S_256_OUTPUT_SIZE 32
 # define BLAKE2S_128_OUTPUT_SIZE 16
@@ -31,17 +35,16 @@ typedef struct			s_blake2s_state {
 	int			keysz;
 }						t_blake2s_state;
 
-t_ft_hash				blake2s_init_key(int hash_size,
-							t_u8 *key, size_t key_len);
+void blake2s_init_key(struct s_blake2s_state *st, int hash_size,
+							t_u8 *key, int key_len);
 
 void					*blake2s_256init(void *state);
 void					*blake2s_128init(void *state);
 void					blake2s_free(void *state);
-ssize_t					blake2s_g_write(void *state, t_u8 *buf, size_t len);
 void					blake2s_finish(void *state, t_u8 *outbuf);
 
 void					blake2s_write(t_blake2s_state *state,
-							t_u8 *buf, size_t len);
+							t_u8 *buf, int len);
 void					blake2s_block(t_blake2s_state *state, t_u8 *block,
 							t_u32 flag);
 
@@ -57,11 +60,5 @@ typedef struct			s_blake2s_roundconf {
 	int					xi;
 	int					yi;
 }						t_blake2s_roundconf;
-
-typedef struct			s_blake2s_roundvars {
-	t_blake2s_sigma	*s;
-	t_u64			*m;
-	t_u64			*v;
-}						t_blake2s_roundvars;
 
 #endif

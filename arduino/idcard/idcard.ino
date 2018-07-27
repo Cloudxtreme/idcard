@@ -71,7 +71,7 @@ typedef struct    s_pin522 {
 //   read data file 7 part 1
 //    
 
-void cardFound(t_pin522 a) {
+void cardFound(struct s_pin522 a) {
   ;
 }
 

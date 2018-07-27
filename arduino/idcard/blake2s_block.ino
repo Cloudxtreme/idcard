@@ -12,8 +12,6 @@
 
 #include "blake2s.h"
 
-#include <libft.h>
-
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 # define LEU32(buf) (*(t_u32*)(buf))
 #elif __BYTE__ORDER == __ORDER_BIG_ENDIAN__
@@ -64,7 +62,7 @@ static const struct s_blake2s_roundconf	g_blake2s_rounds[8] = {
 #define XX m[s[q->xi]]
 #define YY m[s[q->yi]]
 
-static void							blake2s_roundop1(
+static void							blake2s_roundop(
 		const struct s_blake2s_roundconf *q, const t_blake2s_sigma s,
 		t_u32 *m, t_u32 *v)
 {
@@ -75,12 +73,7 @@ static void							blake2s_roundop1(
 	CC += DD;
 	BB ^= CC;
 	BB = ((BB << (32 - 12)) | (BB >> 12));
-}
 
-static void							blake2s_roundop2(
-		const struct s_blake2s_roundconf *q, const t_blake2s_sigma s,
-		t_u32 *m, t_u32 *v)
-{
 	AA += YY;
 	AA += BB;
 	DD ^= AA;
@@ -93,22 +86,14 @@ static void							blake2s_roundop2(
 static void							blake2s_round(
 		const t_blake2s_sigma s, t_u32 *m, t_u32 *v)
 {
-	blake2s_roundop1(&g_blake2s_rounds[0], s, m, v);
-	blake2s_roundop1(&g_blake2s_rounds[1], s, m, v);
-	blake2s_roundop1(&g_blake2s_rounds[2], s, m, v);
-	blake2s_roundop1(&g_blake2s_rounds[3], s, m, v);
-	blake2s_roundop2(&g_blake2s_rounds[0], s, m, v);
-	blake2s_roundop2(&g_blake2s_rounds[1], s, m, v);
-	blake2s_roundop2(&g_blake2s_rounds[2], s, m, v);
-	blake2s_roundop2(&g_blake2s_rounds[3], s, m, v);
-	blake2s_roundop1(&g_blake2s_rounds[4], s, m, v);
-	blake2s_roundop1(&g_blake2s_rounds[5], s, m, v);
-	blake2s_roundop1(&g_blake2s_rounds[6], s, m, v);
-	blake2s_roundop1(&g_blake2s_rounds[7], s, m, v);
-	blake2s_roundop2(&g_blake2s_rounds[4], s, m, v);
-	blake2s_roundop2(&g_blake2s_rounds[5], s, m, v);
-	blake2s_roundop2(&g_blake2s_rounds[6], s, m, v);
-	blake2s_roundop2(&g_blake2s_rounds[7], s, m, v);
+	blake2s_roundop(&g_blake2s_rounds[0], s, m, v);
+	blake2s_roundop(&g_blake2s_rounds[1], s, m, v);
+	blake2s_roundop(&g_blake2s_rounds[2], s, m, v);
+	blake2s_roundop(&g_blake2s_rounds[3], s, m, v);
+	blake2s_roundop(&g_blake2s_rounds[4], s, m, v);
+	blake2s_roundop(&g_blake2s_rounds[5], s, m, v);
+	blake2s_roundop(&g_blake2s_rounds[6], s, m, v);
+	blake2s_roundop(&g_blake2s_rounds[7], s, m, v);
 }
 
 void								blake2s_block(struct s_blake2s_state *state,
@@ -121,8 +106,8 @@ void								blake2s_block(struct s_blake2s_state *state,
 	state->c[0] += BLAKE2S_BLOCK_SIZE;
 	if (state->c[0] < BLAKE2S_BLOCK_SIZE)
 		state->c[1]++;
-	ft_memcpy(&v[0], state->h, 8 * sizeof(t_u32));
-	ft_memcpy(&v[8], g_blake2s_iv, 8 * sizeof(t_u32));
+	memcpy(&v[0], state->h, 8 * sizeof(t_u32));
+	memcpy(&v[8], g_blake2s_iv, 8 * sizeof(t_u32));
 	v[12] ^= state->c[0];
 	v[13] ^= state->c[1];
 	v[14] ^= flag;
@@ -137,15 +122,27 @@ void								blake2s_block(struct s_blake2s_state *state,
 		state->h[i] ^= v[i] ^ v[i + 8];
 }
 
+void        blake2s_init_key(struct s_blake2s_state *st, int hash_size,
+                t_u8 *key, size_t key_len)
+{
+  st->out_size = hash_size;
+  if (key_len > BLAKE2S_KEY_SIZE)
+    abort();
+  st->keysz = key_len;
+  memset(st->key, 0, BLAKE2S_BLOCK_SIZE);
+  memcpy(st->key, key, key_len);
+  blake2s_reset(st);
+}
+
 void								blake2s_reset(struct s_blake2s_state *st)
 {
-	ft_memcpy(st->h, g_blake2s_iv, sizeof(g_blake2s_iv));
+	memcpy(st->h, g_blake2s_iv, sizeof(g_blake2s_iv));
 	st->c[0] = 0;
 	st->c[1] = 0;
-	ft_bzero(st->buf, BLAKE2S_BLOCK_SIZE);
+	memset(st->buf, 0, BLAKE2S_BLOCK_SIZE);
 	st->bufsz = 0;
 	st->h[0] ^= (t_u32)(st->out_size) | (((t_u32)st->keysz) << 8) |
-		(1 << 16) | (1 << 24);
+		((t_u32)1 << 16) | ((t_u32)1 << 24);
 	if (st->keysz)
 		blake2s_block(st, st->key, 0);
 }

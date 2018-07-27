@@ -1,7 +1,8 @@
 
 #include <EEPROM.h>
-#include "Wire.h"
+#include <Wire.h>
 #include "blake2s.h"
+#include "reader_config.h" // Use flags go in here
 
 #define PERMISSION_MODE_STANDARD 1
 #define PERMISSION_MODE_NOPISCINE 2
@@ -23,6 +24,8 @@ struct s_blake2s_state g_hasher;
 
 static bool g_serial_debug = true;
 
+int i2c_master_code = 0x08;
+
 void setup() {
   // put your setup code here, to run once:
   DDRB |= (1 << 5);
@@ -30,6 +33,7 @@ void setup() {
 
   attachInterrupt(digitalPinToInterrupt(2), &nfc_isr, RISING);
 
+  Wire.setClock(I2C_FREQUENCY);
   Wire.begin();
 
   // Read configuration from EEPROM
@@ -88,35 +92,4 @@ delay(10);
 void nfc_isr() {
 }
 
-typedef struct    s_pin522 {
-  // will probably be collapsed into a bool
-  byte i2cID;
-  byte ledPin;
-  byte irqPin; // only 2 or 3
-  //
-  int state;
-  byte serial[7];
-  byte metadataContent[16];
-  byte userInfoContent[32];
-  byte doorContent[56];
-}                 t_pin522;
-
-// SINGLE READER STATE MACHINE
-// soft powerdown
-// card boot: repeat reads to address 0
-// card detect: ask if a card is there
-//   go to card found or soft powerdown
-// card found:
-//   select application
-//   authenticate
-//   read serial
-//   read data file 1
-//   read data file 2
-//   read data file 4
-//   read data file 7 part 1
-//    
-
-void cardFound(struct s_pin522 a) {
-  ;
-}
 

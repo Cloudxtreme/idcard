@@ -64,6 +64,9 @@ void setup() {
       Serial.print(buf[i], HEX);
     }
     Serial.println();
+    Serial.print(EndTime - StartTime, DEC);
+    Serial.print(" microseconds");
+    Serial.println();
   }
 }
 

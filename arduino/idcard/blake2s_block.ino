@@ -143,3 +143,4 @@ void								blake2s_reset(struct s_blake2s_state *st)
 	if (st->keysz)
 		blake2s_block(st, st->key, 0);
 }
+

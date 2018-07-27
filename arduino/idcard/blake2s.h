@@ -67,3 +67,4 @@ typedef struct			s_blake2s_roundconf {
 }						t_blake2s_roundconf;
 
 #endif
+

@@ -30,6 +30,8 @@ void setup() {
 
   attachInterrupt(digitalPinToInterrupt(2), &nfc_isr, RISING);
 
+  Wire.begin();
+
   // Read configuration from EEPROM
   {
     byte *cur = (byte*)&g_config;

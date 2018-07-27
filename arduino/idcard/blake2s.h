@@ -25,12 +25,12 @@
 
 # define BLAKE2S_KEY_SIZE 32
 
+# define BLAKE2S_FLAG_NORMAL 0
+
 typedef struct			s_blake2s_state {
 	t_u32		h[8];
 	t_u32		c[2];
 	size_t		out_size;
-	t_u8		buf[BLAKE2S_BLOCK_SIZE];
-	int			bufsz;
 	t_u8		key[BLAKE2S_BLOCK_SIZE];
 	int			keysz;
 }						t_blake2s_state;
@@ -38,15 +38,20 @@ typedef struct			s_blake2s_state {
 void blake2s_init_key(struct s_blake2s_state *st, int hash_size,
 							t_u8 *key, int key_len);
 
-void					*blake2s_256init(void *state);
-void					*blake2s_128init(void *state);
-void					blake2s_free(void *state);
-void					blake2s_finish(void *state, t_u8 *outbuf);
-
-void					blake2s_write(t_blake2s_state *state,
-							t_u8 *buf, int len);
-void					blake2s_block(t_blake2s_state *state, t_u8 *block,
+// always pass 0 for flag. finish() passes a different value.
+void					blake2s_block(struct s_blake2s_state *state, t_u8 *block,
 							t_u32 flag);
+/*
+ * The provided buf variable must be BLAKE2S_BLOCK_SIZE bytes long, but
+ * only the first 'bufsz' bytes have data in them (the rest will be set
+ * to 0).
+ *
+ * The hashing struct is left in an unusuable state and must be reset
+ * before further operations.
+ *
+ * The hash can be read out of the 'h' variable in little-endian order.
+ */
+void          blake2s_finish(struct s_blake2s_state *state, t_u8 *buf, int bufsz);
 
 void					blake2s_reset(t_blake2s_state *state);
 

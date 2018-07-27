@@ -24,9 +24,9 @@
 #endif
 
 /*
-** important - do NOT write the final block here!
-*/
-
+ * important - do NOT write the final block here!
+ */
+ /*
 void			blake2s_write(struct s_blake2s_state *st, t_u8 *buf, int len)
 {
 	size_t	tmpsz;
@@ -52,26 +52,34 @@ void			blake2s_write(struct s_blake2s_state *st, t_u8 *buf, int len)
 	memcpy(st->buf, buf, len);
 	st->bufsz += len;
 }
+*/
 
-void			blake2s_finish(struct s_blake2s_state *state, t_u8 *outbuf)
+/*
+ * the provided buf must be BLAKE2S_BLOCK_SIZE bytes long.
+ *
+ * note: finish will wreck the contents of state, and state must be reset
+ * to be used again. if we ever want partial hashes, undo the edits to this function.
+ *
+ * the hash can be read in LEU32 order from state->h
+ */
+void			blake2s_finish(struct s_blake2s_state *state,
+            t_u8 *buf, int bufsz)
 {
-	t_blake2s_state	st;
-	t_u8			buf[BLAKE2S_BLOCK_SIZE];
-	size_t			remaining;
-	int				i;
+	int			remaining;
 
-	st = *state;
-	memset(buf, 0, BLAKE2S_BLOCK_SIZE);
-	memcpy(buf, st.buf, st.bufsz);
-	remaining = BLAKE2S_BLOCK_SIZE - st.bufsz;
-	if (st.c[0] < remaining)
-		st.c[1]--;
-	st.c[0] -= remaining;
-	blake2s_block(&st, buf, 0xFFFFFFFFUL);
-	i = -1;
-	while (++i < 8)
-		LEU32(&buf[i * 4]) = st.h[i];
-	memcpy(outbuf, buf, st.out_size);
+  // zero out any unused bytes
+  remaining = BLAKE2S_BLOCK_SIZE - bufsz;
+  memset(buf + bufsz, 0, remaining);
+	if (state->c[0] < remaining)
+		state->c[1]--;
+	state->c[0] -= remaining;
+	blake2s_block(state, buf, 0xFFFFFFFFUL);
 }
 
+void      blake2s_output_hash(struct s_blake2s_state *state, t_u8 *outbuf)
+{
+  for (int i = 0; i < 8; i++) {
+    LEU32(&outbuf[i * 4]) = state->h[i];
+  }
+}
 

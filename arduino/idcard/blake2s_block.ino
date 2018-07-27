@@ -20,7 +20,7 @@
 # error Unsupported endianness define
 #endif
 
-static const t_blake2s_sigma		g_precomputed[10] = {
+static const PROGMEM t_blake2s_sigma  g_precomputed[10] = {
 	{0, 2, 4, 6, 1, 3, 5, 7, 8, 10, 12, 14, 9, 11, 13, 15},
 	{14, 4, 9, 13, 10, 8, 15, 6, 1, 0, 11, 5, 12, 2, 7, 3},
 	{11, 12, 5, 15, 8, 0, 2, 13, 10, 3, 7, 9, 14, 6, 1, 4},
@@ -33,7 +33,7 @@ static const t_blake2s_sigma		g_precomputed[10] = {
 	{10, 8, 7, 1, 2, 4, 6, 5, 15, 9, 3, 13, 11, 14, 12, 0},
 };
 
-static const t_u32					g_blake2s_iv[8] = {
+static const PROGMEM t_u32  g_blake2s_iv[8] = {
 	0x6a09e667,
 	0xbb67ae85,
 	0x3c6ef372,
@@ -44,7 +44,7 @@ static const t_u32					g_blake2s_iv[8] = {
 	0x5be0cd19,
 };
 
-static const struct s_blake2s_roundconf	g_blake2s_rounds[8] = {
+static const PROGMEM struct s_blake2s_roundconf  g_blake2s_rounds[8] = {
 	{0, 4, 8, 12, 0, 4},
 	{1, 5, 9, 13, 1, 5},
 	{2, 6, 10, 14, 2, 6},
@@ -111,19 +111,19 @@ void								blake2s_block(struct s_blake2s_state *state,
 	v[12] ^= state->c[0];
 	v[13] ^= state->c[1];
 	v[14] ^= flag;
-	i = -1;
-	while (++i < 16)
+  for (int i = 0; i < 16; i++) {
 		m[i] = LEU32(&block[i * 4]);
-	i = -1;
-	while (++i < 10)
+  }
+  for (int i = 0; i < 10; i++) {
 		blake2s_round(g_precomputed[i], m, v);
-	i = -1;
-	while (++i < 8)
+  }
+  for (int i = 0; i < 8; i++) {
 		state->h[i] ^= v[i] ^ v[i + 8];
+  }
 }
 
 void        blake2s_init_key(struct s_blake2s_state *st, int hash_size,
-                t_u8 *key, size_t key_len)
+                t_u8 *key, int key_len)
 {
   st->out_size = hash_size;
   if (key_len > BLAKE2S_KEY_SIZE)
@@ -137,10 +137,7 @@ void        blake2s_init_key(struct s_blake2s_state *st, int hash_size,
 void								blake2s_reset(struct s_blake2s_state *st)
 {
 	memcpy(st->h, g_blake2s_iv, sizeof(g_blake2s_iv));
-	st->c[0] = 0;
-	st->c[1] = 0;
-	memset(st->buf, 0, BLAKE2S_BLOCK_SIZE);
-	st->bufsz = 0;
+  memset(st->c, 0, sizeof(st->c));
 	st->h[0] ^= (t_u32)(st->out_size) | (((t_u32)st->keysz) << 8) |
 		((t_u32)1 << 16) | ((t_u32)1 << 24);
 	if (st->keysz)

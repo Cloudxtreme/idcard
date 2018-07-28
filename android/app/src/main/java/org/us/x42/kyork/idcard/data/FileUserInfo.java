@@ -2,6 +2,8 @@ package org.us.x42.kyork.idcard.data;
 
 import android.os.Parcel;
 
+import com.google.common.collect.ImmutableList;
+
 import org.us.x42.kyork.idcard.PackUtil;
 
 import java.io.IOException;
@@ -43,6 +45,32 @@ public class FileUserInfo extends AbstractCardFile {
     public int getExpectedFileSize() {
         return 32;
     }
+
+	private static final List<HexSpanInfo> spanInfo = ImmutableList.of(
+			(new HexSpanInfo(0x0, 8) {
+				@Override
+				public String getStringVaryingByValue(byte[] file) {
+					return new FileUserInfo(file).getLogin();
+				}
+			}).setNameAndHelp(/* Intra login */ 0, 0),
+			(new HexSpanInfo.LittleEndian(0x8, 4)).setNameAndHelp(/* Intra user ID */ 0, 0),
+			(new HexSpanInfo.EnumeratedSingleByte(0xc,
+				/* paris */ 0, Byte.valueOf(1),
+				/* fremont */ 0, Byte.valueOf(7))
+			 ).setNameAndHelp(/* Campus ID */ 0, 0),
+			(new HexSpanInfo.EnumeratedSingleByte(0xd,
+				/* Student */ 0, Byte.valueOf(1),
+				/* Piscine */ 0, Byte.valueOf(2),
+				/* Bocal */ 0, Byte.valueOf(3),
+				/* Security */ 0, Byte.valueOf(4),
+				/* Employee */ 0, Byte.valueOf(5))
+			 ).setNameAndHelp(/* Account Type */ 0, 0),
+			(new HexSpanInfo(0xe, 3)).setNameAndHelp(/* Piscine Day/Month/Year */ 0, 0),
+			(new HexSpanInfo.LittleEndian(0x11, 7)).setNameAndHelp(/* Card serial number */ 0, 0),
+			(new HexSpanInfo.LittleEndian(0x18, 8)).setNameAndHelp(/* Last updated timestamp */ 0, /* Set automatically by the system */ 0)
+			);
+
+	public List<HexSpanInfo> getSpanInfo() { return spanInfo; }
 
     public String getLogin() {
         byte[] slice = getSlice(0, 8);

@@ -8,7 +8,10 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Base class for card file format classes. Provides integer decoding utility functions.
+ * Base class for card file format classes. Provides integer decoding
+ * utility functions.
+ *
+ * TODO(kyork): Convert integer decoding to PackUtil
  */
 public abstract class AbstractCardFile implements CardFile, Parcelable {
     private byte[] rawContent;
@@ -25,6 +28,8 @@ public abstract class AbstractCardFile implements CardFile, Parcelable {
         for (int i = 0; i < length; i++)
             this.dirtyRanges.add(new int[] { parcel.readInt(), parcel.readInt() });
     }
+
+	public abstract List<HexSpanInfo> getSpanInfo();
 
     @Override
     public int describeContents() {

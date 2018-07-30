@@ -20,7 +20,9 @@
 # error Unsupported endianness define
 #endif
 
-static const PROGMEM t_blake2s_sigma  g_precomputed[10] = {
+#define READ_U32(ptr) ( (uint32_t)((ptr)[0]) | ((uint32_t)((ptr)[1]) << 8) | ((uint32_t)((ptr)[2]) << 16) | ((uint32_t)((ptr)[3]) << 24) )
+
+static const PROGMEM t_blake2s_sigma  pg_precomputed[10] = {
 	{0, 2, 4, 6, 1, 3, 5, 7, 8, 10, 12, 14, 9, 11, 13, 15},
 	{14, 4, 9, 13, 10, 8, 15, 6, 1, 0, 11, 5, 12, 2, 7, 3},
 	{11, 12, 5, 15, 8, 0, 2, 13, 10, 3, 7, 9, 14, 6, 1, 4},
@@ -33,7 +35,7 @@ static const PROGMEM t_blake2s_sigma  g_precomputed[10] = {
 	{10, 8, 7, 1, 2, 4, 6, 5, 15, 9, 3, 13, 11, 14, 12, 0},
 };
 
-static const PROGMEM t_u32  g_blake2s_iv[8] = {
+static const PROGMEM uint32_t  pg_blake2s_iv[8] = {
 	0x6a09e667,
 	0xbb67ae85,
 	0x3c6ef372,
@@ -44,7 +46,7 @@ static const PROGMEM t_u32  g_blake2s_iv[8] = {
 	0x5be0cd19,
 };
 
-static const PROGMEM struct s_blake2s_roundconf  g_blake2s_rounds[8] = {
+static const PROGMEM struct s_blake2s_roundconf  pg_blake2s_rounds[8] = {
 	{0, 4, 8, 12, 0, 4},
 	{1, 5, 9, 13, 1, 5},
 	{2, 6, 10, 14, 2, 6},
@@ -55,45 +57,50 @@ static const PROGMEM struct s_blake2s_roundconf  g_blake2s_rounds[8] = {
 	{3, 4, 9, 14, 11, 15},
 };
 
-#define AA v[q->a]
-#define BB v[q->b]
-#define CC v[q->c]
-#define DD v[q->d]
-#define XX m[s[q->xi]]
-#define YY m[s[q->yi]]
+#define BL2s_AA v[pg_blake2s_rounds[roundnum].a]
+#define BL2s_BB v[pg_blake2s_rounds[roundnum].b]
+#define BL2s_CC v[pg_blake2s_rounds[roundnum].c]
+#define BL2s_DD v[pg_blake2s_rounds[roundnum].d]
+#define BL2s_XX m[pg_precomputed[sigma_i][pg_blake2s_rounds[roundnum].xi]]
+#define BL2s_YY m[pg_precomputed[sigma_i][pg_blake2s_rounds[roundnum].yi]]
 
-static void							blake2s_roundop(
-		const struct s_blake2s_roundconf *q, const t_blake2s_sigma s,
-		t_u32 *m, t_u32 *v)
+extern unsigned int __data_start;
+extern unsigned int __data_end;
+extern unsigned int __bss_start;
+extern unsigned int __bss_end;
+extern unsigned int __heap_start;
+extern void *__brkval;
+
+static void							blake2s_roundop(int roundnum, int sigma_i, t_u32 *m, t_u32 *v)
 {
-	AA += XX;
-	AA += BB;
-	DD ^= AA;
-	DD = ((DD << (32 - 16)) | (DD >> 16));
-	CC += DD;
-	BB ^= CC;
-	BB = ((BB << (32 - 12)) | (BB >> 12));
+	BL2s_AA += BL2s_XX;
+	BL2s_AA += BL2s_BB;
+	BL2s_DD ^= BL2s_AA;
+	BL2s_DD = ((BL2s_DD << (32 - 16)) | (BL2s_DD >> 16));
+	BL2s_CC += BL2s_DD;
+	BL2s_BB ^= BL2s_CC;
+	BL2s_BB = ((BL2s_BB << (32 - 12)) | (BL2s_BB >> 12));
 
-	AA += YY;
-	AA += BB;
-	DD ^= AA;
-	DD = ((DD << (32 - 8)) | (DD >> 8));
-	CC += DD;
-	BB ^= CC;
-	BB = ((BB << (32 - 7)) | (BB >> 7));
+	BL2s_AA += BL2s_YY;
+	BL2s_AA += BL2s_BB;
+	BL2s_DD ^= BL2s_AA;
+  BL2s_DD = ((BL2s_DD << (32 - 8)) | (BL2s_DD >> 8));
+	BL2s_CC += BL2s_DD;
+	BL2s_BB ^= BL2s_CC;
+	BL2s_BB = ((BL2s_BB << (32 - 7)) | (BL2s_BB >> 7));
 }
 
 static void							blake2s_round(
-		const t_blake2s_sigma s, t_u32 *m, t_u32 *v)
+		int sigma_i, t_u32 *m, t_u32 *v)
 {
-	blake2s_roundop(&g_blake2s_rounds[0], s, m, v);
-	blake2s_roundop(&g_blake2s_rounds[1], s, m, v);
-	blake2s_roundop(&g_blake2s_rounds[2], s, m, v);
-	blake2s_roundop(&g_blake2s_rounds[3], s, m, v);
-	blake2s_roundop(&g_blake2s_rounds[4], s, m, v);
-	blake2s_roundop(&g_blake2s_rounds[5], s, m, v);
-	blake2s_roundop(&g_blake2s_rounds[6], s, m, v);
-	blake2s_roundop(&g_blake2s_rounds[7], s, m, v);
+	blake2s_roundop(0, sigma_i, m, v);
+	blake2s_roundop(1, sigma_i, m, v);
+	blake2s_roundop(2, sigma_i, m, v);
+	blake2s_roundop(3, sigma_i, m, v);
+	blake2s_roundop(4, sigma_i, m, v);
+	blake2s_roundop(5, sigma_i, m, v);
+	blake2s_roundop(6, sigma_i, m, v);
+	blake2s_roundop(7, sigma_i, m, v);
 }
 
 void								blake2s_block(struct s_blake2s_state *state,
@@ -101,25 +108,45 @@ void								blake2s_block(struct s_blake2s_state *state,
 {
 	t_u32		m[16];
 	t_u32		v[16];
-	int			i;
+	int			i = 0;
 
 	state->c[0] += BLAKE2S_BLOCK_SIZE;
-	if (state->c[0] < BLAKE2S_BLOCK_SIZE)
+	if (state->c[0] < BLAKE2S_BLOCK_SIZE) {
 		state->c[1]++;
-	memcpy(&v[0], state->h, 8 * sizeof(t_u32));
-	memcpy(&v[8], g_blake2s_iv, 8 * sizeof(t_u32));
+	}
+ 
+  for (int i = 0; i < 8; i++) {
+    v[i] = state->h[i];
+  }
+  for (int i = 0; i < 8; i++) {
+    v[8 + i] = pg_blake2s_iv[i];
+  }
 	v[12] ^= state->c[0];
 	v[13] ^= state->c[1];
 	v[14] ^= flag;
+  Serial.print("m start: ");
   for (int i = 0; i < 16; i++) {
-		m[i] = LEU32(&block[i * 4]);
+		m[i] = READ_U32(&block[i * 4]);
+   Serial.print(m[i], HEX);
+   Serial.print(' ');
   }
-  for (int i = 0; i < 10; i++) {
-		blake2s_round(g_precomputed[i], m, v);
+  Serial.println();
+  Serial.print("v start: ");
+  for (int i = 0; i < 16; i++) {
+   Serial.print(v[i], HEX);
+   Serial.print(' ');
   }
+  Serial.println();
+  for (int sigma_i = 0; sigma_i < 10; sigma_i++) {
+		blake2s_round(sigma_i, m, v);
+  }
+  Serial.print("block finish: ");
   for (int i = 0; i < 8; i++) {
 		state->h[i] ^= v[i] ^ v[i + 8];
+   Serial.print(state->h[i], HEX);
+   Serial.print(' ');
   }
+  Serial.println();
 }
 
 void        blake2s_init_key(struct s_blake2s_state *st, int hash_size,
@@ -129,15 +156,16 @@ void        blake2s_init_key(struct s_blake2s_state *st, int hash_size,
   if (key_len > BLAKE2S_KEY_SIZE)
     abort();
   st->keysz = key_len;
-  memset(st->key, 0, BLAKE2S_BLOCK_SIZE);
-  memcpy(st->key, key, key_len);
+  ft_memset(st->key, 0, BLAKE2S_BLOCK_SIZE);
+  ft_memcpy(st->key, key, key_len);
   blake2s_reset(st);
 }
 
 void								blake2s_reset(struct s_blake2s_state *st)
 {
-	memcpy(st->h, g_blake2s_iv, sizeof(g_blake2s_iv));
-  memset(st->c, 0, sizeof(st->c));
+  ft_memset((byte*)(char*)st, 0, sizeof(*st));
+  memcpy_P(st->h, pg_blake2s_iv, sizeof(pg_blake2s_iv));
+  ft_memset((byte*)(char*)st->c, 0, sizeof(st->c));
 	st->h[0] ^= (t_u32)(st->out_size) | (((t_u32)st->keysz) << 8) |
 		((t_u32)1 << 16) | ((t_u32)1 << 24);
 	if (st->keysz)

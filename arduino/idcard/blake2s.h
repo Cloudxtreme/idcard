@@ -13,6 +13,7 @@
 #ifndef FT_SSL_BLAKE2S_H
 # define FT_SSL_BLAKE2S_H
 
+# include <stdalign.h>
 # include <stdint.h>
 
 # define t_u32 uint32_t
@@ -28,8 +29,8 @@
 # define BLAKE2S_FLAG_NORMAL 0
 
 typedef struct			s_blake2s_state {
-	t_u32		h[8];
-	t_u32		c[2];
+	alignas(4) t_u32		h[8];
+	alignas(4) t_u32		c[2];
 	int         out_size;
 	t_u8		key[BLAKE2S_BLOCK_SIZE];
 	int			keysz;
@@ -65,6 +66,11 @@ typedef struct			s_blake2s_roundconf {
 	int					xi;
 	int					yi;
 }						t_blake2s_roundconf;
+
+# include <stddef.h>
+
+void  *ft_memcpy(byte *dst, const byte *src, size_t length);
+void  *ft_memset(byte *b, int c, size_t len);
 
 #endif
 

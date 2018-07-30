@@ -1,3 +1,5 @@
+#ifndef READER_CONFIG_H
+# define READER_CONFIG_H
 
 // === Use Flags
 
@@ -7,11 +9,13 @@
 
 // === End Use Flags
 
+# include <stddef.h>
+
 struct s_desfire_cmd {
   int command;
   int len;
   byte data[64];
-}
+};
 
 void card_init(void);
 void card_startDetect(void);
@@ -48,4 +52,9 @@ enum PICC_Command : byte {
   PICC_CMD_SEL_CL3  = 0x97,   // Anti collision/Select, Cascade Level 3
   PICC_CMD_HLTA     = 0x50,   // HaLT command, Type A. Instructs an ACTIVE PICC to go to state HALT.
   PICC_CMD_RATS     = 0xE0, // Request command for Answer To Reset.
-}
+};
+
+void  *ft_memcpy(byte *dst, const byte *src, size_t length);
+void  *ft_memset(byte *b, int c, size_t len);
+
+#endif // READER_CONFIG_H

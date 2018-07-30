@@ -78,8 +78,14 @@ void			blake2s_finish(struct s_blake2s_state *state,
 
 void      blake2s_output_hash(struct s_blake2s_state *state, t_u8 *outbuf)
 {
-  for (int i = 0; i < 8; i++) {
+#if false
+  for (int i = 0; i < 8 && (i * 4 < state->out_size); i++) {
     LEU32(&outbuf[i * 4]) = state->h[i];
   }
+#else // _128 only
+  for (int i = 0; i < 4; i++) {
+    LEU32(&outbuf[i * 4]) = state->h[i];
+  }
+#endif
 }
 

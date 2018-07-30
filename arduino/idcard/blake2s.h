@@ -6,7 +6,7 @@
 /*   By: kyork <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/05/06 15:18:08 by kyork             #+#    #+#             */
-/*   Updated: 2018/07/27 12:43:17 by kyork            ###   ########.fr       */
+/*   Updated: 2018/07/30 11:53:54 by kyork            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@
 typedef struct			s_blake2s_state {
 	t_u32		h[8];
 	t_u32		c[2];
-	size_t		out_size;
+	int         out_size;
 	t_u8		key[BLAKE2S_BLOCK_SIZE];
 	int			keysz;
 }						t_blake2s_state;

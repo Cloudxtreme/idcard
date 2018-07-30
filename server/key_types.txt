@@ -1,0 +1,4 @@
+public - these encryption keys are known
+admin - authenticated admins can request the key material from the server
+remote - android phones offload encryption operations to the server
+server - key never leaves the server

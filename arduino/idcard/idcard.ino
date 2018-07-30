@@ -56,14 +56,17 @@ void setup() {
 
   // test hashing
   if (g_serial_debug) {
+    memset(&g_config.blake2s_mac_key, 42, BLAKE2S_KEY_SIZE);
+    blake2s_reset(&g_hasher);
+
     unsigned long StartTime = micros();
     byte buf[64];
     memset(buf, 1, 64);
-    blake2s_reset(&g_hasher);
     blake2s_block(&g_hasher, buf, BLAKE2S_FLAG_NORMAL);
     memset(buf, 2, 56);
     blake2s_finish(&g_hasher, buf, 56);
     unsigned long EndTime = micros();
+
     blake2s_output_hash(&g_hasher, buf);
     Serial.print("test pattern hash result:\t");
     for (int i = 0; i < BLAKE2S_128_OUTPUT_SIZE; i++) {

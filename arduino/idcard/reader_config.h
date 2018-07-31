@@ -4,7 +4,7 @@
 // === Use Flags
 
 #define USE_MFRC_522 1
-#undef USE_MFRC_630
+#define USE_MFRC_630 0
 #define USE_I2C_HS_MODE 0
 
 // === End Use Flags
@@ -17,7 +17,7 @@ struct s_desfire_cmd {
   byte data[64];
 };
 
-void card_init(void);
+bool card_init(void);
 void card_startDetect(void);
 
 /*
@@ -41,6 +41,12 @@ void card_transcieve(struct s_desfire_cmd *data);
 # define USE_I2C_HS_MODE 0
 #endif
 
+
+#ifdef USE_MFRC_522
+# define PIN_RESET_A 2
+# define PIN_IRQ_A 3
+#endif
+
 // Commands sent to the PICC.
 enum PICC_Command : byte {
   // The commands used by the PCD to manage communication with several PICCs (ISO 14443-3, Type A, section 6.4)
@@ -53,8 +59,5 @@ enum PICC_Command : byte {
   PICC_CMD_HLTA     = 0x50,   // HaLT command, Type A. Instructs an ACTIVE PICC to go to state HALT.
   PICC_CMD_RATS     = 0xE0, // Request command for Answer To Reset.
 };
-
-void  *ft_memcpy(byte *dst, const byte *src, size_t length);
-void  *ft_memset(byte *b, int c, size_t len);
 
 #endif // READER_CONFIG_H

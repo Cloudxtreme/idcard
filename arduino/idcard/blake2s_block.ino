@@ -20,9 +20,9 @@
 # error Unsupported endianness define
 #endif
 
-#define READ_U32(ptr) ( (uint32_t)((ptr)[0]) | ((uint32_t)((ptr)[1]) << 8) | ((uint32_t)((ptr)[2]) << 16) | ((uint32_t)((ptr)[3]) << 24) )
+#define READ_U32(ptr) ( ((uint32_t)((ptr)[0])) | (((uint32_t)((ptr)[1])) << 8) | (((uint32_t)((ptr)[2])) << 16) | (((uint32_t)((ptr)[3])) << 24) )
 
-static const PROGMEM t_blake2s_sigma  pg_precomputed[10] = {
+static const t_blake2s_sigma  pg_precomputed[10] = {
 	{0, 2, 4, 6, 1, 3, 5, 7, 8, 10, 12, 14, 9, 11, 13, 15},
 	{14, 4, 9, 13, 10, 8, 15, 6, 1, 0, 11, 5, 12, 2, 7, 3},
 	{11, 12, 5, 15, 8, 0, 2, 13, 10, 3, 7, 9, 14, 6, 1, 4},
@@ -35,7 +35,7 @@ static const PROGMEM t_blake2s_sigma  pg_precomputed[10] = {
 	{10, 8, 7, 1, 2, 4, 6, 5, 15, 9, 3, 13, 11, 14, 12, 0},
 };
 
-static const PROGMEM uint32_t  pg_blake2s_iv[8] = {
+static const uint32_t  pg_blake2s_iv[8] = {
 	0x6a09e667,
 	0xbb67ae85,
 	0x3c6ef372,
@@ -46,7 +46,7 @@ static const PROGMEM uint32_t  pg_blake2s_iv[8] = {
 	0x5be0cd19,
 };
 
-static const PROGMEM struct s_blake2s_roundconf  pg_blake2s_rounds[8] = {
+static const struct s_blake2s_roundconf  pg_blake2s_rounds[8] = {
 	{0, 4, 8, 12, 0, 4},
 	{1, 5, 9, 13, 1, 5},
 	{2, 6, 10, 14, 2, 6},
@@ -73,6 +73,22 @@ extern void *__brkval;
 
 static void							blake2s_roundop(int roundnum, int sigma_i, t_u32 *m, t_u32 *v)
 {
+  /*
+  Serial.print("round ");
+  Serial.print(BL2s_AA); Serial.print(" ");
+  Serial.print(BL2s_BB); Serial.print(" ");
+  Serial.print(BL2s_CC); Serial.print(" ");
+  Serial.print(BL2s_DD); Serial.print(" ");
+  int xi = pg_blake2s_rounds[roundnum].xi;
+  int yi = pg_blake2s_rounds[roundnum].yi;
+  Serial.print("xi "); Serial.print(xi); Serial.print(" ");
+  Serial.print("yi "); Serial.print(pg_blake2s_rounds[roundnum].yi); Serial.print(" ");
+  t_blake2s_sigma &sigma = pg_precomputed[sigma_i];
+  Serial.print("sigma x "); Serial.print(sigma[xi]); Serial.print(" ");
+  Serial.print("sigma y "); Serial.print(pg_precomputed[sigma_i][pg_blake2s_rounds[roundnum].xi]); Serial.print(" ");
+  Serial.print(m[sigma[xi]]); Serial.print(" ");
+  Serial.print(BL2s_YY); Serial.println();
+  */
 	BL2s_AA += BL2s_XX;
 	BL2s_AA += BL2s_BB;
 	BL2s_DD ^= BL2s_AA;
@@ -103,6 +119,10 @@ static void							blake2s_round(
 	blake2s_roundop(7, sigma_i, m, v);
 }
 
+#define DEBUG_PRINT(...) Serial.print(__VA_ARGS__)
+#undef DEBUG_PRINT
+#define DEBUG_PRINT(...) 
+
 void								blake2s_block(struct s_blake2s_state *state,
 		t_u8 *block, t_u32 flag)
 {
@@ -124,48 +144,49 @@ void								blake2s_block(struct s_blake2s_state *state,
 	v[12] ^= state->c[0];
 	v[13] ^= state->c[1];
 	v[14] ^= flag;
-  Serial.print("m start: ");
+  DEBUG_PRINT("m start: ");
   for (int i = 0; i < 16; i++) {
-		m[i] = READ_U32(&block[i * 4]);
-   Serial.print(m[i], HEX);
-   Serial.print(' ');
+		m[i] = *(reinterpret_cast<uint32_t*>(&block[i * 4]));
+    DEBUG_PRINT(m[i], HEX);
+    DEBUG_PRINT(' ');
   }
-  Serial.println();
-  Serial.print("v start: ");
+  DEBUG_PRINT("\nv start: ");
   for (int i = 0; i < 16; i++) {
-   Serial.print(v[i], HEX);
-   Serial.print(' ');
+    DEBUG_PRINT(v[i], HEX);
+    DEBUG_PRINT(' ');
   }
-  Serial.println();
+  DEBUG_PRINT("\n");
   for (int sigma_i = 0; sigma_i < 10; sigma_i++) {
 		blake2s_round(sigma_i, m, v);
   }
-  Serial.print("block finish: ");
+  DEBUG_PRINT("block finish: ");
   for (int i = 0; i < 8; i++) {
 		state->h[i] ^= v[i] ^ v[i + 8];
-   Serial.print(state->h[i], HEX);
-   Serial.print(' ');
+    DEBUG_PRINT(state->h[i], HEX);
+    DEBUG_PRINT(' ');
   }
-  Serial.println();
+  DEBUG_PRINT("\n");
 }
 
 void        blake2s_init_key(struct s_blake2s_state *st, int hash_size,
                 t_u8 *key, int key_len)
 {
+  memset(st, 0, sizeof(*st));
   st->out_size = hash_size;
   if (key_len > BLAKE2S_KEY_SIZE)
     abort();
   st->keysz = key_len;
-  ft_memset(st->key, 0, BLAKE2S_BLOCK_SIZE);
-  ft_memcpy(st->key, key, key_len);
+  memset(st->key, 0, BLAKE2S_BLOCK_SIZE);
+  memcpy(st->key, key, key_len);
   blake2s_reset(st);
 }
 
 void								blake2s_reset(struct s_blake2s_state *st)
 {
-  ft_memset((byte*)(char*)st, 0, sizeof(*st));
-  memcpy_P(st->h, pg_blake2s_iv, sizeof(pg_blake2s_iv));
-  ft_memset((byte*)(char*)st->c, 0, sizeof(st->c));
+  for (int i = 0; i < 8; i++)
+    st->h[i] = pg_blake2s_iv[i];
+  st->c[0] = 0;
+  st->c[1] = 0;
 	st->h[0] ^= (t_u32)(st->out_size) | (((t_u32)st->keysz) << 8) |
 		((t_u32)1 << 16) | ((t_u32)1 << 24);
 	if (st->keysz)

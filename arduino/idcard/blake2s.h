@@ -69,8 +69,5 @@ typedef struct			s_blake2s_roundconf {
 
 # include <stddef.h>
 
-void  *ft_memcpy(byte *dst, const byte *src, size_t length);
-void  *ft_memset(byte *b, int c, size_t len);
-
 #endif
 

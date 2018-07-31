@@ -1,6 +1,6 @@
 #include "reader_config.h"
-#ifdef USE_MFRC522
 
+#if 1 //USE_MFRC_522
 
 #define MAX_FIFO_SIZE 64
 #define WIRE_MAX_READ 32
@@ -84,34 +84,43 @@ typedef struct    s_pin522 {
 //   read data file 7 part 1
 //    
 
-int cur_i2c_id;
+int cur_i2c_id = 0b0101000;
 
-void mfrc522_writeRegister(byte reg, byte value) {
+byte mfrc522_writeRegister(byte reg, byte value) {
   Wire.beginTransmission(cur_i2c_id);
   Wire.write(reg);
   Wire.write(value);
-  Wire.endTransmission(true);
+  return Wire.endTransmission(true);
 }
 
-void mfrc522_writeFIFO(byte *data, int len) {
+byte mfrc522_writeFIFO(byte *data, int len) {
   Wire.beginTransmission(cur_i2c_id);
   Wire.write(RC522REG_FIFOData);
   Wire.write(data, len);
-  Wire.endTransmission(true);
+  return Wire.endTransmission(true);
 }
 
 byte mfrc522_readRegister(byte reg) {
+  Serial.print("beginTransmission("); Serial.print(cur_i2c_id); Serial.print(")\n");
   Wire.beginTransmission(cur_i2c_id);
   Wire.write(reg);
-  Wire.endTransmission(true);
+  byte st = Wire.endTransmission(true);
+  if (st != 0) {
+    Serial.print("error "); Serial.print(st); Serial.print("\n");
+    return 0xFF;
+  }
+  Serial.print("requestFrom("); Serial.print(cur_i2c_id); Serial.print(", 1)\n");
   Wire.requestFrom(cur_i2c_id, 1);
+  if (Wire.available() == 0) {
+    Serial.print("readRegister failed\n");
+  }
   return Wire.read();
 }
 
 // up to 64 bytes maximum
 int mfrc522_readFIFO(byte *output) {
   Wire.beginTransmission(cur_i2c_id);
-  Wire.write(reg);
+  Wire.write(RC522REG_FIFOData);
   Wire.endTransmission(true);
 
 #if I2C_SUPPORTS_HS_MODE
@@ -140,9 +149,17 @@ int mfrc522_readFIFO(byte *output) {
   return count;
 }
 
-void mfrc522_communicate
+bool card_init(void) {
+  digitalWrite(PIN_RESET_A, false);
+  delay(1);
+  digitalWrite(PIN_RESET_A, true);
+  delay(1);
+  digitalWrite(PIN_RESET_A, false);
+  delay(50);
 
-void card_init(void) {
+  byte cmdStatus = mfrc522_readRegister(RC522REG_Command);
+  if (cmdStatus == 0xFF) return false;
+  
   // Set min baudrate
   // CRCEn = 0, TxSpeed = 0
   mfrc522_writeRegister(RC522REG_TxMode, 0x00);

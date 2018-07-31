@@ -22,34 +22,23 @@ volatile byte     g_got_isr; // bit 0 for reader A, bit 1 for reader B
 
 struct s_blake2s_state g_hasher;
 
-static bool g_serial_debug = true;
-
-int i2c_master_code = 0x08;
-
-extern unsigned int __data_start;
-extern unsigned int __data_end;
-extern unsigned int __bss_start;
-extern unsigned int __bss_end;
-extern unsigned int __heap_start;
-extern void *__brkval;
+#define HASH_DEBUG false
 
 void setup() {
-  // put your setup code here, to run once:
-  DDRB |= (1 << 5);
-  pinMode(13, OUTPUT);
-
-  // attachInterrupt(digitalPinToInterrupt(2), &nfc_isr, RISING);
-
-  Wire.setClock(I2C_FREQUENCY);
   Wire.begin();
+
+  // Reader A pin config
+  pinMode(PIN_RESET_A, OUTPUT);
+  pinMode(PIN_IRQ_A, INPUT);
+  attachInterrupt(digitalPinToInterrupt(PIN_IRQ_A), &nfc_isr, RISING);
+
+  // Wire.setClock(I2C_FREQUENCY);
 
   if (true) {
     Serial.begin(9600);
     while (!Serial) {
       ; // wait for serial port to connect
     }
-    Serial.print("hello");
-    Serial.println();
     delay(1000);
   }
 
@@ -61,25 +50,23 @@ void setup() {
       cur++;
     }
 
-    digitalWrite(13, true);
-    ft_memset(&g_config.blake2s_mac_key[0], 43, BLAKE2S_KEY_SIZE);
+    memset(&g_config.blake2s_mac_key[0], 42, BLAKE2S_KEY_SIZE);
     Serial.println("calling init_key");
     blake2s_init_key(&g_hasher, BLAKE2S_128_OUTPUT_SIZE, &g_config.blake2s_mac_key[0], BLAKE2S_KEY_SIZE);
-    digitalWrite(13, false);
     delay(1000);
   }
 
   // test hashing
-  if (g_serial_debug) {
-    digitalWrite(13, true);
+#if HASH_DEBUG
+  {
     Serial.println("Starting test pattern");
     blake2s_reset(&g_hasher);
 
     unsigned long StartTime = micros();
     byte buf[64];
-    ft_memset(buf, 1, 64);
+    memset(buf, 1, 64);
     blake2s_block(&g_hasher, buf, BLAKE2S_FLAG_NORMAL);
-    ft_memset(buf, 2, 56);
+    memset(buf, 2, 56);
     blake2s_finish(&g_hasher, buf, 56);
     unsigned long EndTime = micros();
 
@@ -93,27 +80,25 @@ void setup() {
     Serial.print(" microseconds");
     Serial.println();
   }
-    digitalWrite(13, false);
+#endif /* HASH_DEBUG */
+
+  Serial.println("setting up 522");
+  
+  if (!card_init()) {
+    Serial.println("failed to set up 522");
+  }
+  digitalWrite(13, true);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  static int count = 0;
 
-  count++;
-  if (count > 100) {
-    count = 0;
-    PORTB ^= (1 << 5);
-  }
-  digitalWrite(13, true);
-  delay(200);
-  digitalWrite(13, false);
-  delay(200);
+  
 
 delay(10);
 }
 
 void nfc_isr() {
+  Serial.println("got IRQ from reader");
 }
 
 

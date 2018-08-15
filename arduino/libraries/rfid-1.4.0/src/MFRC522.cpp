@@ -448,22 +448,24 @@ MFRC522::StatusCode MFRC522::PCD_CommunicateWithPICC(	byte command,		///< The co
 	
 	// Wait for the command to complete.
 	// In PCD_Init() we set the TAuto flag in TModeReg. This means the timer automatically starts when the PCD stops transmitting.
-	// Each iteration of the do-while-loop takes 17.86μs.
-	// TODO check/modify for other architectures than Arduino Uno 16bit
-	uint16_t i;
-	for (i = 2000; i > 0; i--) {
+	// [idcard] start - use millis() instead
+	bool ok = false;
+	int loop_until = millis() + 35;
+	while (millis() < loop_until) {
 		byte n = PCD_ReadRegister(ComIrqReg);	// ComIrqReg[7..0] bits are: Set1 TxIRq RxIRq IdleIRq HiAlertIRq LoAlertIRq ErrIRq TimerIRq
 		if (n & waitIRq) {					// One of the interrupts that signal success has been set.
+			ok = true;
 			break;
 		}
 		if (n & 0x01) {						// Timer interrupt - nothing received in 25ms
 			return STATUS_TIMEOUT;
 		}
 	}
-	// 35.7ms and nothing happend. Communication with the MFRC522 might be down.
-	if (i == 0) {
+	// 35ms and nothing happened. Communication with the MFRC522 might be down.
+	if (!ok) {
 		return STATUS_TIMEOUT;
 	}
+	// [idcard] end
 	
 	// Stop now if any errors except collisions were detected.
 	byte errorRegValue = PCD_ReadRegister(ErrorReg); // ErrorReg[7..0] bits are: WrErr TempErr reserved BufferOvfl CollErr CRCErr ParityErr ProtocolErr

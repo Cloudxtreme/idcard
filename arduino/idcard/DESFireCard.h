@@ -62,6 +62,6 @@ extern uint16_t g_lerror;
 
 MFRC522::StatusCode send_request(MFRC522 *mfrc522, byte command, byte *sendbuf, byte sendlen, byte **recvbuf, unsigned int *recvlen);
 MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte command, byte *sendbuf, byte sendlen, byte **recvbuf, byte *recvlen);
-MFRC522::StatusCode select_application(MFRC522 *mfrc522, uint32_t appID);
+MFRC522::StatusCode select_application(MFRC522 *mfrc522, uint32_t app_id);
 
 #endif /* DESFIRECARD_H */

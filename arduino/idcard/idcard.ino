@@ -163,6 +163,7 @@ int connect_to_card(int i) {
     SERIAL_PRINTLN();
 
     //g_mfrc522[i]->PICC_DumpToSerial(&(g_mfrc522[i]->uid));
+    //g_mfrc522[i]->PICC_HaltA();
     return (STATE_SELECT);
   }
 
@@ -182,7 +183,7 @@ int select_app(int i) {
       SERIAL_PRINTLN(errno);
     }
     else {
-      SERIAL_PRINT("SELECT_APPLICATION: status: ");
+      SERIAL_PRINT("SELECT_APPLICATION: DESFire Status: ");
       SERIAL_PRINTLN(g_lerror);
     }
   }
@@ -191,7 +192,6 @@ int select_app(int i) {
     SERIAL_PRINTLN(result);
   }
 
-  SERIAL_PRINTLN(result);
   return (STATE_IDLE);
 }
 
@@ -256,6 +256,7 @@ void loop() {
         g_states[i] = STATE_IDLE;
     }
   }
+  delay(1);
 }
 
 /*

@@ -3,7 +3,7 @@
 
 uint16_t g_lerror = 0;
 
-static byte *wrap_message(byte command, byte *sendbuf, byte sendlen) {
+static byte *wrap_message(byte command, byte *sendbuf, byte sendlen, byte *msglen) {
   size_t len = (sendbuf && sendlen) ? sendlen : 0;
   byte *message = (byte *)malloc(6 + len);
 
@@ -13,21 +13,22 @@ static byte *wrap_message(byte command, byte *sendbuf, byte sendlen) {
     message[2] = 0x00;
     message[3] = 0x00;
 
-    if (sendbuf && sendlen) {
-      message[4] = sendlen;
-      for (byte i = 0; i < sendlen; i++) {
-        message[5 + i] = sendbuf[i];
-      }
+    message[4] = len;
+    for (byte i = 0; i < len; i++) {
+      message[5 + i] = sendbuf[i];
     }
-    message[5 + sendlen] = 0x00;
+    message[5 + len] = 0x00;
   }
+
+  if (msglen)
+    *msglen = 6 + len;
 
   return (message);
 }
 
 MFRC522::StatusCode send_request(MFRC522 *mfrc522, byte command, byte *sendbuf, byte sendlen, byte **recvbuf, unsigned int *recvlen) {
-  byte *message = wrap_message(command, sendbuf, sendlen);
-  sendlen = (sendbuf && sendlen) ? sendlen : 0;
+  byte msglen;
+  byte *message = wrap_message(command, sendbuf, sendlen, &msglen);
   if (!message) {
     g_lerror = LERROR_ERRNO;
     return (MFRC522::STATUS_INTERNAL_ERROR);
@@ -42,7 +43,7 @@ MFRC522::StatusCode send_request(MFRC522 *mfrc522, byte command, byte *sendbuf, 
   byte output[0xFF];
   byte len = 0xFF;
 
-  MFRC522::StatusCode result = mfrc522->PCD_TransceiveData(message, 6 + sendlen, output, &len);
+  MFRC522::StatusCode result = mfrc522->PCD_TransceiveData(message, msglen, output, &len);
   free(message);
 
   while (true) {
@@ -59,7 +60,7 @@ MFRC522::StatusCode send_request(MFRC522 *mfrc522, byte command, byte *sendbuf, 
 
     byte status = output[offset + len - 1];
 
-    if (recvbuf && recvlen && len - 2) {
+    if (recvbuf && recvlen && (len - 2)) {
       if (*recvbuf) {
         byte *new_ptr = (byte *)realloc(*recvbuf, offset + len - 2);
 
@@ -93,7 +94,7 @@ MFRC522::StatusCode send_request(MFRC522 *mfrc522, byte command, byte *sendbuf, 
       return (MFRC522::STATUS_INTERNAL_ERROR);
     }
 
-    message = wrap_message(CMD_GET_ADDITIONAL_FRAME, NULL, 0);
+    message = wrap_message(CMD_GET_ADDITIONAL_FRAME, NULL, 0, &msglen);
     if (!message) {
       if (recvbuf && recvlen && *recvbuf)
         free(*recvbuf);
@@ -102,8 +103,8 @@ MFRC522::StatusCode send_request(MFRC522 *mfrc522, byte command, byte *sendbuf, 
       return (MFRC522::STATUS_INTERNAL_ERROR);
     }
 
-    byte len = 0xFF;
-    result = mfrc522->PCD_TransceiveData(message, 6, output, &len);
+    len = 0xFF;
+    result = mfrc522->PCD_TransceiveData(message, msglen, output, &len);
     free(message);
   }
 
@@ -113,8 +114,8 @@ MFRC522::StatusCode send_request(MFRC522 *mfrc522, byte command, byte *sendbuf, 
 }
 
 MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte command, byte *sendbuf, byte sendlen, byte **recvbuf, byte *recvlen) {
-  byte *message = wrap_message(command, sendbuf, sendlen);
-  sendlen = (sendbuf && sendlen) ? sendlen : 0;
+  byte msglen;
+  byte *message = wrap_message(command, sendbuf, sendlen, &msglen);
   if (!message) {
     g_lerror = LERROR_ERRNO;
     return (MFRC522::STATUS_INTERNAL_ERROR);
@@ -127,13 +128,14 @@ MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte command, byte *s
 
   byte output[0xFF];
   byte len = 0xFF;
-  MFRC522::StatusCode result = mfrc522->PCD_TransceiveData(message, 6 + sendlen, output, &len);
+  mfrc522->PCD_WriteRegister(MFRC522::CommandReg, 0);
+  MFRC522::StatusCode result = mfrc522->PCD_TransceiveData(message, msglen, output, &len);
   free(message);
 
   if (result != MFRC522::STATUS_OK)
     return (result);
 
-  if (output[len - 2] != (byte) 0x91) {
+  if (len < 2 || output[len - 2] != (byte) 0x91) {
     g_lerror = LERROR_BAD_RESPONSE;
     return (MFRC522::STATUS_INTERNAL_ERROR);
   }
@@ -159,11 +161,11 @@ MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte command, byte *s
   return (MFRC522::STATUS_INTERNAL_ERROR);
 }
 
-MFRC522::StatusCode select_application(MFRC522 *mfrc522, uint32_t appID) {
+MFRC522::StatusCode select_application(MFRC522 *mfrc522, uint32_t app_id) {
   byte id_frame[3];
-  id_frame[2] = (byte)(appID & 0xFF);
-  id_frame[1] = (byte)((appID >> 8) & 0xFF);
-  id_frame[0] = (byte)((appID >> 16) & 0xFF);
-  return (send_request(mfrc522, CMD_SELECT_APPLICATION, id_frame, 3, NULL, NULL));
+  id_frame[2] = (byte)(app_id & 0xFF);
+  id_frame[1] = (byte)((app_id >> 8) & 0xFF);
+  id_frame[0] = (byte)((app_id >> 16) & 0xFF);
+  return (send_partial_request(mfrc522, CMD_SELECT_APPLICATION, id_frame, 3, NULL, NULL));
 }
 

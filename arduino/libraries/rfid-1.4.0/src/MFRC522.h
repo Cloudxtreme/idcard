@@ -390,6 +390,17 @@ public:
 	StatusCode MIFARE_SetValue(byte blockAddr, int32_t value);
 	StatusCode PCD_NTAG216_AUTH(byte *passWord, byte pACK[]);
 	
+	// [idcard] start - ISO 14443-4 functions
+	/////////////////////////////////////////////////////////////////////////////////////
+	// Functions for communicating with ISO 14443-4 PICCs
+	/////////////////////////////////////////////////////////////////////////////////////
+	StatusCode ISODEP_RATS(byte *response = NULL, byte *responseLen = NULL); // will send 64 bytes, card ID 0
+	StatusCode ISODEP_Transceive(byte *sendData, byte sendLen, byte *returnData, byte &returnLen);
+  protected:
+	bool isodep_blocknum = false;
+  public:
+	// [idcard] end
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Support functions
 	/////////////////////////////////////////////////////////////////////////////////////

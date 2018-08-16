@@ -226,8 +226,10 @@ void MFRC522::PCD_Init() {
 	// TPrescaler_Hi are the four low bits in TModeReg. TPrescaler_Lo is TPrescalerReg.
 	PCD_WriteRegister(TModeReg, 0x80);			// TAuto=1; timer starts automatically at the end of the transmission in all communication modes at all speeds
 	PCD_WriteRegister(TPrescalerReg, 0xA9);		// TPreScaler = TModeReg[3..0]:TPrescalerReg, ie 0x0A9 = 169 => f_timer=40kHz, ie a timer period of 25μs.
-	PCD_WriteRegister(TReloadRegH, 0x03);		// Reload timer with 0x3E8 = 1000, ie 25ms before timeout.
-	PCD_WriteRegister(TReloadRegL, 0xE8);
+	// [idcard] start - change timeout to 77.33ms (Frame Waiting Time = 7)
+	PCD_WriteRegister(TReloadRegH, 0x0C);		// Reload timer with 0xC15 = 3093 = 77.330ms
+	PCD_WriteRegister(TReloadRegL, 0x15);
+	// [idcard] end
 	
 	PCD_WriteRegister(TxASKReg, 0x40);		// Default 0x00. Force a 100 % ASK modulation independent of the ModGsPReg register setting
 	PCD_WriteRegister(ModeReg, 0x3D);		// Default 0x3F. Set the preset value for the CRC coprocessor for the CalcCRC command to 0x6363 (ISO 14443-3 part 6.2.4)
@@ -439,6 +441,11 @@ MFRC522::StatusCode MFRC522::PCD_CommunicateWithPICC(	byte command,		///< The co
 	PCD_WriteRegister(CommandReg, PCD_Idle);			// Stop any active command.
 	PCD_WriteRegister(ComIrqReg, 0x7F);					// Clear all seven interrupt request bits
 	PCD_WriteRegister(FIFOLevelReg, 0x80);				// FlushBuffer = 1, FIFO initialization
+#ifdef IDCARD_DUMP_COMMUNICATION // [idcard] start - dump comms
+	Serial.print("PCD_Communicate: len "); Serial.print(sendLen); Serial.print(" data ");
+	for (int i = 0; i < sendLen; i++) { Serial.print(sendData[i], HEX); Serial.print(" "); }
+	Serial.println();
+#endif // [idcard] end
 	PCD_WriteRegister(FIFODataReg, sendLen, sendData);	// Write sendData to the FIFO
 	PCD_WriteRegister(BitFramingReg, bitFraming);		// Bit adjustments
 	PCD_WriteRegister(CommandReg, command);				// Execute the command
@@ -448,9 +455,9 @@ MFRC522::StatusCode MFRC522::PCD_CommunicateWithPICC(	byte command,		///< The co
 	
 	// Wait for the command to complete.
 	// In PCD_Init() we set the TAuto flag in TModeReg. This means the timer automatically starts when the PCD stops transmitting.
-	// [idcard] start - use millis() instead
+	// [idcard] start - use millis() instead, increase timeout to 78ms
 	bool ok = false;
-	int loop_until = millis() + 35;
+	unsigned long loop_until = millis() + 78;
 	while (millis() < loop_until) {
 		byte n = PCD_ReadRegister(ComIrqReg);	// ComIrqReg[7..0] bits are: Set1 TxIRq RxIRq IdleIRq HiAlertIRq LoAlertIRq ErrIRq TimerIRq
 		if (n & waitIRq) {					// One of the interrupts that signal success has been set.
@@ -461,7 +468,7 @@ MFRC522::StatusCode MFRC522::PCD_CommunicateWithPICC(	byte command,		///< The co
 			return STATUS_TIMEOUT;
 		}
 	}
-	// 35ms and nothing happened. Communication with the MFRC522 might be down.
+	// 78ms and nothing happened. Communication with the MFRC522 might be down.
 	if (!ok) {
 		return STATUS_TIMEOUT;
 	}
@@ -483,6 +490,13 @@ MFRC522::StatusCode MFRC522::PCD_CommunicateWithPICC(	byte command,		///< The co
 		}
 		*backLen = n;											// Number of bytes returned
 		PCD_ReadRegister(FIFODataReg, n, backData, rxAlign);	// Get received data from FIFO
+#ifdef IDCARD_DUMP_COMMUNICATION // [idcard] start - dump comms
+		Serial.print("PICC_Response: len "); Serial.print(n); Serial.print(" data ");
+		for (int i = 0; i < n; i++) {
+			Serial.print(backData[i], HEX); Serial.print(" ");
+		}
+		Serial.println();
+#endif // [idcard] end
 		_validBits = PCD_ReadRegister(ControlReg) & 0x07;		// RxLastBits[2:0] indicates the number of valid bits in the last received byte. If this value is 000b, the whole byte is valid.
 		if (validBits) {
 			*validBits = _validBits;
@@ -1188,6 +1202,115 @@ MFRC522::StatusCode MFRC522::PCD_NTAG216_AUTH(byte* passWord, byte pACK[]) //Aut
 	return STATUS_OK;
 } // End PCD_NTAG216_AUTH()
 
+// [idcard] start - ISO 14443-4 functions
+//
+/////////////////////////////////////////////////////////////////////////////////////
+// Functions for communicating with ISO 14443-4 PICCs
+/////////////////////////////////////////////////////////////////////////////////////
+
+MFRC522::StatusCode MFRC522::ISODEP_RATS(byte *response, byte *responseLen) {
+	byte rats_query[4];
+	byte rats_response[8];
+	byte rats_resplen = 8;
+	MFRC522::StatusCode status;
+
+	rats_query[0] = 0xE0;
+	rats_query[1] = 0x50; // data size: 64 bytes
+	                      // card id: 0
+	byte waitIRq = 0x30;
+
+	isodep_blocknum = false;
+
+	status = PCD_CalculateCRC(rats_query, 2, rats_query + 2);
+	if (status != STATUS_OK)
+		return (status);
+
+	status = PCD_CommunicateWithPICC(PCD_Transceive, waitIRq, rats_query, 4, rats_response, &rats_resplen, 0, false);
+	if (status != STATUS_OK)
+		return status;
+
+	if (response && responseLen) {
+		memcpy(response, rats_response, rats_resplen);
+		*responseLen = rats_resplen;
+	}
+	return status;
+}
+
+/**
+ * Executes a ISO 14443-4 send/receive operation.
+ * CIDs are not supported. Node addresses are not supported. Chaining is not supported.
+ */
+MFRC522::StatusCode MFRC522::ISODEP_Transceive(byte *sendData, byte sendLen, byte *returnData, byte &returnLen) {
+	MFRC522::StatusCode status;
+	byte buf[FIFO_SIZE]; // 64
+
+	if (sendLen > FIFO_SIZE - 3) {
+		return (STATUS_NO_ROOM);
+	}
+	// chaining unset, no CID, no NAD, block number unset
+	if (isodep_blocknum)
+		buf[0] = 0x03;
+	else
+		buf[0] = 0x02;
+	memcpy(buf + 1, sendData, sendLen);
+
+	status = PCD_CalculateCRC(buf, sendLen + 1, buf + sendLen + 1);
+	if (status != STATUS_OK)
+		return (status);
+
+	byte response[FIFO_SIZE];
+	byte respSize;
+	for (int retries = 0; retries < 20; retries++) {
+		respSize = FIFO_SIZE;
+		status = PCD_CommunicateWithPICC(PCD_Transceive, 0x30,
+				buf, sendLen + 3, response, &respSize, NULL, 0, true
+				);
+		if (status != STATUS_OK)
+			return (status);
+
+		if (respSize < 3)
+			return (STATUS_ERROR); // minimum reply is 1 byte PCB and 2 byte CRC
+
+		if ((response[0] & 0xE0) == 0x00) { // I-block
+			if (((response[0] & 1) != 0) == (isodep_blocknum)) {
+				isodep_blocknum = !isodep_blocknum;
+			}
+			if (response[0] & 0x10) {
+				Serial.println("ERR: Card requires IsoDep chaining");
+				return (STATUS_INTERNAL_ERROR);
+			}
+
+			if (returnLen < (respSize - 3)) {
+				return (STATUS_NO_ROOM);
+			}
+			returnLen = respSize - 3;
+			memcpy(returnData, response + 1, returnLen);
+			return (STATUS_OK);
+		} else if ((response[0] & 0xE0) == 0xA0) { // R-block
+			if (((response[0] & 1) != 0) == (isodep_blocknum)) {
+				isodep_blocknum = !isodep_blocknum;
+			}
+			if (response[0] & 0x10) {
+				return (STATUS_MIFARE_NACK); // NAK bit
+			}
+			// TODO - chaining I guess
+			return (STATUS_INTERNAL_ERROR);
+		} else if ((response[0] & 0xF0) == 0xF0) { // WTX
+			buf[0] = 0xF2;
+			buf[1] = response[1] & 0x3F;
+			// TODO - actually change the timeout value
+			// Note: Not actually required for DESFire cards, will always request a multiplier of 1 (unchanged)
+			status = PCD_CalculateCRC(buf, 2, buf + 2);
+			sendLen = 1;
+			continue;
+		} else {
+			Serial.print("ISODEP ifchain failure: "); Serial.println(response[0]);
+			return (STATUS_ERROR);
+		}
+	}
+}
+
+// [idcard] end
 
 /////////////////////////////////////////////////////////////////////////////////////
 // Support functions
@@ -1744,6 +1867,8 @@ bool MFRC522::MIFARE_OpenUidBackdoor(bool logErrors) {
  * It assumes a default KEY A of 0xFFFFFFFFFFFF.
  * Make sure to have selected the card before this function is called.
  */
+
+/* // [idcard] start - remove deprecated calls
 bool MFRC522::MIFARE_SetUid(byte *newUid, byte uidSize, bool logErrors) {
 	
 	// UID + BCC byte can not be larger than 16 together
@@ -1842,10 +1967,12 @@ bool MFRC522::MIFARE_SetUid(byte *newUid, byte uidSize, bool logErrors) {
 	
 	return true;
 }
+*/ // [idcard] end
 
 /**
  * Resets entire sector 0 to zeroes, so the card can be read again by readers.
  */
+/* // [idcard] start - remove deprecated calls
 bool MFRC522::MIFARE_UnbrickUidSector(bool logErrors) {
 	MIFARE_OpenUidBackdoor(logErrors);
 	
@@ -1862,6 +1989,7 @@ bool MFRC522::MIFARE_UnbrickUidSector(bool logErrors) {
 	}
 	return true;
 }
+*/ // [idcard] end
 
 /////////////////////////////////////////////////////////////////////////////////////
 // Convenience functions - does not add extra functionality

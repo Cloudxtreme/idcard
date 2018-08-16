@@ -18,6 +18,7 @@ import org.us.x42.kyork.idcard.desfire.DESFireCard;
 import org.us.x42.kyork.idcard.desfire.DESFireProtocol;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 public class WriteCardTask extends CardNFCTask {
@@ -56,6 +57,9 @@ public class WriteCardTask extends CardNFCTask {
                         FileSignatures.KEYID_DEBUG,
                         FileSignatures.signForDebug(f.getRawContent()));
                 anyDirty = true;
+                if (f instanceof FileUserInfo) {
+                    ((FileUserInfo) f).setLastUpdated(new Date());
+                }
             }
 
             if (!anyDirty) {
@@ -77,14 +81,18 @@ public class WriteCardTask extends CardNFCTask {
 
             mCard.establishAuthentication((byte)0, CardJob.ENC_KEY_NULL);
 
+
             // Write files
             for (AbstractCardFile f : files) {
                 if (f == null) continue;
 
-                if (f instanceof FileDoorPermissions)
-                    ((FileDoorPermissions)f).signMAC(mTag, CardJob.MAC_KEY_DEV, cardToWrite.fileMetadata, cardToWrite.fileUserInfo);
-                else if (!f.isDirty())
+                if (f instanceof FileUserInfo) {
+                    ((FileUserInfo) f).setCardSerialRepeat(mTag.getId());
+                } else if (f instanceof FileDoorPermissions) {
+                    ((FileDoorPermissions) f).signMAC(mTag, CardJob.MAC_KEY_DEV, cardToWrite.fileMetadata, cardToWrite.fileUserInfo);
+                } else if (!f.isDirty()) {
                     continue;
+                }
 
                 mCard.writeToFile(
                         DESFireProtocol.FileEncryptionMode.PLAIN,

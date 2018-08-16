@@ -333,6 +333,7 @@ public class IntraProfileActivity extends AppCompatActivity {
                             else
                                 id.fileUserInfo.setAccountType((byte)0x01);
                         }
+                        id.fileUserInfo.setLastUpdated(new Date());
 /*
                         if (cursus_users != null) {
                             for (int i = 0; i < cursus_users.length(); i++) {
@@ -346,6 +347,8 @@ public class IntraProfileActivity extends AppCompatActivity {
                             }
                         }
 */
+                        PackUtil.writeBE24(id.fileDoorPermissions.getRawContent(), 3, 0x010203);
+
                         id.fileMetadata.getDirtyRanges().add(new int[] { 0, id.fileMetadata.getExpectedFileSize() });
                         id.fileUserInfo.getDirtyRanges().add(new int[] { 0, id.fileUserInfo.getExpectedFileSize() });
                         id.fileDoorPermissions.getDirtyRanges().add(new int[] { 0, id.fileDoorPermissions.getExpectedFileSize() });

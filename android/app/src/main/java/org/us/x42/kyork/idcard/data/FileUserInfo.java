@@ -133,11 +133,15 @@ public class FileUserInfo extends AbstractCardFile {
         return PackUtil.readLE56(getRawContent(), 0x11);
     }
 
-    public void setCardSerialRepeat(long serial) {
-        PackUtil.writeLE56(getRawContent(), 0x11, serial);
+    public void setCardSerialRepeat(byte[] tagId) {
+        setSlice(0x11, tagId, 0, 7);
     }
 
     public long getLastUpdated() {
         return readLE64(0x18);
+    }
+
+    public void setLastUpdated(Date date) {
+        PackUtil.writeLE64(getRawContent(), 0x18, date.getTime());
     }
 }

@@ -7,6 +7,8 @@
 #define USE_MFRC_630 0
 #define USE_I2C_HS_MODE 0
 
+#define NUM_READERS 1
+
 // === End Use Flags
 
 # include <stddef.h>
@@ -47,17 +49,42 @@ void card_transcieve(struct s_desfire_cmd *data);
 # define PIN_IRQ_A 3
 #endif
 
-// Commands sent to the PICC.
-enum PICC_Command : byte {
-  // The commands used by the PCD to manage communication with several PICCs (ISO 14443-3, Type A, section 6.4)
-  PICC_CMD_REQA     = 0x26,   // REQuest command, Type A. Invites PICCs in state IDLE to go to READY and prepare for anticollision or selection. 7 bit frame.
-  PICC_CMD_WUPA     = 0x52,   // Wake-UP command, Type A. Invites PICCs in state IDLE and HALT to go to READY(*) and prepare for anticollision or selection. 7 bit frame.
-  PICC_CMD_CT       = 0x88,   // Cascade Tag. Not really a command, but used during anti collision.
-  PICC_CMD_SEL_CL1  = 0x93,   // Anti collision/Select, Cascade Level 1
-  PICC_CMD_SEL_CL2  = 0x95,   // Anti collision/Select, Cascade Level 2
-  PICC_CMD_SEL_CL3  = 0x97,   // Anti collision/Select, Cascade Level 3
-  PICC_CMD_HLTA     = 0x50,   // HaLT command, Type A. Instructs an ACTIVE PICC to go to state HALT.
-  PICC_CMD_RATS     = 0xE0, // Request command for Answer To Reset.
+enum ReaderState : int {
+  STATE_IDLE = 0,
+  STATE_WAIT = 1,
+  STATE_SELECT,
+  STATE_READ,
+  STATE_LOCK,
+  STATE_UNLOCK_START,
+  STATE_UNLOCK_NOBEEP,
+  STATE_UNLOCK_END,
+  STATE_ERRBEEP,
 };
+
+extern MFRC522           *g_mfrc522[NUM_READERS];
+extern ReaderState       g_states[NUM_READERS];
+extern ReaderState       g_nextstate[NUM_READERS];
+extern unsigned long     g_delayuntil[NUM_READERS];
+
+ReaderState wait_then_do(int cardi, long delay_ms, ReaderState next);
+ReaderState handle_error(int cardi, const char *opname, MFRC522::StatusCode status, bool halt_card = false);
+
+void        state_machine_loop(void);
+ReaderState connect_to_card(int cardi);
+ReaderState select_app(int i);
+ReaderState read_and_verify(int i);
+ReaderState unlock_lock(int i);
+ReaderState unlock_endbeep(int i);
+ReaderState unlock_end(int i);
+ReaderState err_beeper(int i);
+
+#define SCAN_PERIOD_MS 5
+#define UNLOCK_PERIOD_MS 5000
+#define ERRBEEP_HZ 1500
+#define ERRBEEP_ON_MS 100
+#define ERRBEEP_OFF_MS 50
+#define GOODBEEP_HZ 900
+#define GOODBEEP_ON_MS 600
+#define EXPIRE_DETECT ((uint32_t)0x80000000)
 
 #endif // READER_CONFIG_H

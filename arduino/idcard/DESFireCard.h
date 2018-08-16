@@ -27,7 +27,15 @@ enum DESFireCommand : byte {
   CMD_CREATE_CYCLICRECORD_FILE  = 0xC0,
   CMD_CHANGE_KEY_SETTINGS       = 0x54,
   CMD_GET_KEY_SETTINGS          = 0x45,
-  CMD_FORMAT_PICC               = 0xFC
+  CMD_FORMAT_PICC               = 0xFC,
+  CMD_REQA                      = 0x26, // REQuest command, Type A. Invites PICCs in state IDLE to go to READY and prepare for anticollision or selection. 7 bit frame.
+  CMD_WUPA                      = 0x52, // Wake-UP command, Type A. Invites PICCs in state IDLE and HALT to go to READY(*) and prepare for anticollision or selection. 7 bit frame.
+  CMD_CT                        = 0x88, // Cascade Tag. Not really a command, but used during anti collision.
+  CMD_SEL_CL1                   = 0x93, // Anti collision/Select, Cascade Level 1
+  CMD_SEL_CL2                   = 0x95, // Anti collision/Select, Cascade Level 2
+  CMD_SEL_CL3                   = 0x97, // Anti collision/Select, Cascade Level 3
+  CMD_HLTA                      = 0x50, // HaLT command, Type A. Instructs an ACTIVE PICC to go to state HALT.
+  CMD_RATS                      = 0xE0, // Request command for Answer To Reset.
 };
 
 enum ProtocolStatus : byte {
@@ -60,7 +68,7 @@ enum ProtocolStatus : byte {
 
 extern uint16_t g_lerror;
 
-MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte command, byte *sendbuf, byte sendlen, byte *recvbuf, byte *recvlen);
+MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte *cmdbuf, byte sendlen, byte *recvbuf, byte *recvlen);
 MFRC522::StatusCode select_application(MFRC522 *mfrc522, uint32_t app_id);
 MFRC522::StatusCode read_file(MFRC522 *mfrc522, byte file_id, byte length, uint32_t offset, byte *dst);
 

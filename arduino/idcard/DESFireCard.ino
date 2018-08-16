@@ -117,18 +117,10 @@ MFRC522::StatusCode send_request(MFRC522 *mfrc522, byte command, byte *sendbuf, 
   return (MFRC522::STATUS_OK);
 }
 */
-MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte command, byte *sendbuf, byte sendlen, byte *recvbuf, byte *recvlen) {
-  byte msglen;
-  byte *message = wrap_message(command, sendbuf, sendlen, &msglen);
-  if (!message) {
-    g_lerror = LERROR_ERRNO;
-    return (MFRC522::STATUS_INTERNAL_ERROR);
-  }
-
+MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte *cmdbuf, byte sendlen, byte *recvbuf, byte *recvlen) {
   byte output[0xFF];
   byte len = 0xFF;
-  MFRC522::StatusCode result = mfrc522->ISODEP_Transceive(message, msglen, output, len);
-  free(message);
+  MFRC522::StatusCode result = mfrc522->ISODEP_Transceive(cmdbuf, sendlen, output, len);
 
   if (result != MFRC522::STATUS_OK)
     return (result);
@@ -156,15 +148,36 @@ MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte command, byte *s
 }
 
 MFRC522::StatusCode select_application(MFRC522 *mfrc522, uint32_t app_id) {
-  byte id_frame[3];
-  id_frame[2] = (byte)(app_id & 0xFF);
-  id_frame[1] = (byte)((app_id >> 8) & 0xFF);
-  id_frame[0] = (byte)((app_id >> 16) & 0xFF);
-  return (send_partial_request(mfrc522, CMD_SELECT_APPLICATION, id_frame, 3, NULL, NULL));
+  byte select_cmd[4];
+  select_cmd[3] = (byte)(app_id & 0xFF);
+  select_cmd[2] = (byte)((app_id >> 8) & 0xFF);
+  select_cmd[1] = (byte)((app_id >> 16) & 0xFF);
+  select_cmd[0] = CMD_SELECT_APPLICATION;
+  return (send_partial_request(mfrc522, select_cmd, 4, NULL, NULL));
 }
 
-MFRC522::StatusCode read_file(MFRC522 *mfrc522, byte file_id, byte length, uint32_t offset, byte *dst) {
+MFRC522::StatusCode read_file(MFRC522 *mfrc522, byte file_id, uint32_t offset, byte *dst, byte length) {
+  MFRC522::StatusCode status;
+  byte read_command[8];
+
+  if (length > 56)
+    return (MFRC522::STATUS_NO_ROOM);
   
+  read_command[0] = CMD_READ_DATA;
+  read_command[1] = file_id;
+  read_command[2] = (byte)(offset & 0xFF);
+  read_command[3] = (byte)((offset >> 8) & 0xFF);
+  read_command[4] = (byte)((offset >> 16) & 0xFF);
+  read_command[5] = length;
+  read_command[6] = 0; // length
+  read_command[7] = 0; // length
+  byte actual_len = length;
+  status = send_partial_request(mfrc522, read_command, 8, dst, &actual_len);
+  if (status != MFRC522::STATUS_OK)
+    return (status);
+  if (length != actual_len)
+    return (static_cast<MFRC522::StatusCode>(0x7E));
+  return (status);
 }
 
 

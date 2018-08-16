@@ -149,42 +149,4 @@ int mfrc522_readFIFO(byte *output) {
   return count;
 }
 
-bool card_init(void) {
-  digitalWrite(PIN_RESET_A, false);
-  delay(1);
-  digitalWrite(PIN_RESET_A, true);
-  delay(1);
-  digitalWrite(PIN_RESET_A, false);
-  delay(50);
-
-  byte cmdStatus = mfrc522_readRegister(RC522REG_Command);
-  if (cmdStatus == 0xFF) return false;
-  
-  // Set min baudrate
-  // CRCEn = 0, TxSpeed = 0
-  mfrc522_writeRegister(RC522REG_TxMode, 0x00);
-  // CRCEn = 0, TxSpeed = 0, RxNoErr = 1, RxMultiple = 0
-  mfrc522_writeRegister(RC522REG_RxMode, 0x08);
-  // Force100ASK = 1
-  mfrc522_writeRegister(RC522REG_TxASK, 0x40);
-  mfrc522_writeRegister(RC522REG_ModWidth, 0x26);
-
-  // Set a 25-ms timeout
-  // TODO - verify correctness
-  mfrc522_writeRegister(RC522REG_TimerMode, 0x80);
-  mfrc522_writeRegister(RC522REG_TimerPrescaler, 0xA9);
-  mfrc522_writeRegister(RC522REG_TimerReloadHi, 0x03);
-  mfrc522_writeRegister(RC522REG_TimerReloadLo, 0xE8);
-  
-}
-
-void card_startDetect(void) {
-  mfrc522_writeRegister(RC522REG_FIFOData, PICC_CMD_REQA);
-  
-}
-
-void transcieve(struct s_desfire_cmd *data) {
-  
-}
-
 #endif

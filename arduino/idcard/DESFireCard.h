@@ -64,11 +64,15 @@ enum ProtocolStatus : byte {
 };
 
 # define LERROR_ERRNO 0xFFFF
-# define LERROR_BAD_RESPONSE 0xFFFE
+# define LERROR_TRANSCEIVE_FAILURE 0xFFFE
+# define LERROR_LARGER_RESPONSE 0xFFFD
 
 extern uint16_t g_lerror;
+extern byte     g_lstatus;
 
-MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte *cmdbuf, byte sendlen, byte *recvbuf, byte *recvlen);
+MFRC522::StatusCode send_request(MFRC522 *mfrc522, byte *cmdbuf, byte sendlen, byte *recvbuf, byte *recvlen);
+MFRC522::StatusCode get_additional_frame(MFRC522 *mfrc522, byte *recvbuf, byte *recvlen);
+
 MFRC522::StatusCode select_application(MFRC522 *mfrc522, uint32_t app_id);
 MFRC522::StatusCode read_file(MFRC522 *mfrc522, byte file_id, byte length, uint32_t offset, byte *dst);
 

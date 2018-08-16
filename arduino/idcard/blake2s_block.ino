@@ -119,7 +119,7 @@ static void							blake2s_round(
 	blake2s_roundop(7, sigma_i, m, v);
 }
 
-#define DEBUG_PRINT(...) Serial.print(__VA_ARGS__)
+#define DEBUG_PRINT(...) SERIAL_PRINT(__VA_ARGS__)
 #undef DEBUG_PRINT
 #define DEBUG_PRINT(...) 
 

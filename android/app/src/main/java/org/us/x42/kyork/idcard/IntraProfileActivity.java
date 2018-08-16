@@ -23,13 +23,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.us.x42.kyork.idcard.data.CardDataFormat;
 import org.us.x42.kyork.idcard.data.FileDoorPermissions;
+import org.us.x42.kyork.idcard.data.FileMetadata;
 import org.us.x42.kyork.idcard.data.FileSignatures;
 import org.us.x42.kyork.idcard.data.FileUserInfo;
 import org.us.x42.kyork.idcard.data.IDCard;
 import org.us.x42.kyork.idcard.tasks.WriteCardTask;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -280,6 +284,9 @@ public class IntraProfileActivity extends AppCompatActivity {
                         if (id == null)
                             id = new IDCard();
 
+                        if (id.fileMetadata == null)
+                            id.fileMetadata = new FileMetadata(new byte[CardDataFormat.FORMAT_METADATA.expectedSize]);
+
                         if (id.fileUserInfo == null)
                             id.fileUserInfo = new FileUserInfo(new byte[CardDataFormat.FORMAT_USERINFO.expectedSize]);
 
@@ -288,6 +295,10 @@ public class IntraProfileActivity extends AppCompatActivity {
 
                         if (id.fileSignatures == null)
                             id.fileSignatures = new FileSignatures(new byte[CardDataFormat.FORMAT_SIGNATURES.expectedSize]);
+
+                        id.fileMetadata.setProvisioningDate(new Date());
+                        id.fileMetadata.setSchemaVersion((short)1);
+                        id.fileMetadata.setDeviceType((short)0x4449);
 
                         id.fileUserInfo.setLogin(login);
                         id.fileUserInfo.setIntraUserID(user.getInt("id"));
@@ -322,7 +333,7 @@ public class IntraProfileActivity extends AppCompatActivity {
                             else
                                 id.fileUserInfo.setAccountType((byte)0x01);
                         }
-                        /*
+/*
                         if (cursus_users != null) {
                             for (int i = 0; i < cursus_users.length(); i++) {
                                 JSONObject cursus_user = cursus_users.getJSONObject(i);
@@ -334,16 +345,18 @@ public class IntraProfileActivity extends AppCompatActivity {
                                 }
                             }
                         }
-                        */
-
+*/
+                        id.fileMetadata.getDirtyRanges().add(new int[] { 0, id.fileMetadata.getExpectedFileSize() });
                         id.fileUserInfo.getDirtyRanges().add(new int[] { 0, id.fileUserInfo.getExpectedFileSize() });
-//                        id.fileDoorPermissions.getDirtyRanges().add(new int[] { 0, id.fileDoorPermissions.getExpectedFileSize() });
+                        id.fileDoorPermissions.getDirtyRanges().add(new int[] { 0, id.fileDoorPermissions.getExpectedFileSize() });
 
                         IntraProfileActivity.this.beginWriteTask(id);
                     }
                     catch (JSONException e) {
                         e.printStackTrace(System.err);
-                    }
+                    } //catch (ParseException e) {
+                        //e.printStackTrace(System.err);
+                    //}
                 }
                 return true;
             }

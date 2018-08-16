@@ -1,4 +1,4 @@
-
+#include "DESFireCard.h"
 #include "reader_config.h"
 
 // todo: auto cps conversion?
@@ -22,15 +22,27 @@ ReaderState handle_error(int i, const char *opname, MFRC522::StatusCode status, 
   
   SERIAL_PRINT("Card "); SERIAL_PRINT(i); SERIAL_PRINT(" error ");
   if (status == MFRC522::STATUS_INTERNAL_ERROR) {
-    if (g_lerror == LERROR_ERRNO) {
-      SERIAL_PRINT(opname);
-      SERIAL_PRINT(": errno: ");
-      SERIAL_PRINTLN(errno);
-    }
-    else {
-      SERIAL_PRINT(opname);
-      SERIAL_PRINT(": DESFire Status: ");
-      SERIAL_PRINTLN(g_lerror);
+    switch (g_lerror) {
+      case LERROR_ERRNO:
+        SERIAL_PRINT(opname);
+        SERIAL_PRINT(": errno: ");
+        SERIAL_PRINTLN(errno);
+        break;
+
+      case LERROR_TRANSCEIVE_FAILURE:
+        SERIAL_PRINT(opname);
+        SERIAL_PRINTLN(": MFRC522::ISODEP_Transceive() internal error");
+        break;
+
+      case LERROR_LARGER_RESPONSE:
+        SERIAL_PRINT(opname);
+        SERIAL_PRINTLN(": Specified response buffer is not large enough");
+        break;
+
+      default:
+        SERIAL_PRINT(opname);
+        SERIAL_PRINT(": DESFire Status: ");
+        SERIAL_PRINTLN(g_lerror);
     }
   }
   else {

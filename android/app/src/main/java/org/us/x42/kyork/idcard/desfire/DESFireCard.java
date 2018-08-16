@@ -299,7 +299,7 @@ public class DESFireCard {
     }
 
     @NonNull
-    private static String stringifyByteArray(byte[] data) {
+    public static String stringifyByteArray(byte[] data) {
         if (data == null) {
             return "(null)";
         }
@@ -308,7 +308,7 @@ public class DESFireCard {
         sb.append('[');
         sb.append(' ');
         for (byte d : data) {
-            sb.append((int) d);
+            sb.append(String.format("%02X", d));
             sb.append(' ');
         }
         sb.append(']');

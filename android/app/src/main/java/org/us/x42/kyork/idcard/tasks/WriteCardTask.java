@@ -44,13 +44,13 @@ public class WriteCardTask extends CardNFCTask {
     @Override
     protected List<Object> doInBackground(Object... params) {
         try {
-            AbstractCardFile files[] = new AbstractCardFile[] {cardToWrite.fileUserInfo, cardToWrite.fileDoorPermissions};
+            AbstractCardFile files[] = new AbstractCardFile[] {cardToWrite.fileMetadata, cardToWrite.fileUserInfo, cardToWrite.fileDoorPermissions};
             boolean anyDirty = false;
 
             // Sign files
             // TODO(kyork): this becomes an HTTP request to the signing server, or handled in the caller
             for (AbstractCardFile f : files) {
-                if (!f.isDirty()) continue;
+                if (f == null || !f.isDirty()) continue;
                 cardToWrite.fileSignatures.setSignature(
                         (byte)f.getFileID(),
                         FileSignatures.KEYID_DEBUG,
@@ -79,7 +79,12 @@ public class WriteCardTask extends CardNFCTask {
 
             // Write files
             for (AbstractCardFile f : files) {
-                if (!f.isDirty()) continue;
+                if (f == null) continue;
+
+                if (f instanceof FileDoorPermissions)
+                    ((FileDoorPermissions)f).signMAC(mTag, CardJob.MAC_KEY_DEV, cardToWrite.fileMetadata, cardToWrite.fileUserInfo);
+                else if (!f.isDirty())
+                    continue;
 
                 mCard.writeToFile(
                         DESFireProtocol.FileEncryptionMode.PLAIN,

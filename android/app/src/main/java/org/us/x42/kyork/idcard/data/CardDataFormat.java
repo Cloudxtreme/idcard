@@ -35,7 +35,7 @@ public class CardDataFormat {
             new FileFormatInfo(FileMetadata.class, (byte)0x1, 16, false, DESFireProtocol.FILETYPE_STANDARD);
     public static final FileFormatInfo FORMAT_USERINFO =
             new FileFormatInfo(FileUserInfo.class, (byte)0x2, 32, true, DESFireProtocol.FILETYPE_BACKUP);
-    // cantina file..?
+    // cantina file..? (possibly encrypted payment information for real-time payments)
     public static final FileFormatInfo FORMAT_DOORPERMS =
             new FileFormatInfo(FileDoorPermissions.class, (byte)0x4, 64, true, DESFireProtocol.FILETYPE_BACKUP);
     public static final FileFormatInfo FORMAT_SIGNATURES =

@@ -11,7 +11,7 @@ import java.util.List;
  * Base class for card file format classes. Provides integer decoding utility functions.
  */
 public abstract class AbstractCardFile implements CardFile, Parcelable {
-    private byte[] rawContent;
+    protected byte[] rawContent;
     private List<int[]> dirtyRanges = new ArrayList<>();
 
     public AbstractCardFile(byte[] content) {

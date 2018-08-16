@@ -457,8 +457,8 @@ MFRC522::StatusCode MFRC522::PCD_CommunicateWithPICC(	byte command,		///< The co
 	// In PCD_Init() we set the TAuto flag in TModeReg. This means the timer automatically starts when the PCD stops transmitting.
 	// [idcard] start - use millis() instead, increase timeout to 78ms
 	bool ok = false;
-	unsigned long loop_until = millis() + 78;
-	while (millis() < loop_until) {
+	unsigned long prev_interval = millis();
+	while ((unsigned long)(millis() - prev_interval) < 78) {
 		byte n = PCD_ReadRegister(ComIrqReg);	// ComIrqReg[7..0] bits are: Set1 TxIRq RxIRq IdleIRq HiAlertIRq LoAlertIRq ErrIRq TimerIRq
 		if (n & waitIRq) {					// One of the interrupts that signal success has been set.
 			ok = true;

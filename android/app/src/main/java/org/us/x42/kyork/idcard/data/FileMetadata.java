@@ -63,4 +63,24 @@ public class FileMetadata extends AbstractCardFile {
     public short getUnused2() {
         return readLE16(0xe);
     }
+
+    public void setProvisioningDate(Date date) {
+        writeLE64(0x0, date.getTime());
+    }
+
+    public void setSchemaVersion(short ver) {
+        writeLE16(0x8, ver);
+    }
+
+    public void setDeviceType(short type) {
+        writeLE16(0xa, type);
+    }
+
+    public void setUnused1(short val) {
+        writeLE16(0xc, val);
+    }
+
+    public void setUnused2(short val) {
+        writeLE16(0xe, val);
+    }
 }

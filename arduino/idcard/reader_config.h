@@ -11,44 +11,6 @@
 
 // === End Use Flags
 
-# include <stddef.h>
-
-struct s_desfire_cmd {
-  int command;
-  int len;
-  byte data[64];
-};
-
-bool card_init(void);
-void card_startDetect(void);
-
-/*
- * @returns true if a card is present
- */
-bool card_checkDetect(void);
-void card_transcieve(struct s_desfire_cmd *data);
-
-// I2C Frequency
-#ifdef USE_MFRC_522
-# define I2C_FREQUENCY 400000 // Fast
-# define I2C_SUPPORTS_HS_MODE 1
-#elif USE_MFRC_630
-# define I2C_FREQUENCY 1000000 // Fast+
-# define I2C_SUPPORTS_HS_MODE 0
-#endif
-#define I2C_FREQUENCY_HS 3400000 // High Speed
-
-#if USE_I2C_HS_MODE && !I2C_SUPPORTS_HS_MODE
-# undef USE_I2C_HS_MODE
-# define USE_I2C_HS_MODE 0
-#endif
-
-
-#ifdef USE_MFRC_522
-# define PIN_RESET_A 2
-# define PIN_IRQ_A 3
-#endif
-
 enum ReaderState : int {
   STATE_IDLE = 0,
   STATE_WAIT = 1,

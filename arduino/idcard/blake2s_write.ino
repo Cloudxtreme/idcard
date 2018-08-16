@@ -84,9 +84,9 @@ void      blake2s_output_hash(struct s_blake2s_state *state, t_u8 *outbuf)
   }
 #else // _128 only
 memcpy(outbuf, state->h, BLAKE2S_128_OUTPUT_SIZE);
-  for (int i = 0; i < 4; i++) {
+//  for (int i = 0; i < 4; i++) {
 //    LEU32(&outbuf[i * 4]) = state->h[i];
-  }
+//  }
 #endif
 }
 

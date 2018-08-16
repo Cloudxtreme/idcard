@@ -436,7 +436,7 @@ public:
 	/////////////////////////////////////////////////////////////////////////////////////
 	virtual bool PICC_IsNewCardPresent();
 	virtual bool PICC_ReadCardSerial();
-	
+
 protected:
 	byte _chipSelectPin;		// Arduino pin connected to MFRC522's SPI slave select input (Pin 24, NSS, active low)
 	byte _resetPowerDownPin;	// Arduino pin connected to MFRC522's reset and power down input (Pin 6, NRSTPD, active low)

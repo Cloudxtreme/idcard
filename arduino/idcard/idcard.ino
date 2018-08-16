@@ -162,8 +162,11 @@ int connect_to_card(int i) {
     }
     SERIAL_PRINTLN();
 
-    //g_mfrc522[i]->PICC_DumpToSerial(&(g_mfrc522[i]->uid));
-    //g_mfrc522[i]->PICC_HaltA();
+    auto status = g_mfrc522[i]->ISODEP_RATS();
+    if (status != MFRC522::STATUS_OK) {
+      Serial.print("RATS failed: "); Serial.println(status);
+      return (STATE_IDLE);
+    }
     return (STATE_SELECT);
   }
 
@@ -196,6 +199,17 @@ int select_app(int i) {
 }
 
 int read_and_verify(int i) {
+  byte verify_data[0x80];
+  // 16 bytes serial, zeroes
+  // 16 bytes file 0x1
+  // 32 bytes file 0x2
+  // 48 bytes file 0x4
+
+  memset(verify_data + 0, 0, 16);
+  for (int j = 0; j < g_mfrc522[i]->uid.size; j++) {
+    verify_data[j] = g_mfrc522[i]->uid.uidByte[j];
+  }
+
   if (true) { //TODO: read the card data and verify it
     return (STATE_UNLOCK); //At this point the card can be pulled away
   }

@@ -5,27 +5,31 @@ uint16_t g_lerror = 0;
 
 static byte *wrap_message(byte command, byte *sendbuf, byte sendlen, byte *msglen) {
   size_t len = (sendbuf && sendlen) ? sendlen : 0;
-  byte *message = (byte *)malloc(6 + len);
+  byte *message = (byte *)malloc(1 + len);
 
   if (message) {
+    /*
     message[0] = 0x90;
     message[1] = command;
     message[2] = 0x00;
     message[3] = 0x00;
 
     message[4] = len;
+    */
+    message[0] = command;
     for (byte i = 0; i < len; i++) {
-      message[5 + i] = sendbuf[i];
+      message[1 + i] = sendbuf[i];
     }
-    message[5 + len] = 0x00;
+    // message[5 + len] = 0x00;
+    
   }
 
   if (msglen)
-    *msglen = 6 + len;
+    *msglen = 1 + len;
 
   return (message);
 }
-
+/*
 MFRC522::StatusCode send_request(MFRC522 *mfrc522, byte command, byte *sendbuf, byte sendlen, byte **recvbuf, unsigned int *recvlen) {
   byte msglen;
   byte *message = wrap_message(command, sendbuf, sendlen, &msglen);
@@ -112,8 +116,8 @@ MFRC522::StatusCode send_request(MFRC522 *mfrc522, byte command, byte *sendbuf, 
     *recvlen = offset;
   return (MFRC522::STATUS_OK);
 }
-
-MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte command, byte *sendbuf, byte sendlen, byte **recvbuf, byte *recvlen) {
+*/
+MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte command, byte *sendbuf, byte sendlen, byte *recvbuf, byte *recvlen) {
   byte msglen;
   byte *message = wrap_message(command, sendbuf, sendlen, &msglen);
   if (!message) {
@@ -121,37 +125,27 @@ MFRC522::StatusCode send_partial_request(MFRC522 *mfrc522, byte command, byte *s
     return (MFRC522::STATUS_INTERNAL_ERROR);
   }
 
-  if (recvbuf && recvlen) {
-    *recvbuf = NULL;
-    *recvlen = 0;
-  }
-
   byte output[0xFF];
   byte len = 0xFF;
-  mfrc522->PCD_WriteRegister(MFRC522::CommandReg, 0);
-  MFRC522::StatusCode result = mfrc522->PCD_TransceiveData(message, msglen, output, &len);
+  MFRC522::StatusCode result = mfrc522->ISODEP_Transceive(message, msglen, output, len);
   free(message);
 
   if (result != MFRC522::STATUS_OK)
     return (result);
 
-  if (len < 2 || output[len - 2] != (byte) 0x91) {
-    g_lerror = LERROR_BAD_RESPONSE;
-    return (MFRC522::STATUS_INTERNAL_ERROR);
-  }
-
-  byte status = output[len - 1];
+  byte status = output[0];
 
   if (status == STATUS_OPERATION_OK || status == STATUS_ADDITIONAL_FRAME) {
-    if (recvbuf && recvlen) {
-      *recvbuf = (byte *)malloc(len - 2);
-      if (!(*recvbuf)) {
-        g_lerror = LERROR_ERRNO;
-        return (MFRC522::STATUS_INTERNAL_ERROR);
+    if (recvbuf && recvlen && *recvlen != 0) {
+      if ((len - 1) > *recvlen) {
+        memcpy(recvbuf, output + 1, *recvlen);
       }
-
-      memcpy(*recvbuf, output, len - 2);
-      *recvlen = len - 2;
+      else {
+        memcpy(recvbuf, output + 1, len - 1);
+      }
+    }
+    if (recvlen) {
+      *recvlen = len - 1;
     }
 
     return (MFRC522::STATUS_OK);
@@ -168,4 +162,9 @@ MFRC522::StatusCode select_application(MFRC522 *mfrc522, uint32_t app_id) {
   id_frame[0] = (byte)((app_id >> 16) & 0xFF);
   return (send_partial_request(mfrc522, CMD_SELECT_APPLICATION, id_frame, 3, NULL, NULL));
 }
+
+MFRC522::StatusCode read_file(MFRC522 *mfrc522, byte file_id, byte length, uint32_t offset, byte *dst) {
+  
+}
+
 

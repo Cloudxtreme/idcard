@@ -37,21 +37,40 @@ public class Blake2sMessageDigest extends MessageDigest {
 
     private int[] h;
     private byte[] block;
+    private byte[] key;
     private int[] m;
     private int[] v;
     private long length;
+    private int keySize;
+    private int outputSize;
     private int posn;
 
     /**
      * Constructs a new BLAKE2s message digest object.
      */
-    public Blake2sMessageDigest() {
+    public Blake2sMessageDigest(int outputBytes, byte[] key) {
         super("BLAKE2S-256");
         h = new int [8];
         block = new byte [64];
         m = new int [16];
         v = new int [16];
+        this.key = key;
+        if (key != null) {
+            if (key.length > 32) throw new IllegalArgumentException("Key size too large");
+            this.keySize = key.length;
+        }
+        this.outputSize = outputBytes;
+        if (outputBytes != 32 && outputBytes != 16) {
+            throw new IllegalArgumentException("Bad value for outputBytes");
+        }
+        if (outputBytes == 16 && key == null) {
+            throw new IllegalArgumentException("Key is required for BLAKE2s-128");
+        }
         engineReset();
+    }
+
+    public Blake2sMessageDigest() {
+        this(32, null);
     }
 
     @Override
@@ -90,7 +109,8 @@ public class Blake2sMessageDigest extends MessageDigest {
 
     @Override
     protected void engineReset() {
-        h[0] = 0x6A09E667 ^ 0x01010020;
+        h[0] = 0x6A09E667;
+        h[0] ^= (outputSize) | (keySize << 8) | (1 << 16) | (1 << 24);
         h[1] = 0xBB67AE85;
         h[2] = 0x3C6EF372;
         h[3] = 0xA54FF53A;
@@ -100,6 +120,10 @@ public class Blake2sMessageDigest extends MessageDigest {
         h[7] = 0x5BE0CD19;
         length = 0;
         posn = 0;
+        if (this.key != null) {
+            this.engineUpdate(key, 0, keySize);
+            this.engineUpdate(new byte[0x40 - keySize], 0, 0x40 - keySize);
+        }
     }
 
     @Override

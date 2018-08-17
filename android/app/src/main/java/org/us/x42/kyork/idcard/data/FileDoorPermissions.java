@@ -45,9 +45,6 @@ public class FileDoorPermissions extends AbstractCardFile {
 
     public void signMAC(Tag tag, byte[] key, FileMetadata meta, FileUserInfo info) throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        byte[] keyPadding = new byte[0x40 - key.length];
-        stream.write(key);
-        stream.write(keyPadding);
 
         byte[] uid = tag.getId();
         byte[] uidPadding = new byte[0x10 - uid.length];
@@ -59,7 +56,7 @@ public class FileDoorPermissions extends AbstractCardFile {
 
         byte[] verifyData = stream.toByteArray();
 
-        Blake2sMessageDigest engine = new Blake2sMessageDigest();
+        Blake2sMessageDigest engine = new Blake2sMessageDigest(16, key);
         engine.engineUpdate(verifyData, 0, verifyData.length);
         byte[] mac = engine.engineDigest();
 
@@ -67,14 +64,9 @@ public class FileDoorPermissions extends AbstractCardFile {
         Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x10, 0x20)));
         Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x20, 0x30)));
         Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x30, 0x40)));
-
         Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x40, 0x50)));
         Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x50, 0x60)));
         Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x60, 0x70)));
-        Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x70, 0x80)));
-        Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x80, 0x90)));
-        Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x90, 0xA0)));
-        Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0xA0, 0xB0)));
 
         Log.i("HASH", DESFireCard.stringifyByteArray(Arrays.copyOfRange(mac, 0x00, 0x10)));
         setSlice(0x30, mac, 0, 0x10);

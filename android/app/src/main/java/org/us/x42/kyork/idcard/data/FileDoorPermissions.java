@@ -59,6 +59,7 @@ public class FileDoorPermissions extends AbstractCardFile {
         Blake2sMessageDigest engine = new Blake2sMessageDigest(16, key);
         engine.engineUpdate(verifyData, 0, verifyData.length);
         byte[] mac = engine.engineDigest();
+        engine.destroy();
 
         Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x00, 0x10)));
         Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x10, 0x20)));
@@ -68,8 +69,8 @@ public class FileDoorPermissions extends AbstractCardFile {
         Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x50, 0x60)));
         Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x60, 0x70)));
 
-        Log.i("HASH", DESFireCard.stringifyByteArray(Arrays.copyOfRange(mac, 0x00, 0x10)));
+        //Log.i("HASH", DESFireCard.stringifyByteArray(Arrays.copyOfRange(mac, 0x00, 0x10)));
         setSlice(0x30, mac, 0, 0x10);
-        Log.i("COPY", DESFireCard.stringifyByteArray(Arrays.copyOfRange(rawContent, 0x30, 0x40)));
+        //Log.i("COPY", DESFireCard.stringifyByteArray(Arrays.copyOfRange(rawContent, 0x30, 0x40)));
     }
 }

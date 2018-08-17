@@ -284,9 +284,6 @@ public class IntraProfileActivity extends AppCompatActivity {
                         if (id == null)
                             id = new IDCard();
 
-                        if (id.fileMetadata == null)
-                            id.fileMetadata = new FileMetadata(new byte[CardDataFormat.FORMAT_METADATA.expectedSize]);
-
                         if (id.fileUserInfo == null)
                             id.fileUserInfo = new FileUserInfo(new byte[CardDataFormat.FORMAT_USERINFO.expectedSize]);
 
@@ -295,10 +292,6 @@ public class IntraProfileActivity extends AppCompatActivity {
 
                         if (id.fileSignatures == null)
                             id.fileSignatures = new FileSignatures(new byte[CardDataFormat.FORMAT_SIGNATURES.expectedSize]);
-
-                        id.fileMetadata.setProvisioningDate(new Date());
-                        id.fileMetadata.setSchemaVersion((short)1);
-                        id.fileMetadata.setDeviceType((short)0x4449);
 
                         id.fileUserInfo.setLogin(login);
                         id.fileUserInfo.setIntraUserID(user.getInt("id"));
@@ -349,7 +342,6 @@ public class IntraProfileActivity extends AppCompatActivity {
 */
                         PackUtil.writeBE24(id.fileDoorPermissions.getRawContent(), 3, 0x010203);
 
-                        id.fileMetadata.getDirtyRanges().add(new int[] { 0, id.fileMetadata.getExpectedFileSize() });
                         id.fileUserInfo.getDirtyRanges().add(new int[] { 0, id.fileUserInfo.getExpectedFileSize() });
                         id.fileDoorPermissions.getDirtyRanges().add(new int[] { 0, id.fileDoorPermissions.getExpectedFileSize() });
 

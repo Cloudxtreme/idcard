@@ -108,16 +108,15 @@ public class ProvisionBlankCardTask extends CardNFCTask {
             provisioningDate = new Date().getTime();
 
             // Write provisioning file
-            // TODO(apuel): convert to 'new FileMetadata(id_card)' ?
-            byte[] provisioningFileContents = new byte[16];
-            PackUtil.writeLE64(provisioningFileContents, 0, provisioningDate);
-            PackUtil.writeLE16(provisioningFileContents, 8, CardDataFormat.SCHEMA_ID);
-            PackUtil.writeBE16(provisioningFileContents, 0xa, FileMetadata.DEVICE_TYPE_ID);
+            FileMetadata fileMetadata = new FileMetadata(new byte[CardDataFormat.FORMAT_METADATA.expectedSize]);
+            fileMetadata.setProvisioningDate(new Date());
+            fileMetadata.setSchemaVersion((short)1); //(?)
+            fileMetadata.setDeviceType((short)0x4449); //LE 'ID'
 
             try {
                 mCard.writeToFile(DESFireProtocol.FileEncryptionMode.PLAIN,
                         FileMetadata.FILE_ID,
-                        provisioningFileContents, 0);
+                        fileMetadata.getRawContent(), 0);
             } catch (DESFireCard.CardException e) {
                 Log.e(LOG_TAG, "Failed to write metadata file", e);
                 setError("Failed to write metadata file", e);

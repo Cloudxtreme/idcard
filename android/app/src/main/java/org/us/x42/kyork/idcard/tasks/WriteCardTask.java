@@ -45,6 +45,21 @@ public class WriteCardTask extends CardNFCTask {
     @Override
     protected List<Object> doInBackground(Object... params) {
         try {
+            this.setUpCard();
+
+            try {
+                mCard.selectApplication(CardJob.APP_ID_CARD42);
+            } catch (DESFireCard.CardException e) {
+                if (e.getErrorCode() == DESFireProtocol.StatusCode.APPLICATION_NOT_FOUND.getValue()) {
+                    setError(R.string.incomingscan_err_not_card42);
+                    return null;
+                }
+                throw e;
+            }
+
+            if (cardToWrite.fileMetadata == null) //if metadata was read earlier, don't bother
+                cardToWrite.fileMetadata = new FileMetadata(mCard.readFullFile(CardDataFormat.FORMAT_METADATA.fileID, CardDataFormat.FORMAT_METADATA.expectedSize));
+
             AbstractCardFile files[] = new AbstractCardFile[] {cardToWrite.fileMetadata, cardToWrite.fileUserInfo, cardToWrite.fileDoorPermissions};
             boolean anyDirty = false;
 
@@ -67,20 +82,7 @@ public class WriteCardTask extends CardNFCTask {
                 return null;
             }
 
-            this.setUpCard();
-
-            try {
-                mCard.selectApplication(CardJob.APP_ID_CARD42);
-            } catch (DESFireCard.CardException e) {
-                if (e.getErrorCode() == DESFireProtocol.StatusCode.APPLICATION_NOT_FOUND.getValue()) {
-                    setError(R.string.incomingscan_err_not_card42);
-                    return null;
-                }
-                throw e;
-            }
-
             mCard.establishAuthentication((byte)0, CardJob.ENC_KEY_NULL);
-
 
             // Write files
             for (AbstractCardFile f : files) {

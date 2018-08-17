@@ -211,10 +211,17 @@ ReaderState read_and_verify(int i) {
     }
 
     // Read the MAC
-    status = read_file(g_mfrc522[i], 4, 0x30, &verify_data[0x70], 0x10);
+    byte card_mac[0x10];
+    status = read_file(g_mfrc522[i], 4, 0x30, card_mac, 0x10);
     if (status != MFRC522::STATUS_OK) {
       return (handle_error(i, "ReadFile 4b", status, true));
     }
+
+    SERIAL_PRINTLN("Card data:");
+    print_memory(verify_data, 0x70); SERIAL_PRINTLN();
+
+    SERIAL_PRINTLN("Card MAC:");
+    print_memory(card_mac, 0x10); SERIAL_PRINTLN();
 
     // Compute the MAC
     blake2s_reset(&g_hasher);
@@ -225,23 +232,17 @@ ReaderState read_and_verify(int i) {
 
     byte compare = 0;
     for (int i = 0; i < 16; i++) {
-      compare |= verify_data[0x70 + i] ^ compare_mac[i];
+      compare |= card_mac[i] ^ compare_mac[i];
     }
 
-    SERIAL_PRINTLN("Card data:");
-    print_memory(verify_data, 0x70); SERIAL_PRINTLN();
     SERIAL_PRINTLN("Calculated MAC:");
     print_memory(compare_mac, 0x10); SERIAL_PRINTLN();
-    SERIAL_PRINTLN("Card MAC:");
-    print_memory(verify_data + 0x70, 0x10); SERIAL_PRINTLN();
 
     if (!compare) {
       return (STATE_UNLOCK_START); //At this point the card can be pulled away
     }
     else {
-      SERIAL_PRINTLN("MAC AUTH failure");
-      return (STATE_UNLOCK_START);
-      //return (handle_error(i, "MAC failure", MFRC522::STATUS_OK));
+      return (handle_error(i, "MAC failure", MFRC522::STATUS_OK));
     }
   }
   else if (verify_data[0x1a] == 'U') {

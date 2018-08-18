@@ -27,8 +27,9 @@
     <string name="error_cmdid_out_of_range">Error: cmdId must be hex byte (00-FF)</string>
     <string name="title_activity_intra_profile">IntraProfileActivity</string>
     <string name="title_activity_main">MainActivity</string>
-    <string name="launch_setup">Launch Setup</string>
+    <string name="launch_raw_command">Send Manual Command</string>
     <string name="launch_intraprofile">Launch IntraProfile</string>
+    <string name="launch_readerupdate">Manual Reader Update</string>
     <string name="nfc_test_results">Results</string>
     <string name="provision_blank_card">Provision blank card</string>
     <string name="provision_result_title">Card Provisioning Result</string>
@@ -44,5 +45,6 @@
     <string name="incomingscan_err_validate_sig">Card info is corrupted: Signature verify failed</string>
     <string name="incomingscan_err_validate_serial">Card info is corrupted: Serial numbers do not match</string>
     <string name="title_activity_editor">Hex Editor</string>
+    <string name="title_activity_card_admin">Card Administration Menu</string>
 
 </resources>

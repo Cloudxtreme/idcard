@@ -5,11 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="org.us.x42.kyork.idcard.MainActivity"
-    tools:showIn="@layout/activity_main">
+    tools:context="org.us.x42.kyork.idcard.CardAdminActivity"
+    tools:showIn="@layout/activity_card_admin">
 
     <Button
-        android:id="@+id/launch_setup"
+        android:id="@+id/cadmin_launch_manual"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
@@ -19,47 +19,24 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/launch_intraprofile"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="8dp"
-        android:text="@string/launch_intraprofile"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/launch_setup"
-         />
-
-    <Button
-        android:id="@+id/launch_provisioning"
+        android:id="@+id/cadmin_launch_provisioning"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="8dp"
         android:text="@string/provision_blank_card"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/launch_intraprofile"
+        app:layout_constraintTop_toBottomOf="@+id/cadmin_launch_manual"
         />
 
     <Button
-        android:id="@+id/button4"
+        android:id="@+id/cadmin_launch_readerupdate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="8dp"
-        android:text="Button"
+        android:text="@string/launch_readerupdate"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/launch_provisioning"
-         />
+        app:layout_constraintTop_toBottomOf="@+id/cadmin_launch_provisioning" />
 
-    <EditText
-        android:id="@+id/login_textbox"
-        android:layout_width="140dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="80dp"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:textColor="#FFFFFF"
-        app:layout_constraintStart_toEndOf="@+id/launch_intraprofile"
-        app:layout_constraintTop_toTopOf="parent" />
 </android.support.constraint.ConstraintLayout>

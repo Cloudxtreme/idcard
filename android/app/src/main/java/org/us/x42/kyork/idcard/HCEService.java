@@ -7,9 +7,11 @@ import android.content.SharedPreferences;
 import android.nfc.cardemulation.HostApduService;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 
 import org.us.x42.kyork.idcard.data.FileMetadata;
 import org.us.x42.kyork.idcard.data.IDCard;
+import org.us.x42.kyork.idcard.desfire.DESFireCard;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,6 +20,7 @@ import java.io.IOException;
 // https://stackoverflow.com/questions/25018121/passing-information-to-a-hostapduservice-from-another-context
 
 public class HCEService extends HostApduService {
+    private static final String LOG_TAG = "HCEService";
     private IDCard ourCard;
 
     public HCEService() {
@@ -28,6 +31,7 @@ public class HCEService extends HostApduService {
         } else {
             String maybeTicket = prefs.getString(HCEServiceUtils.TICKET_STORAGE, null);
             if (maybeTicket != null) {
+                // TODO
             }
         }
     }
@@ -45,7 +49,9 @@ public class HCEService extends HostApduService {
 
     // if we cannot return immediately, return null for a time extension and use sendCommandApdu() later
     public byte[] processCommandApdu(byte[] var1, Bundle var2) {
-        throw new RuntimeException("Stub!");
+        Log.i(LOG_TAG, DESFireCard.stringifyByteArray(var1));
+
+        return new byte[] {(byte)0x91, 0x00};
     }
 
     public void onDeactivated(int var1) {

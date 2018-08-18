@@ -83,7 +83,7 @@ public class FileMetadata extends AbstractCardFile {
     }
 
     public void setDeviceType(short type) {
-        writeLE16(0xa, type);
+        writeBE16(0xa, type);
     }
 
     public void setUnused1(short val) {

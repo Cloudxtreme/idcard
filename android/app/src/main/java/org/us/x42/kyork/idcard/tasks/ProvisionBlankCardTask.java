@@ -111,7 +111,7 @@ public class ProvisionBlankCardTask extends CardNFCTask {
             FileMetadata fileMetadata = new FileMetadata(new byte[CardDataFormat.FORMAT_METADATA.expectedSize]);
             fileMetadata.setProvisioningDate(new Date());
             fileMetadata.setSchemaVersion((short)1); //(?)
-            fileMetadata.setDeviceType((short)0x4449); //LE 'ID'
+            fileMetadata.setDeviceType(FileMetadata.DEVICE_TYPE_ID); //BE 'ID'
 
             try {
                 mCard.writeToFile(DESFireProtocol.FileEncryptionMode.PLAIN,

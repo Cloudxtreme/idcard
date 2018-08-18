@@ -239,10 +239,12 @@ void MFRC522::PCD_Init() {
 /**
  * Initializes the MFRC522 chip.
  */
+/* // [idcard] start - remove deprecated calls
 void MFRC522::PCD_Init(	byte resetPowerDownPin	///< Arduino pin connected to MFRC522's reset and power down input (Pin 6, NRSTPD, active low)
 					) {
 	PCD_Init(SS, resetPowerDownPin); // SS is defined in pins_arduino.h
 } // End PCD_Init()
+*/ // [idcard] end
 
 /**
  * Initializes the MFRC522 chip.

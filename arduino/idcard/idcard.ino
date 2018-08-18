@@ -165,7 +165,13 @@ ReaderState connect_to_card(int i) {
 
 // STATE_SELECT
 ReaderState select_app(int i) {
-  MFRC522::StatusCode result = select_application(g_mfrc522[i], APP_ID_CARD42);
+  MFRC522::StatusCode result;
+  result = select_7816_app(g_mfrc522[i]);
+  if (result != MFRC522::STATUS_OK) {
+    return (handle_error(i, "SelectISOApplication", result, true));
+  }
+  
+  result = select_application(g_mfrc522[i], APP_ID_CARD42);
   if (result != MFRC522::STATUS_OK) {
     return (handle_error(i, "SelectApplication", result, true));
   }
@@ -194,12 +200,18 @@ ReaderState read_and_verify(int i) {
   for (int j = 0; j < g_mfrc522[i]->uid.size; j++) {
     verify_data[j] = g_mfrc522[i]->uid.uidByte[j];
   }
+
   status = read_file(g_mfrc522[i], 1, 0, &verify_data[0x10], 0x10);
   if (status != MFRC522::STATUS_OK) {
     return (handle_error(i, "ReadFile 1", status, true));
   }
 
-  if (verify_data[0x1a] == 'I' || verify_data[0x1a] == 'T') {
+  if ((verify_data[0x1a] == 'U') && (verify_data[0x1b] == 'P')) {
+    return (STATE_READ_UPDATE);
+  }
+
+  if (((verify_data[0x1a] == 'I') && (verify_data[0x1b] == 'D')) ||
+      ((verify_data[0x1a] == 'T') && (verify_data[0x1b] == 'K'))) {
     status = read_file(g_mfrc522[i], 2, 0, &verify_data[0x20], 0x20);
     if (status != MFRC522::STATUS_OK) {
       return (handle_error(i, "ReadFile 2", status, true));
@@ -244,9 +256,6 @@ ReaderState read_and_verify(int i) {
     else {
       return (handle_error(i, "MAC failure", MFRC522::STATUS_OK));
     }
-  }
-  else if (verify_data[0x1a] == 'U') {
-    Serial.println("TODO read update data");
   }
 
   return (handle_error(i, "Unknown card type", MFRC522::STATUS_OK));

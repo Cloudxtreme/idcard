@@ -15,6 +15,7 @@ public class CardJob {
     // DESFire Application ID values.
     public static final int APP_ID_NULL = 0;
     public static final int APP_ID_CARD42 = 0xFB9852;
+    public static final String APP_IDSTR_CARD42 = "FB9852";
 
     // Encryption key values.
     public static final byte[] ENC_KEY_NONE = null;

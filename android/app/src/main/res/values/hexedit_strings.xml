@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="editor_unknown">(Unknown)</string>
+    <string name="editor_reserved">(Reserved)</string>
+    <string name="editor_reserved_help">All zero.</string>
+    <string name="editor_meta_timestamp">Provisioning Date</string>
+    <string name="editor_meta_timestamp_help">Set automatically by the server when card is set up.</string>
+    <string name="editor_meta_schema">Version</string>
+    <string name="editor_meta_type">Device Type</string>
+    <string name="editor_meta_type_card">ID Card</string>
+    <string name="editor_meta_type_ticket">Access Ticket</string>
+    <string name="editor_meta_type_door">Door Controller</string>
+    <string name="editor_meta_type_cantina">Cantina System</string>
+    <string name="editor_user_intra">Intra Login</string>
+    <string name="editor_user_intra_help">Fixed-size ASCII String, Zero-filled</string>
+    <string name="editor_user_id">Intra User ID (internal)</string>
+    <string name="editor_user_campus">Campus</string>
+    <string name="editor_user_campus_paris">Paris</string>
+    <string name="editor_user_campus_fremont">Fremont</string>
+    <string name="editor_user_act">Account Type</string>
+    <string name="editor_user_act_student">Student</string>
+    <string name="editor_user_act_piscine">Piscine</string>
+    <string name="editor_user_act_bocal">Bocal (Staff)</string>
+    <string name="editor_user_act_security">Security</string>
+    <string name="editor_user_act_employee">Employee</string>
+    <string name="editor_user_piscine">Piscine Expiry D/M/Y</string>
+    <string name="editor_user_piscine_help">Packed as: (LSb) 5 bits day, 4 bits month, 15 bits year (MSb)</string>
+    <string name="editor_user_timestamp">Last Updated (Unix seconds)</string>
+    <string name="editor_sig_fil1">Signature 1 File ID</string>
+    <string name="editor_sig_key1">Signature 1 Key ID</string>
+    <string name="editor_sig_sig1">Signature 1 Body</string>
+    <string name="editor_sig_fil2">Signature 2 File ID</string>
+    <string name="editor_sig_key2">Signature 2 Key ID</string>
+    <string name="editor_sig_sig2">Signature 2 Body</string>
+    <string name="editor_sig_fil3">Signature 3 File ID</string>
+    <string name="editor_sig_key3">Signature 3 Key ID</string>
+    <string name="editor_sig_sig3">Signature 3 Body</string>
+    <string name="editor_sig_fil4">Signature 4 File ID</string>
+    <string name="editor_sig_key4">Signature 4 Key ID</string>
+    <string name="editor_sig_sig4">Signature 4 Body</string>
+    <string name="editor_sig_fil5">Signature 5 File ID</string>
+    <string name="editor_sig_key5">Signature 5 Key ID</string>
+    <string name="editor_sig_sig5">Signature 5 Body</string>
+</resources>

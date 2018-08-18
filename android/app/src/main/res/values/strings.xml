@@ -6,6 +6,8 @@
     <string name="nfc_open">Please touch the ID Card to the device</string>
     <string name="nfc_found">Found Card, working…</string>
     <string name="nfc_done">Card Operation complete</string>
+    <string name="hce_service_name">Card42 Phone-Card Service</string>
+    <string name="hce_aidgroup_desc">NFC Application IDs for 42 ID Cards</string>
 
     <string name="nfc_appid_label">App ID</string>
     <string-array name="nfc_appid_items">
@@ -41,5 +43,6 @@
     <string name="incomingscan_err_not_card42">The device is not a Card42 card or is blank.</string>
     <string name="incomingscan_err_validate_sig">Card info is corrupted: Signature verify failed</string>
     <string name="incomingscan_err_validate_serial">Card info is corrupted: Serial numbers do not match</string>
+    <string name="title_activity_editor">Hex Editor</string>
 
 </resources>

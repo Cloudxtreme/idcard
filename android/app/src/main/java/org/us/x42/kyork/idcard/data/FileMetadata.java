@@ -9,11 +9,13 @@ import java.util.Date;
  */
 public class FileMetadata extends AbstractCardFile {
     public static final byte FILE_ID = (byte)0x01;
+    public static final int SIZE = 16;
 
     public static final short DEVICE_TYPE_ID = 0x4944;
     public static final short DEVICE_TYPE_TICKET = 0x544b;
     public static final short DEVICE_TYPE_DOOR = 0x444f;
     public static final short DEVICE_TYPE_CANTINA = 0x4341;
+    public static final short DEVICE_TYPE_UPDATE = 0x5550;
 
     public FileMetadata(byte[] content) { super(content); }
 
@@ -40,7 +42,15 @@ public class FileMetadata extends AbstractCardFile {
 
     @Override
     public int getExpectedFileSize() {
-        return 16;
+        return SIZE;
+    }
+
+    public static FileMetadata createUpdateMetadataFile() {
+        FileMetadata ret = new FileMetadata(new byte[SIZE]);
+        ret.setProvisioningDate(new Date());
+        ret.setDeviceType(DEVICE_TYPE_UPDATE);
+        ret.setSchemaVersion((short)0x0001);
+        return ret;
     }
 
     public Date getProvisioningDate() {

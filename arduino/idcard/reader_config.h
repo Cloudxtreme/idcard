@@ -21,7 +21,17 @@ enum ReaderState : int {
   STATE_UNLOCK_NOBEEP,
   STATE_UNLOCK_END,
   STATE_ERRBEEP,
+  STATE_READ_UPDATE,
 };
+
+/*
+struct  s_reader {
+  MFRC522       *mfrc522;
+  ReaderState   state;
+  ReaderState   nextstate;
+  unsigned long delayuntil;
+};
+*/
 
 extern MFRC522           *g_mfrc522[NUM_READERS];
 extern ReaderState       g_states[NUM_READERS];

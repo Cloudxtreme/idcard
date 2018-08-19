@@ -41,12 +41,12 @@
         />
 
     <Button
-        android:id="@+id/button4"
+        android:id="@+id/test_hce"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="8dp"
-        android:text="Button"
+        android:text="HCE Test"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/launch_provisioning"
          />

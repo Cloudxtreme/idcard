@@ -30,6 +30,23 @@ public class IDCard implements Parcelable {
             this.fileSignatures = parcel.readParcelable(IDCard.class.getClassLoader());
     }
 
+    public AbstractCardFile getFileByID(byte id) {
+        switch (id) {
+            case (byte)0x1:
+                return (this.fileMetadata);
+
+            case (byte)0x2:
+                return (this.fileUserInfo);
+
+            case (byte)0x4:
+                return (this.fileDoorPermissions);
+
+            case (byte)0x7:
+                return (this.fileSignatures);
+        }
+        return (null);
+    }
+
     public static final Creator<IDCard> CREATOR = new Creator<IDCard>() {
         @Override
         public IDCard createFromParcel(Parcel in) {

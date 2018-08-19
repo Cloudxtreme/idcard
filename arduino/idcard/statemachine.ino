@@ -22,7 +22,7 @@ ReaderState handle_error(int i, const char *opname, MFRC522::StatusCode status, 
   
   SERIAL_PRINT("Card "); SERIAL_PRINT(i); SERIAL_PRINT(" error ");
   if (status == MFRC522::STATUS_INTERNAL_ERROR) {
-    switch (g_lerror) {
+    switch (g_lstatus) {
       case LERROR_ERRNO:
         SERIAL_PRINT(opname);
         SERIAL_PRINT(": errno: ");
@@ -39,10 +39,15 @@ ReaderState handle_error(int i, const char *opname, MFRC522::StatusCode status, 
         SERIAL_PRINTLN(": Specified response buffer is not large enough");
         break;
 
+      case LERROR_BAD_RESPONSE:
+        SERIAL_PRINT(opname);
+        SERIAL_PRINTLN(": Invalid DESFire response");
+        break;
+
       default:
         SERIAL_PRINT(opname);
         SERIAL_PRINT(": DESFire Status: ");
-        SERIAL_PRINTLN(g_lerror);
+        SERIAL_PRINTLN(g_lstatus, HEX);
     }
   }
   else {

@@ -1,6 +1,10 @@
 package org.us.x42.kyork.idcard;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.nfc.NfcAdapter;
+import android.nfc.cardemulation.CardEmulation;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -10,6 +14,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import com.google.common.collect.ImmutableList;
 
 import org.us.x42.kyork.idcard.tasks.ProvisionBlankCardTask;
 
@@ -57,6 +64,26 @@ public class MainActivity extends AppCompatActivity {
                 ProvisionBlankCardTask task = new ProvisionBlankCardTask(login, false);
                 intent.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
                 startActivityForResult(intent, REQUEST_ID_PROVISION);
+            }
+        });
+
+        findViewById(R.id.test_hce).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    CardEmulation emu = CardEmulation.getInstance(NfcAdapter.getDefaultAdapter(MainActivity.this));
+                    ComponentName hceService = new ComponentName(MainActivity.this, HCEService.class);
+                    emu.registerAidsForService(hceService, CardEmulation.CATEGORY_OTHER, ImmutableList.of(CardJob.ISO_APPID_CARD42));
+
+                    boolean result = emu.isDefaultServiceForAid(hceService, CardJob.ISO_APPID_CARD42);
+                    if (result) {
+                        Toast.makeText(MainActivity.this, "is default handler", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(MainActivity.this, "is NOT default handler", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(MainActivity.this, "too old for HCE support", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }

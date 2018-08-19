@@ -15,13 +15,15 @@ enum ReaderState : int {
   STATE_IDLE = 0,
   STATE_WAIT = 1,
   STATE_SELECT,
-  STATE_READ,
   STATE_LOCK,
   STATE_UNLOCK_START,
   STATE_UNLOCK_NOBEEP,
   STATE_UNLOCK_END,
   STATE_ERRBEEP,
+  STATE_READ_START,
   STATE_READ_UPDATE,
+  STATE_READ_POSTPHONEWAIT,
+  STATE_PHONE_WAIT,
 };
 
 /*
@@ -37,6 +39,7 @@ extern MFRC522           *g_mfrc522[NUM_READERS];
 extern ReaderState       g_states[NUM_READERS];
 extern ReaderState       g_nextstate[NUM_READERS];
 extern unsigned long     g_delayuntil[NUM_READERS];
+extern int               g_extra1[NUM_READERS];
 
 ReaderState wait_then_do(int cardi, long delay_ms, ReaderState next);
 ReaderState handle_error(int cardi, const char *opname, MFRC522::StatusCode status, bool halt_card = false);
@@ -45,6 +48,7 @@ void        state_machine_loop(void);
 ReaderState connect_to_card(int cardi);
 ReaderState select_app(int i);
 ReaderState read_and_verify(int i);
+ReaderState check_phone_ready(int i);
 ReaderState unlock_lock(int i);
 ReaderState unlock_endbeep(int i);
 ReaderState unlock_end(int i);

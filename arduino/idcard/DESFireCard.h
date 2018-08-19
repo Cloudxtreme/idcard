@@ -36,12 +36,14 @@ enum DESFireCommand : byte {
   CMD_SEL_CL3                   = 0x97, // Anti collision/Select, Cascade Level 3
   CMD_HLTA                      = 0x50, // HaLT command, Type A. Instructs an ACTIVE PICC to go to state HALT.
   CMD_RATS                      = 0xE0, // Request command for Answer To Reset.
+  CMD_CUSTOM_IS_READY           = 0x2D, // Card42 Exclusive: is the card ready to present its files?
 };
 
 enum ProtocolStatus : byte {
   STATUS_OPERATION_OK          = 0,
   STATUS_NO_CHANGES            = 0xC,
   STATUS_OUT_OF_MEMORY         = 0xE,
+  STATUS_ILLEGAL_COMMAND       = 0x1C,
   STATUS_INTEGRITY_ERROR       = 0x1E,
   STATUS_NO_SUCH_KEY           = 0x40,
   STATUS_LENGTH_ERROR          = 0x7E,

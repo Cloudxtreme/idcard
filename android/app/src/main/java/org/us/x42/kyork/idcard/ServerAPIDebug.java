@@ -24,6 +24,7 @@ import java.util.TimeZone;
 public class ServerAPIDebug implements ServerAPI {
     private static final byte[] ID_MAC_KEY_DEV = CardJob.decodeHex("2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A");
     private static final byte[] TK_MAC_KEY_DEV = CardJob.decodeHex("4242424242424242424242424242424242424242424242424242424242424242");
+    private static final byte[] TK_FAKE_SERIAL = CardJob.decodeHex("FFFFFFFFFFFFFFFFFFFFFF"); // longer than any possible NFC-A serial
     private Map<Long, IDCard> pendingUpdates = new HashMap<>();
 
     @Override
@@ -98,17 +99,16 @@ public class ServerAPIDebug implements ServerAPI {
     }
 
     @Override
-    public IDCard getTicketForLogin(String login) throws IOException {
+    public IDCard getTicketForLogin(String login, FileMetadata metaFile) throws IOException {
         simulatedDelay();
 
         // TODO - check if they're logged in as that account
 
         IDCard card = new IDCard();
-
-        card.fileMetadata = FileMetadata.createTicketMetadataFile();
+        card.fileMetadata = metaFile;
         card.fileUserInfo = getUserInfoFileForLogin(login);
         card.fileDoorPermissions = getUnsignedDoorPermissionsForLogin(login);
-        this.signDoorMAC(new byte[0], TK_MAC_KEY_DEV, card);
+        this.signDoorMAC(TK_FAKE_SERIAL, TK_MAC_KEY_DEV, card);
         return card;
     }
 

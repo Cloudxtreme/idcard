@@ -8,6 +8,7 @@ MFRC522           *g_mfrc522[NUM_READERS] = { NULL };
 ReaderState       g_states[NUM_READERS] = { STATE_IDLE };
 ReaderState       g_nextstate[NUM_READERS] = { STATE_IDLE };
 uint32_t          g_delayuntil[NUM_READERS] = { 0 };
+int               g_extra1[NUM_READERS] = { 0 };
 
 ReaderState wait_then_do(int i, long delay_ms, ReaderState next) {
   g_nextstate[i] = next;

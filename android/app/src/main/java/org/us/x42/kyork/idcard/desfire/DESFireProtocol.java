@@ -34,6 +34,7 @@ public final class DESFireProtocol {
     public static final byte GET_KEY_SETTINGS = (byte) 0x45;
     public static final byte ADDITIONAL_FRAME = (byte) 0xAF;
     public static final byte FORMAT_PICC = (byte) 0xFC;
+    public static final byte CUSTOM_IS_READY = (byte) 0x2D; // Card42 Exclusive: is the card ready to present its files?
 
 
     public static final byte FILETYPE_STANDARD = 0;
@@ -47,6 +48,7 @@ public final class DESFireProtocol {
         OPERATION_OK(0),
         NO_CHANGES(0xC),
         OUT_OF_MEMORY(0xE),
+        ILLEGAL_COMMAND(0x1C),
         INTEGRITY_ERROR(0x1E),
         NO_SUCH_KEY(0x40),
         LENGTH_ERROR(0x7E),
@@ -86,6 +88,8 @@ public final class DESFireProtocol {
                     return NO_CHANGES;
                 case (byte) 0xE:
                     return OUT_OF_MEMORY;
+                case (byte) 0x1C:
+                    return ILLEGAL_COMMAND;
                 case (byte) 0x1E:
                     return INTEGRITY_ERROR;
                 case (byte) 0x7E:

@@ -177,7 +177,7 @@ ReaderState select_app(int i) {
     return (handle_error(i, "SelectApplication", result, true));
   }
 
-  return (STATE_READ);
+  return (STATE_READ_START);
 }
 
 void print_memory(byte *ptr, int len) {
@@ -188,7 +188,7 @@ void print_memory(byte *ptr, int len) {
   }
 }
 
-// STATE_READ
+// STATE_READ_START, STATE_READ_POSTPHONEWAIT
 ReaderState read_and_verify(int i) {
   MFRC522::StatusCode status;
   byte verify_data[0x80];
@@ -207,10 +207,15 @@ ReaderState read_and_verify(int i) {
   }
 
   if ((verify_data[0x1a] == 'T') && (verify_data[0x1b] == 'K')) {
-    //TODO: Check if HCE
+    if (g_states[i] == STATE_READ_START) {
+      g_extra1[i] = 0; // attempts counter
+      return (STATE_PHONE_WAIT);
+    } else {
+      // continue, is POSTPHONEWAIT
+    }
   }
   else {
-    //TODO: Check if DESFire
+    // continue
   }
 
   if (((verify_data[0x1a] == 'I') && (verify_data[0x1b] == 'D')) ||
@@ -244,7 +249,7 @@ ReaderState read_and_verify(int i) {
       blake2s_init_key(&g_hasher, BLAKE2S_128_OUTPUT_SIZE, g_config.id_mac_key, BLAKE2S_KEY_SIZE);
     }
     else {
-      memset(verify_data, 0xFF, 7); //TEMPORARY, not sure about how serials work with tickets -apuel
+      memset(verify_data, 0xFF, 11); // kyork: card serials cannot possibly be 11 bytes long
       blake2s_init_key(&g_hasher, BLAKE2S_128_OUTPUT_SIZE, g_config.tk_mac_key, BLAKE2S_KEY_SIZE);
     }
 
@@ -278,6 +283,32 @@ ReaderState read_and_verify(int i) {
   }
 
   return (handle_error(i, "Unknown card type", MFRC522::STATUS_OK));
+}
+
+// STATE_PHONE_WAIT
+ReaderState check_phone_ready(int i) {
+  g_extra1[i]++;
+  if (g_extra1[i] > 40) { // ~1 seconds
+    return (handle_error(i, "phone_wait_exceeded", MFRC522::STATUS_TIMEOUT, true));
+  }
+
+  byte reply[1];
+  byte reply_len = 1;
+  byte cmd[1];
+
+  cmd[0] = CMD_CUSTOM_IS_READY;
+  MFRC522::StatusCode status = send_wrapped_request(g_mfrc522[i], cmd, 1, reply, &reply_len);
+  if (status != MFRC522::STATUS_OK) {
+    return (handle_error(i, "phone_wait", status, true));
+  }
+  // SERIAL_PRINT("PhoneWait result: "); SERIAL_PRINTLN(reply[0]);
+  if (reply[0] == 1) {
+    return (STATE_READ_POSTPHONEWAIT);
+  } else if (reply[0] == 2) {
+    return (wait_then_do(i, 60, STATE_PHONE_WAIT));
+  } else {
+    return (handle_error(i, "phone_wait", MFRC522::STATUS_ERROR, true));
+  }
 }
 
 // STATE_UNLOCK_START
@@ -355,8 +386,13 @@ void loop() {
         g_states[i] = select_app(i);
         break;
 
-      case STATE_READ:
+      case STATE_READ_START:
+      case STATE_READ_POSTPHONEWAIT:
         g_states[i] = read_and_verify(i);
+        break;
+
+      case STATE_PHONE_WAIT:
+        g_states[i] = check_phone_ready(i);
         break;
 
       case STATE_UNLOCK_START:

@@ -34,9 +34,11 @@ public class CommandTestTask extends CardNFCTask {
 
             mCard.selectApplication(appId);
             if (this.encKey != null) {
+                publishProgress("Authenticating");
                 mCard.establishAuthentication(this.keyId, this.encKey);
             }
 
+            publishProgress("Executing command");
             responseData = mCard.sendRequest(cmdId, cmdData);
             errorCode = 0;
         } catch (DESFireCard.CardException e) {

@@ -15,11 +15,20 @@ import java.util.HashMap;
 public class IntraAPI {
     private static final String UID = "c7c56a88eef81dbcd50dea5d1384d1e9448e786699672d78db78e29c9f2584e7";
     private static final String SECRET = "bea0ca93b5bc8606cddc318c083f89008e09c20bb7568b4bc8925c3fe9419e6b";
+    private static IntraAPI instance;
 
     private JSONObject token = null;
     private HashMap<String,JSONObject> users = new HashMap<String,JSONObject>();
 
-    public IntraAPI() { }
+    private IntraAPI() { }
+
+    static {
+        if (instance == null) {
+            instance = new IntraAPI();
+        }
+    }
+
+    public static IntraAPI get() { return instance; }
 
     private static String getResponse(URLConnection conn) throws IOException, JSONException {
         InputStream stream = conn.getInputStream();
@@ -197,5 +206,25 @@ public class IntraAPI {
             e.printStackTrace(System.err);
         }
         return (null);
+    }
+
+    public static byte getAccountType(JSONObject userObject) throws JSONException {
+        boolean staff = userObject.getBoolean("staff?");
+        JSONArray cursus_users = userObject.getJSONArray("cursus_users");
+
+        if (staff) {
+            return 3;
+        } else {
+            if (cursus_users == null)
+                return 0;
+            if (cursus_users.length() == 1) {
+                JSONObject cursus_user = cursus_users.getJSONObject(0);
+                JSONObject cursus = cursus_user.getJSONObject("cursus");
+                if (cursus.getString("slug").equals("piscine-c"))
+                    return 2;
+            }
+            // TODO - fix this
+            return 1;
+        }
     }
 }

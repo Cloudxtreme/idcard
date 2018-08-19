@@ -53,6 +53,14 @@ public class FileMetadata extends AbstractCardFile {
         return ret;
     }
 
+    public static FileMetadata createTicketMetadataFile() {
+        FileMetadata ret = new FileMetadata(new byte[SIZE]);
+        ret.setProvisioningDate(new Date());
+        ret.setDeviceType(DEVICE_TYPE_TICKET);
+        ret.setSchemaVersion((short)0x0001);
+        return ret;
+    }
+
     public Date getProvisioningDate() {
         long timestamp = readLE64(0x0);
         return new Date(timestamp);

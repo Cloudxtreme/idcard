@@ -23,15 +23,13 @@ public class CardJob {
     public static final byte[] ENC_KEY_NULL = decodeHex("00000000000000000000000000000000");
     public static final byte[] ENC_KEY_ANDROID_PUBLIC = decodeHex("5BF8127E692E3F65CF8B78C79762E27A");
 
-    public static final byte[] MAC_KEY_DEV = decodeHex("2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A");
-
     public interface CardOp {
         void execute(DESFireCard card) throws IOException;
     }
 
     // Gutted, replaced by tasks.CommandTestTask
 
-    private static byte[] decodeHex(String hex) {
+    public static byte[] decodeHex(String hex) {
         return BaseEncoding.base16().decode(hex);
     }
 }

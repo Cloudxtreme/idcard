@@ -7,6 +7,9 @@ import android.util.Log;
 
 import org.us.x42.kyork.idcard.CardJob;
 import org.us.x42.kyork.idcard.R;
+import org.us.x42.kyork.idcard.ServerAPI;
+import org.us.x42.kyork.idcard.ServerAPIDebug;
+import org.us.x42.kyork.idcard.ServerAPIFactory;
 import org.us.x42.kyork.idcard.data.AbstractCardFile;
 import org.us.x42.kyork.idcard.data.CardDataFormat;
 import org.us.x42.kyork.idcard.data.FileDoorPermissions;
@@ -17,10 +20,13 @@ import org.us.x42.kyork.idcard.data.IDCard;
 import org.us.x42.kyork.idcard.desfire.DESFireCard;
 import org.us.x42.kyork.idcard.desfire.DESFireProtocol;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Update the contents of an ID Card.
+ */
 public class WriteCardTask extends CardNFCTask {
     private static final String LOG_TAG = WriteCardTask.class.getSimpleName();
 
@@ -28,8 +34,11 @@ public class WriteCardTask extends CardNFCTask {
     private String errorString;
     private int errorStringResource;
 
-    public WriteCardTask(IDCard modifiedCard) {
-        cardToWrite = modifiedCard;
+    public WriteCardTask() {
+        cardToWrite = null;
+    }
+    public WriteCardTask(IDCard updateContent) {
+        cardToWrite = updateContent;
     }
 
     private void setError(String error) {
@@ -45,6 +54,8 @@ public class WriteCardTask extends CardNFCTask {
     @Override
     protected List<Object> doInBackground(Object... params) {
         try {
+            // TODO maybe prefetch card contents?
+
             this.setUpCard();
 
             try {
@@ -57,59 +68,33 @@ public class WriteCardTask extends CardNFCTask {
                 throw e;
             }
 
-            if (cardToWrite.fileMetadata == null) //if metadata was read earlier, don't bother
-                cardToWrite.fileMetadata = new FileMetadata(mCard.readFullFile(CardDataFormat.FORMAT_METADATA.fileID, CardDataFormat.FORMAT_METADATA.expectedSize));
-
-            AbstractCardFile files[] = new AbstractCardFile[] {cardToWrite.fileMetadata, cardToWrite.fileUserInfo, cardToWrite.fileDoorPermissions};
-            boolean anyDirty = false;
-
-            // Sign files
-            // TODO(kyork): this becomes an HTTP request to the signing server, or handled in the caller
-            for (AbstractCardFile f : files) {
-                if (f == null || !f.isDirty()) continue;
-                cardToWrite.fileSignatures.setSignature(
-                        (byte)f.getFileID(),
-                        FileSignatures.KEYID_DEBUG,
-                        FileSignatures.signForDebug(f.getRawContent()));
-                anyDirty = true;
-                if (f instanceof FileUserInfo) {
-                    ((FileUserInfo) f).setLastUpdated(new Date());
+            FileUserInfo userFile = new FileUserInfo(mCard.readFullFile(FileUserInfo.FILE_ID, FileUserInfo.SIZE));
+            if (cardToWrite == null || cardToWrite.fileUserInfo.getCardSerialRepeat() != userFile.getCardSerialRepeat()) {
+                try {
+                    cardToWrite = ServerAPIFactory.getAPI().getCardUpdates(mTag.getId(), userFile.getLastUpdated());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // TODO report error
+                    return null;
                 }
             }
 
-            if (!anyDirty) {
-                // Nothing to write
+            if (cardToWrite == null) {
+                Log.i(LOG_TAG, "Card is up to date");
                 return null;
             }
 
+            // TODO switch to Android public key
             mCard.establishAuthentication((byte)0, CardJob.ENC_KEY_NULL);
 
             // Write files
-            for (AbstractCardFile f : files) {
+            for (AbstractCardFile f : cardToWrite.files()) {
                 if (f == null) continue;
-
-                if (f instanceof FileUserInfo) {
-                    ((FileUserInfo) f).setCardSerialRepeat(mTag.getId());
-                } else if (f instanceof FileDoorPermissions) {
-                    ((FileDoorPermissions) f).signMAC(mTag, CardJob.MAC_KEY_DEV, cardToWrite.fileMetadata, cardToWrite.fileUserInfo);
-                } else if (!f.isDirty()) {
-                    continue;
-                }
 
                 mCard.writeToFile(
                         DESFireProtocol.FileEncryptionMode.PLAIN,
                         (byte)f.getFileID(),
                         f.getRawContent(), 0);
-            }
-
-
-            // Write signatures
-            for (int[] range : cardToWrite.fileSignatures.getDirtyRanges()) {
-                mCard.writeToFile(
-                        DESFireProtocol.FileEncryptionMode.PLAIN,
-                        FileSignatures.FILE_ID,
-                        cardToWrite.fileSignatures.getSlice(range[0], range[0] + range[1]),
-                        range[0]);
             }
 
             // Commit

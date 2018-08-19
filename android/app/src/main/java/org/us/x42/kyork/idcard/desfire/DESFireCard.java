@@ -10,25 +10,21 @@ import org.us.x42.kyork.idcard.PackUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.ProtocolException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
 import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-//import com.nxp.nfclib.desfire.DESFireEV1;
-
+@SuppressWarnings("SameParameterValue")
 public class DESFireCard {
     private static final String LOG_TAG = DESFireCard.class.getSimpleName();
 
     private Tag mTag;
     private IsoDep mTagTech;
-    private Cipher mSessionCipher;
     private byte[] sessionKey;
 
     public static class CardException extends IOException {
@@ -67,6 +63,33 @@ public class DESFireCard {
         byte[] args = new byte[3];
         PackUtil.writeBE24(args, 0, appID);
         sendRequest(DESFireProtocol.SELECT_APPLICATION, args);
+        sessionKey = null;
+    }
+
+    public void changeFileAccess(byte fileID, DESFireProtocol.FileEncryptionMode mode, int readKey, int writeKey, int rwKey, int changeKey, boolean needsEncrypt) throws IOException {
+        byte[] encArgs = new byte[8];
+        encArgs[0] = mode.getValue();
+        short accessRights = (short) (((readKey & 0xF) << 24) | ((writeKey & 0xF) << 16) | ((rwKey & 0xF) << 8) | (changeKey & 0xF));
+        PackUtil.writeLE16(encArgs, 1, accessRights);
+
+        byte[] cmd;
+        if (needsEncrypt) {
+            cmd = new byte[9];
+            PackUtil.CRC6363(encArgs, 0, 3, encArgs, 3);
+            try {
+                encArgs = doCipherDES(sessionKey, encArgs, 1);
+                System.arraycopy(encArgs, 0, cmd, 1, 8);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new IOException("bad cipher setup", e);
+            }
+        } else {
+            cmd = new byte[4];
+            System.arraycopy(encArgs, 0, cmd, 1, 3);
+        }
+        cmd[0] = fileID;
+
+        this.sendRequest(DESFireProtocol.CHANGE_FILE_SETTINGS, cmd);
     }
 
     public byte[] readFullFile(byte fileID, int expectedLength) throws IOException {
@@ -127,7 +150,7 @@ public class DESFireCard {
      * any command that invalidates authentication.
      */
     public void resetEncryption() {
-        mSessionCipher = null;
+        sessionKey = null;
     }
 
     private byte[] perform3desSingleBlock(byte[] longKey, byte[] iv, byte[] data) throws GeneralSecurityException {

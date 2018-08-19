@@ -1,16 +1,12 @@
 package org.us.x42.kyork.idcard.data;
 
-import android.util.Log;
-
 import com.google.common.io.BaseEncoding;
 
 import org.junit.Test;
-import org.us.x42.kyork.idcard.CardJob;
+import org.us.x42.kyork.idcard.ServerAPIDebug;
 import org.us.x42.kyork.idcard.desfire.DESFireCard;
 
 import java.util.Arrays;
-
-import static org.junit.Assert.*;
 
 public class FileSignaturesTest {
     @Test
@@ -25,7 +21,7 @@ public class FileSignaturesTest {
     public void testBlake2sVector() throws Exception {
         byte[] buf = new byte[64];
 
-        Blake2sMessageDigest engine = new Blake2sMessageDigest(16, CardJob.MAC_KEY_DEV);
+        Blake2sMessageDigest engine = new Blake2sMessageDigest(16, ServerAPIDebug.MAC_KEY_DEV);
         Arrays.fill(buf, (byte)1);
         engine.engineUpdate(buf, 0, 64);
         Arrays.fill(buf, (byte)2);

@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
         launchSetup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, SetupActivity.class);
+                Intent intent = new Intent(MainActivity.this, CardAdminActivity.class);
                 startActivity(intent);
             }
         });
@@ -52,7 +52,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, CardWriteActivity.class);
-                ProvisionBlankCardTask task = new ProvisionBlankCardTask(false);
+                EditText loginTextbox = (EditText) findViewById(R.id.login_textbox);
+                String login = loginTextbox.getText().toString().toLowerCase();
+                ProvisionBlankCardTask task = new ProvisionBlankCardTask(login, false);
                 intent.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
                 startActivityForResult(intent, REQUEST_ID_PROVISION);
             }

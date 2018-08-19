@@ -214,4 +214,25 @@ public final class PackUtil {
         rawContent[offset + 7] = (byte)((value >> 56) & 0xFF);
     }
 
+    /**
+     * The ISO 14443a CRC (initial 6363 poly 8408).
+     *
+     * @param data data to calculate CRC of
+     * @param offset offset into the data to start
+     * @param size number of bytes to examine
+     * @param destination where to place result (2 bytes)
+     * @param destOffset offset into destination
+     */
+    public static void CRC6363(byte[] data, int offset, int size, byte[] destination, int destOffset) {
+        int crc = 0x6363;
+        for (int i = offset; i < offset + size; i++) {
+            byte bt = data[i];
+            bt ^= (byte)(crc & 0xFF);
+            bt ^= bt << 4;
+            int bt32 = bt;
+            crc = (crc >> 8) ^ (bt32 << 8) ^ (bt32 << 3) ^ (bt32 >> 4); // 0x8408;
+        }
+        destination[destOffset] = (byte)(crc & 0xFF);
+        destination[destOffset + 1] = (byte)((crc >> 8) & 0xFF);
+    }
 }

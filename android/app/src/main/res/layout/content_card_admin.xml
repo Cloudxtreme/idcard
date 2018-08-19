@@ -19,6 +19,49 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
+        android:id="@+id/cadmin_launch_readerupdate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/launch_readerupdate"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cadmin_launch_manual" />
+
+    <Button
+        android:id="@+id/cadmin_wipe_card"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="8dp"
+        android:text="Wipe card"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cadmin_launch_readerupdate" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/editor_user_intra"
+        android:textColor="#FFFFFF"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/login_textbox" />
+
+    <EditText
+        android:id="@+id/login_textbox"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:textColor="#FFFFFF"
+        app:layout_constraintStart_toEndOf="@+id/textView"
+        app:layout_constraintTop_toBottomOf="@+id/cadmin_wipe_card" />
+
+    <Button
         android:id="@+id/cadmin_launch_provisioning"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -26,16 +69,16 @@
         android:layout_marginTop="8dp"
         android:text="@string/provision_blank_card"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cadmin_launch_manual"
+        app:layout_constraintTop_toBottomOf="@+id/login_textbox"
         />
 
     <Button
-        android:id="@+id/cadmin_launch_readerupdate"
+        android:id="@+id/cadmin_launch_markdirty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="8dp"
-        android:text="@string/launch_readerupdate"
+        android:text="@string/launch_card_editor"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/cadmin_launch_provisioning" />
 

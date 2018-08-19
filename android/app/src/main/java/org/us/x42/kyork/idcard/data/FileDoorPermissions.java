@@ -43,6 +43,10 @@ public class FileDoorPermissions extends AbstractCardFile {
 
     public byte[] getMAC() { return getSlice(0x30, 0x40); }
 
+    public void setMAC(byte[] newMAC) {
+        setSlice(0x30, newMAC, 0, 0x10);
+    }
+
     public void signMAC(Tag tag, byte[] key, FileMetadata meta, FileUserInfo info) throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
@@ -58,7 +62,7 @@ public class FileDoorPermissions extends AbstractCardFile {
 
         Blake2sMessageDigest engine = new Blake2sMessageDigest(16, key);
         engine.engineUpdate(verifyData, 0, verifyData.length);
-        byte[] mac = engine.engineDigest();
+        byte[] mac = engine.digest();
         engine.destroy();
 
         Log.i("DATA", DESFireCard.stringifyByteArray(Arrays.copyOfRange(verifyData, 0x00, 0x10)));

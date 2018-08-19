@@ -3,7 +3,11 @@ package org.us.x42.kyork.idcard.data;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class IDCard implements Parcelable {
+    public long serial;
     public FileMetadata fileMetadata;
     public FileUserInfo fileUserInfo;
     public FileDoorPermissions fileDoorPermissions;
@@ -13,6 +17,7 @@ public class IDCard implements Parcelable {
     }
 
     private IDCard(Parcel parcel) {
+        serial = parcel.readLong();
         boolean[] values = new boolean[4];
         parcel.readBooleanArray(values);
         if (values[0])
@@ -44,6 +49,7 @@ public class IDCard implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(serial);
         dest.writeBooleanArray(new boolean[]{
                 this.fileMetadata != null,
                 this.fileUserInfo != null,
@@ -62,5 +68,20 @@ public class IDCard implements Parcelable {
         if (this.fileSignatures != null) {
             dest.writeParcelable(this.fileSignatures, 0);
         }
+    }
+
+    public List<AbstractCardFile> files() {
+        List<AbstractCardFile> fileList = new ArrayList<>();
+        fileList.add(fileMetadata);
+        if (fileUserInfo != null) {
+            fileList.add(fileUserInfo);
+        }
+        if (fileDoorPermissions != null) {
+            fileList.add(fileDoorPermissions);
+        }
+        if (fileSignatures != null) {
+            fileList.add(fileSignatures);
+        }
+        return fileList;
     }
 }

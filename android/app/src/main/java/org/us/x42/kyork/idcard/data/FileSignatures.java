@@ -53,6 +53,10 @@ public class FileSignatures extends AbstractCardFile {
         }
     };
 
+    public static FileSignatures newBlank() {
+        return new FileSignatures(new byte[SIGNATURE_LENGTH * MAX_SIGNATURE_COUNT]);
+    }
+
     @Override
     public int getFileID() {
         return 0x7;
@@ -60,7 +64,7 @@ public class FileSignatures extends AbstractCardFile {
 
     @Override
     public int getExpectedFileSize() {
-        return 68 * 5;
+        return SIGNATURE_LENGTH * MAX_SIGNATURE_COUNT;
     }
 
     public static final int MAX_SIGNATURE_COUNT = 5;

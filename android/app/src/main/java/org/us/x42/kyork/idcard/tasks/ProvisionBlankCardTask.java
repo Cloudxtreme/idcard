@@ -4,9 +4,14 @@ import android.os.Parcel;
 import android.util.Log;
 
 import org.us.x42.kyork.idcard.CardJob;
+import org.us.x42.kyork.idcard.IntraAPI;
 import org.us.x42.kyork.idcard.PackUtil;
+import org.us.x42.kyork.idcard.ServerAPI;
+import org.us.x42.kyork.idcard.ServerAPIFactory;
+import org.us.x42.kyork.idcard.data.AbstractCardFile;
 import org.us.x42.kyork.idcard.data.CardDataFormat;
 import org.us.x42.kyork.idcard.data.FileMetadata;
+import org.us.x42.kyork.idcard.data.IDCard;
 import org.us.x42.kyork.idcard.desfire.DESFireCard;
 import org.us.x42.kyork.idcard.desfire.DESFireProtocol;
 
@@ -18,18 +23,22 @@ import java.util.List;
 public class ProvisionBlankCardTask extends CardNFCTask {
     private static final String LOG_TAG = ProvisionBlankCardTask.class.getSimpleName();
     private boolean piccFormat;
+    private String login;
     private long provisioningDate;
     private String errorString;
 
-    public ProvisionBlankCardTask(boolean piccFormat) {
+    public ProvisionBlankCardTask(String login, boolean piccFormat) {
+        this.login = login;
         this.piccFormat = piccFormat;
     }
 
     private void setError(String prefix, Throwable t) {
         if (prefix.isEmpty()) {
             errorString = t.getMessage();
-        } else {
+        } else if (t != null) {
             errorString = prefix + ": " + t.getMessage();
+        } else {
+            errorString = prefix;
         }
     }
 
@@ -38,40 +47,53 @@ public class ProvisionBlankCardTask extends CardNFCTask {
         try {
             super.setUpCard();
 
+            publishProgress("Preparing card");
             mCard.selectApplication(0);
             byte[] infoResponse = mCard.sendRequest(DESFireProtocol.GET_MANUFACTURING_DATA, null);
-            byte[] appListResponse = mCard.sendRequest(DESFireProtocol.GET_APPLICATION_DIRECTORY, null);
-
-            long serial = PackUtil.readLE56(infoResponse, 14);
-
-            // TODO - if app list contains Card42, abort
-
+            byte[] appListResponse;
             if (piccFormat) {
                 mCard.sendRequest(DESFireProtocol.FORMAT_PICC, null);
+            } else {
+                appListResponse = mCard.sendRequest(DESFireProtocol.GET_APPLICATION_DIRECTORY, null);
+                if (hasApp(appListResponse, CardJob.APP_ID_CARD42)) {
+                    Log.i(LOG_TAG, "Card already has application");
+                    setError("Card is already provisioned", null);
+                    return null;
+                }
             }
 
-            if (piccFormat || !hasApp(appListResponse, CardJob.APP_ID_CARD42)) {
-                // CreateApplication
-                try {
-                    Log.i(LOG_TAG, "Creating application");
-                    byte[] createApplicationData = new byte[5];
-                    PackUtil.writeBE24(createApplicationData, 0, CardJob.APP_ID_CARD42);
-                    // ChangeKey = E
-                    // Free access / not frozen = F
-                    createApplicationData[3] = (byte)0xEF;
-                    createApplicationData[4] = 5; // Number of keys
-                    mCard.sendRequest(DESFireProtocol.CREATE_APPLICATION, createApplicationData);
-                } catch (DESFireCard.CardException e) {
-                    if (e.getErrorCode() == DESFireProtocol.StatusCode.DUPLICATE_ERROR.getValue()) {
-                        // ok
-                    } else {
-                        Log.e(LOG_TAG, "Failed to CreateApplication", e);
-                        setError("Failed to CreateApplication", e);
-                        return null;
-                    }
+            long serial = PackUtil.readLE56(infoResponse, 14);
+            Date provisionDate = new Date();
+
+            Log.i(LOG_TAG, String.format("calling registerNewCard - %d %d %s", serial, provisionDate.getTime(), login));
+            publishProgress("Contacting server");
+            ServerAPIFactory.getAPI().registerNewCard(serial, provisionDate, login);
+
+            IDCard cardContent = ServerAPIFactory.getAPI().getCardUpdates(serial, 0);
+            if (cardContent == null) {
+                Log.e(LOG_TAG, "ServerAPI returned null");
+                return null;
+            }
+
+            publishProgress("Writing data to card");
+            // CreateApplication
+            try {
+                Log.i(LOG_TAG, "Creating application");
+                byte[] createApplicationData = new byte[5];
+                PackUtil.writeBE24(createApplicationData, 0, CardJob.APP_ID_CARD42);
+                // ChangeKey = E
+                // Free access / not frozen = F
+                createApplicationData[3] = (byte) 0xEF;
+                createApplicationData[4] = 5; // Number of keys
+                mCard.sendRequest(DESFireProtocol.CREATE_APPLICATION, createApplicationData);
+            } catch (DESFireCard.CardException e) {
+                if (e.getErrorCode() == DESFireProtocol.StatusCode.DUPLICATE_ERROR.getValue()) {
+                    // ok
+                } else {
+                    Log.e(LOG_TAG, "Failed to CreateApplication", e);
+                    setError("Failed to CreateApplication", e);
+                    return null;
                 }
-            } else {
-                Log.i(LOG_TAG, "Card already has application");
             }
 
             mCard.selectApplication(CardJob.APP_ID_CARD42);
@@ -79,9 +101,9 @@ public class ProvisionBlankCardTask extends CardNFCTask {
             // CreateFile
             for (CardDataFormat.FileFormatInfo info : CardDataFormat.files) {
                 byte[] createFileData = new byte[7];
-                createFileData[0] = (byte)info.fileID;
+                createFileData[0] = (byte) info.fileID;
                 createFileData[1] = DESFireProtocol.FileEncryptionMode.PLAIN.getValue();
-                PackUtil.writeLE16(createFileData, 2, (short)0xEEEE);
+                PackUtil.writeLE16(createFileData, 2, (short) 0xEEEE);
                 PackUtil.writeLE24(createFileData, 4, info.expectedSize);
                 Log.i(LOG_TAG, "Creating file " + info.dfnClass.getSimpleName());
                 try {
@@ -105,25 +127,22 @@ public class ProvisionBlankCardTask extends CardNFCTask {
                 }
             }
 
-            provisioningDate = new Date().getTime();
-
-            // Write provisioning file
-            FileMetadata fileMetadata = new FileMetadata(new byte[CardDataFormat.FORMAT_METADATA.expectedSize]);
-            fileMetadata.setProvisioningDate(new Date());
-            fileMetadata.setSchemaVersion((short)1); //(?)
-            fileMetadata.setDeviceType((short)0x4449); //LE 'ID'
-
             try {
-                mCard.writeToFile(DESFireProtocol.FileEncryptionMode.PLAIN,
-                        FileMetadata.FILE_ID,
-                        fileMetadata.getRawContent(), 0);
+                for (AbstractCardFile f : cardContent.files()) {
+                    // including FileMetadata
+                    mCard.writeToFile(DESFireProtocol.FileEncryptionMode.PLAIN,
+                            (byte) f.getFileID(),
+                            f.getRawContent(), 0);
+                }
             } catch (DESFireCard.CardException e) {
-                Log.e(LOG_TAG, "Failed to write metadata file", e);
-                setError("Failed to write metadata file", e);
+                Log.e(LOG_TAG, "Failed to write files", e);
+                setError("Failed to write files", e);
                 return null;
             }
 
-            // TODO - post to server that we did this
+            mCard.changeFileAccess(FileMetadata.FILE_ID, DESFireProtocol.FileEncryptionMode.PLAIN, 0xE, 0xF, 0xF, 0xE, false);
+
+            ServerAPIFactory.getAPI().cardUpdatesApplied(serial, cardContent.fileUserInfo.getLastUpdated());
 
             Log.i(LOG_TAG, "provision done");
 
@@ -146,6 +165,7 @@ public class ProvisionBlankCardTask extends CardNFCTask {
         if (in.readByte() == 0x4C) {
             piccFormat = true;
         }
+        login = in.readString();
         provisioningDate = in.readLong();
         errorString = in.readString();
     }
@@ -158,10 +178,11 @@ public class ProvisionBlankCardTask extends CardNFCTask {
     @Override
     public void writeToParcel(Parcel parcel, int i) {
         if (piccFormat) {
-            parcel.writeByte((byte)0x4C);
+            parcel.writeByte((byte) 0x4C);
         } else {
-            parcel.writeByte((byte)0);
+            parcel.writeByte((byte) 0);
         }
+        parcel.writeString(login);
         parcel.writeLong(provisioningDate);
         parcel.writeString(errorString);
     }
@@ -180,5 +201,7 @@ public class ProvisionBlankCardTask extends CardNFCTask {
 
     // Result Getters
 
-    public String getErrorString() { return errorString; }
+    public String getErrorString() {
+        return errorString;
+    }
 }

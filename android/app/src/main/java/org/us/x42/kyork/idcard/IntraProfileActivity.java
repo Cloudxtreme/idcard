@@ -21,30 +21,22 @@ import com.squareup.picasso.Picasso;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.us.x42.kyork.idcard.data.CardDataFormat;
-import org.us.x42.kyork.idcard.data.FileDoorPermissions;
-import org.us.x42.kyork.idcard.data.FileMetadata;
-import org.us.x42.kyork.idcard.data.FileSignatures;
-import org.us.x42.kyork.idcard.data.FileUserInfo;
 import org.us.x42.kyork.idcard.data.IDCard;
 import org.us.x42.kyork.idcard.tasks.WriteCardTask;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 
 public class IntraProfileActivity extends AppCompatActivity {
-    private static IntraAPI api = null;
-
-    private static final int NFC_REQUEST_CODE = 3;
+    private static final int REQUEST_CODE_UPDATECARD = 1;
+    private static final int REQUEST_CODE_CHECKUPDATES = 2;
 
     private List<ProgressBar> progressBars = new ArrayList<ProgressBar>();
     private TextView levelHeader;
+    private IDCard updateContent = null;
     private MenuItem.OnMenuItemClickListener refreshCallback;
     private MenuItem.OnMenuItemClickListener writeCallback;
 
@@ -58,16 +50,16 @@ public class IntraProfileActivity extends AppCompatActivity {
         return true;
     }
 
-    private void beginWriteTask(IDCard idcard) {
+    private void beginUpdateTask() {
         Intent intent = new Intent(this, CardWriteActivity.class);
-        WriteCardTask task = new WriteCardTask(idcard);
+        WriteCardTask task = new WriteCardTask(updateContent);
         intent.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
-        startActivityForResult(intent, NFC_REQUEST_CODE);
+        startActivityForResult(intent, REQUEST_CODE_UPDATECARD);
     }
 
     @Override
     protected void onActivityResult (int requestCode, int resultCode, Intent data) {
-        if (requestCode == NFC_REQUEST_CODE) {
+        if (requestCode == REQUEST_CODE_UPDATECARD) {
             if (resultCode == RESULT_OK) {
                 WriteCardTask task = data.getParcelableExtra(CardWriteActivity.CARD_JOB_PARAMS);
                 String err = task.getErrorString(this);
@@ -92,6 +84,8 @@ public class IntraProfileActivity extends AppCompatActivity {
         if (idcard != null) {
             //Populate UI info with card data
         }
+        IntraAPI api = IntraAPI.get();
+
         if (api.isCached(login)) {
             TextView fullNameText = findViewById(R.id.full_name);
             fullNameText.setText(api.getFullName(login));
@@ -175,7 +169,7 @@ public class IntraProfileActivity extends AppCompatActivity {
             @Override
             public void run() {
                 try {
-                    api.queryUser(login, false);
+                    IntraAPI.get().queryUser(login, false);
                 }
                 catch (IOException | JSONException e) {
                     e.printStackTrace(System.err);
@@ -190,6 +184,24 @@ public class IntraProfileActivity extends AppCompatActivity {
                             }
                         }
                     );
+                }
+
+                // Check for updates to the card
+                if (idcard != null) {
+                    try {
+                        IDCard updateContent = ServerAPIFactory.getAPI().getCardUpdates(idcard.serial, idcard.fileUserInfo.getLastUpdated());
+                        if (updateContent != null) {
+                            IntraProfileActivity.this.updateContent = updateContent;
+                            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    IntraProfileActivity.this.markUpdateRequired();
+                                }
+                            });
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         };
@@ -211,6 +223,8 @@ public class IntraProfileActivity extends AppCompatActivity {
         titleText.setText("");
         ImageView bmImage = findViewById(R.id.user_picture);
         bmImage.setVisibility(View.INVISIBLE);
+        ImageView updateAlert = findViewById(R.id.update_needed_alert);
+        updateAlert.setVisibility(View.GONE);
         TextView cursusHeader = findViewById(R.id.cursus_header);
         // levelHeader = findViewById(R.id.level_header);
         TextView gradeHeader = findViewById(R.id.grade_header);
@@ -231,6 +245,11 @@ public class IntraProfileActivity extends AppCompatActivity {
         coalitionText.setText("");
         TextView phoneText = findViewById(R.id.phone);
         phoneText.setText("");
+    }
+
+    private void markUpdateRequired() {
+        ImageView updateAlert = findViewById(R.id.update_needed_alert);
+        updateAlert.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -262,8 +281,6 @@ public class IntraProfileActivity extends AppCompatActivity {
             idcard = null;
         }
 
-        if (login.isEmpty())
-
         this.refreshCallback = new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -276,93 +293,23 @@ public class IntraProfileActivity extends AppCompatActivity {
         this.writeCallback = new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                JSONObject user = IntraProfileActivity.api.cachedUser(login);
-                if (user != null) {
-                    try {
-                        IDCard id = idcard;
-
-                        if (id == null)
-                            id = new IDCard();
-
-                        if (id.fileUserInfo == null)
-                            id.fileUserInfo = new FileUserInfo(new byte[CardDataFormat.FORMAT_USERINFO.expectedSize]);
-
-                        if (id.fileDoorPermissions == null)
-                            id.fileDoorPermissions = new FileDoorPermissions(new byte[CardDataFormat.FORMAT_DOORPERMS.expectedSize]);
-
-                        if (id.fileSignatures == null)
-                            id.fileSignatures = new FileSignatures(new byte[CardDataFormat.FORMAT_SIGNATURES.expectedSize]);
-
-                        id.fileUserInfo.setLogin(login);
-                        id.fileUserInfo.setIntraUserID(user.getInt("id"));
-
-                        JSONArray campus_users = user.getJSONArray("campus_users");
-                        for (int i = 0; i < campus_users.length(); i++) {
-                            JSONObject campus_user = campus_users.getJSONObject(i);
-                            if (campus_user.getBoolean("is_primary")) {
-                                id.fileUserInfo.setCampusID((byte)campus_user.getInt("campus_id"));
-                                break;
-                            }
-                        }
-
-                        boolean staff = user.getBoolean("staff?");
-                        JSONArray cursus_users = api.getCursusArray(login);
-
-                        if (staff)
-                            id.fileUserInfo.setAccountType((byte)0x03);
-                        else {
-                            if (cursus_users == null || cursus_users.length() == 1) {
-                                if (cursus_users.length() == 1) {
-                                    JSONObject cursus_user = cursus_users.getJSONObject(0);
-                                    JSONObject cursus = cursus_user.getJSONObject("cursus");
-                                    if (cursus.getString("slug").equals("piscine-c"))
-                                        id.fileUserInfo.setAccountType((byte)0x02);
-                                    else
-                                        id.fileUserInfo.setAccountType((byte)0x01);
-                                }
-                                else
-                                    id.fileUserInfo.setAccountType((byte)0x02);
-                            }
-                            else
-                                id.fileUserInfo.setAccountType((byte)0x01);
-                        }
-                        id.fileUserInfo.setLastUpdated(new Date());
-/*
-                        if (cursus_users != null) {
-                            for (int i = 0; i < cursus_users.length(); i++) {
-                                JSONObject cursus_user = cursus_users.getJSONObject(i);
-                                JSONObject cursus = cursus_user.getJSONObject("cursus");
-                                if (cursus.getString("slug").equals("piscine-c")) {
-                                    String end_at = cursus.getString("end_at");
-                                    Date date = new SimpleDateFormat("YYYY-MM-DD").parse(end_at.substring(0, 10));
-                                    id.fileUserInfo.setPiscineEndDate(date);
-                                }
-                            }
-                        }
-*/
-                        PackUtil.writeBE24(id.fileDoorPermissions.getRawContent(), 3, 0x010203);
-
-                        id.fileUserInfo.getDirtyRanges().add(new int[] { 0, id.fileUserInfo.getExpectedFileSize() });
-                        id.fileDoorPermissions.getDirtyRanges().add(new int[] { 0, id.fileDoorPermissions.getExpectedFileSize() });
-
-                        IntraProfileActivity.this.beginWriteTask(id);
-                    }
-                    catch (JSONException e) {
-                        e.printStackTrace(System.err);
-                    } //catch (ParseException e) {
-                        //e.printStackTrace(System.err);
-                    //}
-                }
+                IntraProfileActivity.this.beginUpdateTask();
                 return true;
             }
         };
 
+        ImageView updateAlert = findViewById(R.id.update_needed_alert);
+        updateAlert.setClickable(true);
+        updateAlert.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                IntraProfileActivity.this.beginUpdateTask();
+            }
+        });
+
         boolean shouldReload = launchIntent.getBooleanExtra("shouldReload", false);
 
-        if (api == null)
-            api = new IntraAPI();
-
-        if (shouldReload || !api.isCached(login))
+        if (shouldReload || !IntraAPI.get().isCached(login))
             this.fetchUser(login, idcard);
         else
             this.populateUI(login, idcard);

@@ -13,6 +13,7 @@ import java.util.TimeZone;
 
 public class FileUserInfo extends AbstractCardFile {
     public static final byte FILE_ID = (byte)0x02;
+    public static final int SIZE = 32;
 
     public FileUserInfo(byte[] content) {
         super(content);
@@ -36,12 +37,12 @@ public class FileUserInfo extends AbstractCardFile {
 
     @Override
     public int getFileID() {
-        return 0x02;
+        return FILE_ID;
     }
 
     @Override
     public int getExpectedFileSize() {
-        return 32;
+        return SIZE;
     }
 
     public String getLogin() {

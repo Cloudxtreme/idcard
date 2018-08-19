@@ -91,7 +91,7 @@ public class WriteCardTask extends CardNFCTask {
                 if (f instanceof FileUserInfo) {
                     ((FileUserInfo) f).setCardSerialRepeat(mTag.getId());
                 } else if (f instanceof FileDoorPermissions) {
-                    ((FileDoorPermissions) f).signMAC(mTag, CardJob.MAC_KEY_DEV, cardToWrite.fileMetadata, cardToWrite.fileUserInfo);
+                    ((FileDoorPermissions) f).signMAC(mTag.getId(), CardJob.ID_MAC_KEY_DEV, cardToWrite.fileMetadata, cardToWrite.fileUserInfo);
                 } else if (!f.isDirty()) {
                     continue;
                 }

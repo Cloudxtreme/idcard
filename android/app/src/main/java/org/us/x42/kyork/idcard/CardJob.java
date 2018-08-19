@@ -23,7 +23,8 @@ public class CardJob {
     public static final byte[] ENC_KEY_NULL = decodeHex("00000000000000000000000000000000");
     public static final byte[] ENC_KEY_ANDROID_PUBLIC = decodeHex("5BF8127E692E3F65CF8B78C79762E27A");
 
-    public static final byte[] MAC_KEY_DEV = decodeHex("2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A");
+    public static final byte[] ID_MAC_KEY_DEV = decodeHex("2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A");
+    public static final byte[] TK_MAC_KEY_DEV = decodeHex("4242424242424242424242424242424242424242424242424242424242424242");
 
     public interface CardOp {
         void execute(DESFireCard card) throws IOException;

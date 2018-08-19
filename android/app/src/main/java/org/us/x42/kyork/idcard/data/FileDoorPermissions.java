@@ -43,10 +43,9 @@ public class FileDoorPermissions extends AbstractCardFile {
 
     public byte[] getMAC() { return getSlice(0x30, 0x40); }
 
-    public void signMAC(Tag tag, byte[] key, FileMetadata meta, FileUserInfo info) throws IOException {
+    public void signMAC(byte[] uid, byte[] key, FileMetadata meta, FileUserInfo info) throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
-        byte[] uid = tag.getId();
         byte[] uidPadding = new byte[0x10 - uid.length];
         stream.write(uid);
         stream.write(uidPadding);

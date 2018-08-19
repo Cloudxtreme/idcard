@@ -42,6 +42,7 @@ ReaderState handle_error(int i, const char *opname, MFRC522::StatusCode status, 
       case LERROR_BAD_RESPONSE:
         SERIAL_PRINT(opname);
         SERIAL_PRINTLN(": Invalid DESFire response");
+        break;
 
       default:
         SERIAL_PRINT(opname);

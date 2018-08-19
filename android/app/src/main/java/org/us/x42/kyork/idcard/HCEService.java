@@ -30,6 +30,8 @@ public class HCEService extends HostApduService {
     private static final byte[] FRAMING_ERROR = new byte[] {(byte)0x6A, (byte)0xA0};
     private static final byte[] APP_ID_CARD42 = new byte[] {(byte)0xFB, (byte)0x98, (byte)0x52};
 
+    private static final byte[] TK_SERIAL_DEV = new byte[] {(byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF};  //TEMPORARY, not sure about how serials work with tickets -apuel
+
     private IDCard ourCard;
     private byte[] authRndA;
     private byte[] authRndB;
@@ -43,7 +45,13 @@ public class HCEService extends HostApduService {
         ourCard.fileMetadata.setDeviceType(FileMetadata.DEVICE_TYPE_TICKET); //BE 'TK'
 
         ourCard.fileUserInfo = new FileUserInfo(new byte[CardDataFormat.FORMAT_USERINFO.expectedSize]);
+
         ourCard.fileDoorPermissions = new FileDoorPermissions(new byte[CardDataFormat.FORMAT_DOORPERMS.expectedSize]);
+        try {
+            ourCard.fileDoorPermissions.signMAC(TK_SERIAL_DEV, CardJob.TK_MAC_KEY_DEV, ourCard.fileMetadata, ourCard.fileUserInfo);
+        }
+        catch (IOException e) { }
+
         ourCard.fileSignatures = new FileSignatures(new byte[CardDataFormat.FORMAT_SIGNATURES.expectedSize]);
     }
 

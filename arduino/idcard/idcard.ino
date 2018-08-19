@@ -28,7 +28,8 @@ struct    s_config {
   byte door_id;
   byte permission_mode;
 
-  byte blake2s_mac_key[BLAKE2S_KEY_SIZE];
+  byte id_mac_key[BLAKE2S_KEY_SIZE];
+  byte tk_mac_key[BLAKE2S_KEY_SIZE];
 };
 
 s_config          g_config;
@@ -78,8 +79,8 @@ void setup() {
     // Do not expose MAC key in any case
     SERIAL_PRINTLN();
 
-    memset(g_config.blake2s_mac_key, 42, BLAKE2S_KEY_SIZE);
-    blake2s_init_key(&g_hasher, BLAKE2S_128_OUTPUT_SIZE, g_config.blake2s_mac_key, BLAKE2S_KEY_SIZE);
+    memset(g_config.id_mac_key, 42, BLAKE2S_KEY_SIZE);
+    memset(g_config.tk_mac_key, 0x42, BLAKE2S_KEY_SIZE);
   }
 
 #if HASH_DEBUG
@@ -196,11 +197,6 @@ ReaderState read_and_verify(int i) {
   // 32 bytes file 0x2
   // 48 bytes file 0x4
 
-  memset(verify_data + 0, 0, 16);
-  for (int j = 0; j < g_mfrc522[i]->uid.size; j++) {
-    verify_data[j] = g_mfrc522[i]->uid.uidByte[j];
-  }
-
   status = read_file(g_mfrc522[i], 1, 0, &verify_data[0x10], 0x10);
   if (status != MFRC522::STATUS_OK) {
     return (handle_error(i, "ReadFile 1", status, true));
@@ -208,6 +204,13 @@ ReaderState read_and_verify(int i) {
 
   if ((verify_data[0x1a] == 'U') && (verify_data[0x1b] == 'P')) {
     return (STATE_READ_UPDATE);
+  }
+
+  if ((verify_data[0x1a] == 'T') && (verify_data[0x1b] == 'K')) {
+    //TODO: Check if HCE
+  }
+  else {
+    //TODO: Check if DESFire
   }
 
   if (((verify_data[0x1a] == 'I') && (verify_data[0x1b] == 'D')) ||
@@ -229,14 +232,23 @@ ReaderState read_and_verify(int i) {
       return (handle_error(i, "ReadFile 4b", status, true));
     }
 
-    SERIAL_PRINTLN("Card data:");
-    print_memory(verify_data, 0x70); SERIAL_PRINTLN();
+    // Clear out the card serial
+    memset(verify_data, 0, 16);
 
-    SERIAL_PRINTLN("Card MAC:");
-    print_memory(card_mac, 0x10); SERIAL_PRINTLN();
+    // ID cards and Tickets have separate MAC keys and serial methods (?)
+    if (verify_data[0x1a] == 'I') {
+      for (int j = 0; j < g_mfrc522[i]->uid.size; j++) {
+        verify_data[j] = g_mfrc522[i]->uid.uidByte[j];
+      }
+
+      blake2s_init_key(&g_hasher, BLAKE2S_128_OUTPUT_SIZE, g_config.id_mac_key, BLAKE2S_KEY_SIZE);
+    }
+    else {
+      memset(verify_data, 0xFF, 7); //TEMPORARY, not sure about how serials work with tickets -apuel
+      blake2s_init_key(&g_hasher, BLAKE2S_128_OUTPUT_SIZE, g_config.tk_mac_key, BLAKE2S_KEY_SIZE);
+    }
 
     // Compute the MAC
-    blake2s_reset(&g_hasher);
     blake2s_block(&g_hasher, verify_data + 0x00, BLAKE2S_FLAG_NORMAL);
     blake2s_finish(&g_hasher, verify_data + 0x40, 0x30);
     byte compare_mac[16];
@@ -247,10 +259,17 @@ ReaderState read_and_verify(int i) {
       compare |= card_mac[i] ^ compare_mac[i];
     }
 
+    SERIAL_PRINTLN("Card data:");
+    print_memory(verify_data, 0x70); SERIAL_PRINTLN();
+
+    SERIAL_PRINTLN("Card MAC:");
+    print_memory(card_mac, 0x10); SERIAL_PRINTLN();
+
     SERIAL_PRINTLN("Calculated MAC:");
     print_memory(compare_mac, 0x10); SERIAL_PRINTLN();
 
     if (!compare) {
+      //TODO: Verify card information when MAC is valid
       return (STATE_UNLOCK_START); //At this point the card can be pulled away
     }
     else {

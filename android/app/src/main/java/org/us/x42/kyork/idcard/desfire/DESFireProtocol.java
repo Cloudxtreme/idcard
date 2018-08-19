@@ -1,5 +1,7 @@
 package org.us.x42.kyork.idcard.desfire;
 
+import android.util.Log;
+
 import org.us.x42.kyork.idcard.PackUtil;
 
 /**
@@ -49,6 +51,7 @@ public final class DESFireProtocol {
         NO_SUCH_KEY(0x40),
         LENGTH_ERROR(0x7E),
         PERMISSION_DENIED(0x9D),
+        PARAMETER_ERROR(0x9E),
         APPLICATION_NOT_FOUND(0xA0),
         APPL_INTEGRITY_ERROR(0xA1),
         AUTHENTICATION_ERROR(0xAE),
@@ -89,6 +92,8 @@ public final class DESFireProtocol {
                     return LENGTH_ERROR;
                 case (byte) 0x9D:
                     return PERMISSION_DENIED;
+                case (byte) 0x9E:
+                    return PARAMETER_ERROR;
                 case (byte) 0xA0:
                     return APPLICATION_NOT_FOUND;
                 case (byte) 0xA1:
@@ -116,6 +121,7 @@ public final class DESFireProtocol {
                 case (byte) 0xF1:
                     return FILE_INTEGRITY_ERROR;
             }
+            Log.e("DESFireProtocol", "unknown error code " + code);
             return UNKNOWN_ERROR_CODE;
         }
     }

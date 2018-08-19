@@ -69,7 +69,7 @@ public class DESFireCard {
     public void changeFileAccess(byte fileID, DESFireProtocol.FileEncryptionMode mode, int readKey, int writeKey, int rwKey, int changeKey, boolean needsEncrypt) throws IOException {
         byte[] encArgs = new byte[8];
         encArgs[0] = mode.getValue();
-        short accessRights = (short) (((readKey & 0xF) << 24) | ((writeKey & 0xF) << 16) | ((rwKey & 0xF) << 8) | (changeKey & 0xF));
+        short accessRights = (short) (((readKey & 0xF) << 12) | ((writeKey & 0xF) << 8) | ((rwKey & 0xF) << 4) | (changeKey & 0xF));
         PackUtil.writeLE16(encArgs, 1, accessRights);
 
         byte[] cmd;

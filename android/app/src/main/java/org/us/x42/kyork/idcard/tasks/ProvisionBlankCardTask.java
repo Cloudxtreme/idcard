@@ -139,6 +139,7 @@ public class ProvisionBlankCardTask extends CardNFCTask {
                 setError("Failed to write files", e);
                 return null;
             }
+            mCard.sendRequest(DESFireProtocol.COMMIT_TRANSACTION, null);
 
             mCard.changeFileAccess(FileMetadata.FILE_ID, DESFireProtocol.FileEncryptionMode.PLAIN, 0xE, 0xF, 0xF, 0xE, false);
 

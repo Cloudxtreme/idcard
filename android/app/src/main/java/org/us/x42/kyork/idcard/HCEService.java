@@ -47,10 +47,6 @@ public class HCEService extends HostApduService {
         ourCard.fileUserInfo = new FileUserInfo(new byte[CardDataFormat.FORMAT_USERINFO.expectedSize]);
 
         ourCard.fileDoorPermissions = new FileDoorPermissions(new byte[CardDataFormat.FORMAT_DOORPERMS.expectedSize]);
-        try {
-            ourCard.fileDoorPermissions.signMAC(TK_SERIAL_DEV, CardJob.TK_MAC_KEY_DEV, ourCard.fileMetadata, ourCard.fileUserInfo);
-        }
-        catch (IOException e) { }
 
         ourCard.fileSignatures = new FileSignatures(new byte[CardDataFormat.FORMAT_SIGNATURES.expectedSize]);
     }

@@ -22,7 +22,8 @@ import java.util.Map;
 import java.util.TimeZone;
 
 public class ServerAPIDebug implements ServerAPI {
-    public static final byte[] MAC_KEY_DEV = CardJob.decodeHex("2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A");
+    private static final byte[] ID_MAC_KEY_DEV = CardJob.decodeHex("2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A");
+    private static final byte[] TK_MAC_KEY_DEV = CardJob.decodeHex("4242424242424242424242424242424242424242424242424242424242424242");
     private Map<Long, IDCard> pendingUpdates = new HashMap<>();
 
     @Override
@@ -58,7 +59,7 @@ public class ServerAPIDebug implements ServerAPI {
         // Update timestamps and sign
         newCard.fileUserInfo.setLastUpdated(new Date());
         newCard.fileUserInfo.setCardSerialRepeat(serialBytes);
-        this.signDoorMAC(serialBytes, newCard);
+        this.signDoorMAC(serialBytes, ID_MAC_KEY_DEV, newCard);
 
         if (newCard.fileSignatures == null) {
             newCard.fileSignatures = FileSignatures.newBlank();
@@ -107,7 +108,7 @@ public class ServerAPIDebug implements ServerAPI {
         card.fileMetadata = FileMetadata.createTicketMetadataFile();
         card.fileUserInfo = getUserInfoFileForLogin(login);
         card.fileDoorPermissions = getUnsignedDoorPermissionsForLogin(login);
-        this.signDoorMAC(new byte[0], card);
+        this.signDoorMAC(new byte[0], TK_MAC_KEY_DEV, card);
         return card;
     }
 
@@ -154,8 +155,8 @@ public class ServerAPIDebug implements ServerAPI {
         return doorPermissions;
     }
 
-    private void signDoorMAC(byte[] serialBytes, IDCard card) {
-        Blake2sMessageDigest engine = new Blake2sMessageDigest(16, MAC_KEY_DEV);
+    private void signDoorMAC(byte[] serialBytes, byte[] key, IDCard card) {
+        Blake2sMessageDigest engine = new Blake2sMessageDigest(16, key);
         engine.update(serialBytes);
         engine.update(new byte[0x10 - serialBytes.length]);
         engine.update(card.fileMetadata.getRawContent());

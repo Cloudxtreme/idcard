@@ -12,15 +12,20 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.google.common.collect.ImmutableList;
+
 import org.us.x42.kyork.idcard.tasks.CardNFCTask;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
-public class CardWriteActivity extends AppCompatActivity {
+public class CardWriteActivity extends AppCompatActivity implements ProgressStepListFragment.ProgressStepListFragmentInterface {
     private static final String LOG_TAG = CardWriteActivity.class.getSimpleName();
     private NfcAdapter mAdapter;
 
@@ -30,8 +35,10 @@ public class CardWriteActivity extends AppCompatActivity {
 
     private CardNFCTask mTask;
 
-    private TextView mStatusText;
     private Handler mHandler;
+
+    private List<ProgressStep> progressSteps = new ArrayList<>();
+    private ProgressStepRecyclerViewAdapter mProgressFragment;
 
     public static final String CARD_JOB_PARAMS = "org.us.x42.kyork.idcard.CARD_JOB_PARAMS";
 
@@ -47,21 +54,12 @@ public class CardWriteActivity extends AppCompatActivity {
         scanFilter = new IntentFilter[]{new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED)};
         scanTechs = new String[][] { new String[] { IsoDep.class.getName(), NfcA.class.getName() } };
 
-        mStatusText = findViewById(R.id.communicate_text);
-
         mHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == CardNFCTask.MSG_ID_NFC_STATUS) {
-                    if (msg.arg1 != 0) {
-                        mStatusText.setText(msg.arg1);
-                    } else if (msg.obj instanceof Integer) {
-                        mStatusText.setText((Integer) msg.obj);
-                    } else if (msg.obj instanceof String) {
-                        mStatusText.setText((String) msg.obj);
-                    } else {
-                        Log.i(LOG_TAG, "unrecognized Message payload: " + msg.obj.getClass().getName() + " " + msg.obj.toString());
-                    }
+                    progressSteps.get(msg.arg1).state = msg.arg2;
+                    mProgressFragment.notifyItemChanged(msg.arg1);
                 } else if (msg.what == CardNFCTask.MSG_ID_NFC_DONE) {
                     // Operation complete
                     Intent returnData = new Intent(Intent.ACTION_VIEW);
@@ -81,6 +79,11 @@ public class CardWriteActivity extends AppCompatActivity {
             return;
         }
 
+        mTask.writeListOfSteps(progressSteps);
+        Log.i(LOG_TAG, "got step list");
+        if (mProgressFragment != null) {
+            mProgressFragment.notifyDataSetChanged();
+        }
     }
 
     @Override
@@ -106,5 +109,16 @@ public class CardWriteActivity extends AppCompatActivity {
             mTask.setTagAndHandler(tagFromIntent, mHandler);
             mTask.execute();
         }
+    }
+
+    @Override
+    public @NonNull List<ProgressStep> getProgressStepList() {
+        Log.i(LOG_TAG, "got getProgressStepList() call");
+        return this.progressSteps;
+    }
+
+    @Override
+    public void attachFragmentListeners(ProgressStepRecyclerViewAdapter adapter) {
+        this.mProgressFragment = adapter;
     }
 }

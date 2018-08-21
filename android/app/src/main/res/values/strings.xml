@@ -3,9 +3,26 @@
     <string name="action_settings">Settings</string>
     <string name="door">Door</string>
     <string name="run_nfc_test">Run NFC Test</string>
-    <string name="nfc_open">Please touch the ID Card to the device</string>
+    <string name="nfc_open">Touch the ID card</string>
     <string name="nfc_found">Found Card, working…</string>
     <string name="nfc_done">Card Operation complete</string>
+    <string name="nfc_generic_findcard">Please touch the card</string>
+    <string name="nfc_generic_findcard_done">ID Card Found</string>
+    <string name="nfc_generic_findcard_fail">ID Card Not Found</string>
+    <string name="nfc_generic_modify">Communicate With Card</string>
+    <string name="nfc_generic_modify_fail">Communication With Card Failed</string>
+    <string name="nfc_provision_step1a">Validate Card</string>
+    <string name="nfc_provision_step1b">Wipe Card</string>
+    <string name="nfc_provision_step2_server">Register Card on Server</string>
+    <string name="nfc_provision_step3">Format Card</string>
+    <string name="nfc_provision_step4">Write Data to Card</string>
+    <string name="nfc_provision_step5">Report Success to Server</string>
+    <string name="nfc_read_step1">Read Card Data</string>
+    <string name="nfc_read_step2">Validate Card Data</string>
+    <string name="nfc_update_step1_server">Get Updates From Server</string>
+    <string name="nfc_update_step2">Write Updates To Card</string>
+    <string name="nfc_update_step2b">Card Already Updated</string>
+    <string name="nfc_update_step3_server">Notify Server of Update</string>
     <string name="hce_service_name">Card42 Phone-Card Service</string>
     <string name="hce_aidgroup_desc">NFC Application IDs for 42 ID Cards</string>
 
@@ -49,4 +66,6 @@
     <string name="launch_card_editor">Change Card Content</string>
     <string name="launch_card_admin">Launch Card Admin</string>
     <string name="err_need_login">Please enter a valid intra login</string>
+    <string name="done">Done</string>
+    <string name="working">Working</string>
 </resources>

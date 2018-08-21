@@ -21,6 +21,13 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <style name="BlueProgress" parent="AppTheme">
+        <item name="colorAccent">@color/colorPrimary</item>
+    </style>
+    <style name="FractalBackground" parent="AppTheme">
+        <item name="android:textColorPrimary">?attr/android:textColorPrimaryInverse</item>
+    </style>
+
 
     <style name="mySpinnerItemStyle" parent="@android:style/Widget.Holo.DropDownItem.Spinner">
         <item name="android:textColor">@color/my_spinner_text_color</item>

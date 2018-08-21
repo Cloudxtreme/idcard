@@ -18,12 +18,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.google.common.collect.ImmutableList;
+
 import org.us.x42.kyork.idcard.tasks.CardNFCTask;
 import org.us.x42.kyork.idcard.tasks.ReadCardTask;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
-public class IncomingScanActivity extends AppCompatActivity {
+public class IncomingScanActivity extends AppCompatActivity implements ProgressStepListFragment.ProgressStepListFragmentInterface {
     private static final String LOG_TAG = IncomingScanActivity.class.getSimpleName();
 
     private boolean needForegroundScan;
@@ -31,8 +35,10 @@ public class IncomingScanActivity extends AppCompatActivity {
     private NfcAdapter mAdapter;
 
     private ReadCardTask mTask;
-    private TextView mStatusText;
     private Handler mHandler;
+
+    private List<ProgressStep> progressSteps = new ArrayList<>();
+    private ProgressStepRecyclerViewAdapter mProgressFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,24 +47,12 @@ public class IncomingScanActivity extends AppCompatActivity {
 
         Log.i(LOG_TAG, "IncomingScanActivity");
 
-        mStatusText = findViewById(R.id.communicate_text);
-
         mHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == CardNFCTask.MSG_ID_NFC_STATUS) {
-                    int msgInt = 0;
-                    if (msg.arg1 != 0) {
-                        mStatusText.setText(msg.arg1);
-                        msgInt = msg.arg1;
-                    } else if (msg.obj instanceof Integer) {
-                        mStatusText.setText((Integer) msg.obj);
-                        msgInt = (Integer) msg.obj;
-                    } else if (msg.obj instanceof String) {
-                        mStatusText.setText((String) msg.obj);
-                    } else {
-                        Log.i(LOG_TAG, "wtf did i just get in that Message: " + msg.obj.getClass().getName() + " " + msg.obj.toString());
-                    }
+                    progressSteps.get(msg.arg1).state = msg.arg2;
+                    mProgressFragment.notifyItemChanged(msg.arg1);
                 } else if (msg.what == CardNFCTask.MSG_ID_NFC_DONE) {
                     // Operation complete
                     Intent viewProfileIntent = new Intent(IncomingScanActivity.this, IntraProfileActivity.class);
@@ -101,9 +95,11 @@ public class IncomingScanActivity extends AppCompatActivity {
         Tag tag = launchIntent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         if (tag == null) {
             needForegroundScan = true;
+            mAdapter = NfcAdapter.getDefaultAdapter(this);
         } else {
             needForegroundScan = false;
             mTask = new ReadCardTask();
+            changeProgressStepList(mTask.getListOfSteps());
             mTask.setTagAndHandler(tag, mHandler);
             mTask.execute();
         }
@@ -120,7 +116,7 @@ public class IncomingScanActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        if (needForegroundScan) {
+        if (mAdapter != null && needForegroundScan) {
             PendingIntent scanIntent = PendingIntent.getActivity(
                     this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
             IntentFilter[] scanFilter = new IntentFilter[] { new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED) };
@@ -139,8 +135,28 @@ public class IncomingScanActivity extends AppCompatActivity {
                 mAdapter.disableForegroundDispatch(this);
             }
             mTask = new ReadCardTask();
+            changeProgressStepList(mTask.getListOfSteps());
             mTask.setTagAndHandler(tag, mHandler);
             mTask.execute();
         }
+    }
+
+    @Override
+    public List<ProgressStep> getProgressStepList() {
+        return this.progressSteps;
+    }
+
+    private void changeProgressStepList(List<ProgressStep> newList) {
+        this.progressSteps.clear();
+        this.progressSteps.addAll(newList);
+        if (mProgressFragment != null) {
+            // SuppressWarnings("performance") we are entirely replacing the list, so this is appropriate
+            mProgressFragment.notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void attachFragmentListeners(ProgressStepRecyclerViewAdapter adapter) {
+        this.mProgressFragment = adapter;
     }
 }

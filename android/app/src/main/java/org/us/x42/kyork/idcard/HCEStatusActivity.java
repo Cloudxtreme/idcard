@@ -1,0 +1,13 @@
+package org.us.x42.kyork.idcard;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+
+public class HCEStatusActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_hce_status);
+    }
+}

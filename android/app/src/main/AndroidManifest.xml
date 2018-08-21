@@ -68,6 +68,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.us.x42.kyork.idcard.MainActivity" />
         </activity>
+        <activity android:name=".HCEStatusActivity"></activity>
     </application>
 
 </manifest>

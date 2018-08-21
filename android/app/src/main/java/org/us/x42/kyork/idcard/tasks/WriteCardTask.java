@@ -5,7 +5,10 @@ import android.content.Context;
 import android.os.Parcel;
 import android.util.Log;
 
+import com.google.common.collect.ImmutableList;
+
 import org.us.x42.kyork.idcard.CardJob;
+import org.us.x42.kyork.idcard.ProgressStep;
 import org.us.x42.kyork.idcard.R;
 import org.us.x42.kyork.idcard.ServerAPI;
 import org.us.x42.kyork.idcard.ServerAPIDebug;
@@ -52,6 +55,16 @@ public class WriteCardTask extends CardNFCTask {
     }
 
     @Override
+    public List<ProgressStep> getListOfSteps() {
+        return ImmutableList.of(
+                new ProgressStep.WithDoneText(R.string.nfc_generic_findcard, R.string.nfc_generic_findcard_done, R.string.nfc_generic_findcard_fail),
+                new ProgressStep(R.string.nfc_update_step1_server),
+                new ProgressStep(R.string.nfc_update_step2),
+                new ProgressStep(R.string.nfc_update_step3_server)
+        );
+    }
+
+    @Override
     protected List<Object> doInBackground(Object... params) {
         try {
             // TODO maybe prefetch card contents?
@@ -68,6 +81,7 @@ public class WriteCardTask extends CardNFCTask {
                 throw e;
             }
 
+            stepProgress(1, ProgressStep.STATE_WORKING);
             FileUserInfo userFile = new FileUserInfo(mCard.readFullFile(FileUserInfo.FILE_ID, FileUserInfo.SIZE));
             if (cardToWrite == null || cardToWrite.fileUserInfo.getCardSerialRepeat() != userFile.getCardSerialRepeat()) {
                 try {
@@ -78,15 +92,19 @@ public class WriteCardTask extends CardNFCTask {
                     return null;
                 }
             }
+            stepProgress(1, ProgressStep.STATE_DONE);
 
             if (cardToWrite == null) {
                 Log.i(LOG_TAG, "Card is up to date");
+                getListOfSteps().get(2).text = R.string.nfc_update_step2b;
+                stepProgress(2, ProgressStep.STATE_DONE);
                 return null;
             }
 
             // TODO switch to Android public key
             mCard.establishAuthentication((byte)0, CardJob.ENC_KEY_NULL);
 
+            stepProgress(2, ProgressStep.STATE_WORKING);
             // Write files
             for (AbstractCardFile f : cardToWrite.files()) {
                 if (f == null) continue;
@@ -99,6 +117,15 @@ public class WriteCardTask extends CardNFCTask {
 
             // Commit
             mCard.sendRequest(DESFireProtocol.COMMIT_TRANSACTION, null);
+            stepProgress(2, ProgressStep.STATE_DONE);
+
+
+            stepProgress(3, ProgressStep.STATE_WORKING);
+            // TODO contact server
+            try {
+                Thread.sleep(350);
+            } catch (InterruptedException ignored) {}
+            stepProgress(3, ProgressStep.STATE_DONE);
 
             return null;
         } catch (DESFireCard.CardException e) {
@@ -106,6 +133,7 @@ public class WriteCardTask extends CardNFCTask {
         } catch (Exception e) {
             setError(e.getClass().getName() + ": " + e.getLocalizedMessage());
         }
+        stepProgress(curStep, ProgressStep.STATE_FAIL);
         return null;
     }
 

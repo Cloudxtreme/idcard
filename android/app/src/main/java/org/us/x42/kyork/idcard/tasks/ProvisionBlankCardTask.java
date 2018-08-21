@@ -3,9 +3,13 @@ package org.us.x42.kyork.idcard.tasks;
 import android.os.Parcel;
 import android.util.Log;
 
+import com.google.common.collect.ImmutableList;
+
 import org.us.x42.kyork.idcard.CardJob;
 import org.us.x42.kyork.idcard.IntraAPI;
 import org.us.x42.kyork.idcard.PackUtil;
+import org.us.x42.kyork.idcard.ProgressStep;
+import org.us.x42.kyork.idcard.R;
 import org.us.x42.kyork.idcard.ServerAPI;
 import org.us.x42.kyork.idcard.ServerAPIFactory;
 import org.us.x42.kyork.idcard.data.AbstractCardFile;
@@ -43,11 +47,28 @@ public class ProvisionBlankCardTask extends CardNFCTask {
     }
 
     @Override
+    public List<ProgressStep> getListOfSteps() {
+        List<ProgressStep> steps = ImmutableList.of(
+                new ProgressStep.WithDoneText(R.string.nfc_generic_findcard, R.string.nfc_generic_findcard_done, R.string.nfc_generic_findcard_fail),
+                new ProgressStep(R.string.nfc_provision_step1a),
+                new ProgressStep(R.string.nfc_provision_step2_server),
+                new ProgressStep(R.string.nfc_provision_step3),
+                new ProgressStep(R.string.nfc_provision_step4),
+                new ProgressStep(R.string.nfc_provision_step5)
+        );
+        if (piccFormat) {
+            steps.get(1).text = R.string.nfc_provision_step1b;
+        }
+        return steps;
+    }
+
+    @Override
     protected List<Object> doInBackground(Object... params) {
+        this.stepProgress(0, ProgressStep.STATE_WORKING);
         try {
             super.setUpCard();
 
-            publishProgress("Preparing card");
+            stepProgress(1, ProgressStep.STATE_WORKING);
             mCard.selectApplication(0);
             byte[] infoResponse = mCard.sendRequest(DESFireProtocol.GET_MANUFACTURING_DATA, null);
             byte[] appListResponse;
@@ -58,15 +79,18 @@ public class ProvisionBlankCardTask extends CardNFCTask {
                 if (hasApp(appListResponse, CardJob.APP_ID_CARD42)) {
                     Log.i(LOG_TAG, "Card already has application");
                     setError("Card is already provisioned", null);
+                    stepProgress(1, ProgressStep.STATE_FAIL);
                     return null;
                 }
             }
 
+
             long serial = PackUtil.readLE56(infoResponse, 14);
             Date provisionDate = new Date();
 
+            stepProgress(1, ProgressStep.STATE_DONE);
+            stepProgress(2, ProgressStep.STATE_WORKING);
             Log.i(LOG_TAG, String.format("calling registerNewCard - %d %d %s", serial, provisionDate.getTime(), login));
-            publishProgress("Contacting server");
             ServerAPIFactory.getAPI().registerNewCard(serial, provisionDate, login);
 
             IDCard cardContent = ServerAPIFactory.getAPI().getCardUpdates(serial, 0);
@@ -75,7 +99,8 @@ public class ProvisionBlankCardTask extends CardNFCTask {
                 return null;
             }
 
-            publishProgress("Writing data to card");
+            stepProgress(2, ProgressStep.STATE_DONE);
+            stepProgress(3, ProgressStep.STATE_WORKING);
             // CreateApplication
             try {
                 Log.i(LOG_TAG, "Creating application");
@@ -127,6 +152,9 @@ public class ProvisionBlankCardTask extends CardNFCTask {
                 }
             }
 
+            stepProgress(3, ProgressStep.STATE_DONE);
+            stepProgress(4, ProgressStep.STATE_WORKING);
+
             try {
                 for (AbstractCardFile f : cardContent.files()) {
                     // including FileMetadata
@@ -143,12 +171,20 @@ public class ProvisionBlankCardTask extends CardNFCTask {
 
             mCard.changeFileAccess(FileMetadata.FILE_ID, DESFireProtocol.FileEncryptionMode.PLAIN, 0xE, 0xF, 0xF, 0xE, false);
 
+            stepProgress(4, ProgressStep.STATE_DONE);
+            stepProgress(5, ProgressStep.STATE_WORKING);
             ServerAPIFactory.getAPI().cardUpdatesApplied(serial, cardContent.fileUserInfo.getLastUpdated());
+            stepProgress(5, ProgressStep.STATE_DONE);
 
             Log.i(LOG_TAG, "provision done");
 
         } catch (IOException e) {
             setError("Communication error", e);
+            stepProgress(this.curStep, ProgressStep.STATE_FAIL);
+            try {
+                Thread.sleep(25);
+            } catch (InterruptedException ignored) {
+            }
         }
         return null;
     }

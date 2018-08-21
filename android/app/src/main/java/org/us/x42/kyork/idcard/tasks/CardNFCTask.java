@@ -6,6 +6,9 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
 
+import com.google.common.collect.ImmutableList;
+
+import org.us.x42.kyork.idcard.ProgressStep;
 import org.us.x42.kyork.idcard.R;
 import org.us.x42.kyork.idcard.desfire.DESFireCard;
 
@@ -15,7 +18,7 @@ import java.util.List;
 /**
  * Abstract base class for NFC Card AsyncTasks.
  */
-public abstract class CardNFCTask extends AsyncTask<Object, String, List<Object>> implements Parcelable {
+public abstract class CardNFCTask extends AsyncTask<Object, Message, List<Object>> implements Parcelable {
     /**
      * The Android tag. Must be set before calling execute() (see {@link #setTagAndHandler(Tag, Handler)}).
      */
@@ -30,10 +33,28 @@ public abstract class CardNFCTask extends AsyncTask<Object, String, List<Object>
      */
     protected DESFireCard mCard;
 
-    public static final int MSG_ID_NFC_STATUS = 23;
-    public static final int MSG_ID_NFC_DONE = 24;
+    /**
+     * Progress update message.
+     * @param num1 Index into the getListOfSteps()
+     * @param num2 A ProgressStep STATE constant
+     */
+    public static final int MSG_ID_NFC_STATUS = 0x50;
+    public static final int MSG_ID_NFC_DONE = 0x51;
+    protected int curStep;
 
     CardNFCTask() {
+    }
+
+    public final void writeListOfSteps(List<ProgressStep> dest) {
+        dest.clear();
+        dest.addAll(getListOfSteps());
+    }
+
+    public List<ProgressStep> getListOfSteps() {
+        return ImmutableList.<ProgressStep>of(
+                new ProgressStep.WithDoneText(R.string.nfc_generic_findcard, R.string.nfc_generic_findcard_done, R.string.nfc_generic_findcard_fail),
+                new ProgressStep.WithDoneText(R.string.nfc_generic_modify, R.string.nfc_generic_modify, R.string.nfc_generic_modify_fail)
+        );
     }
 
     /**
@@ -47,8 +68,10 @@ public abstract class CardNFCTask extends AsyncTask<Object, String, List<Object>
     }
 
     public void setUpCard() throws IOException {
+        this.stepProgress(0, ProgressStep.STATE_WORKING);
         mCard = new DESFireCard(mTag);
         mCard.connect();
+        this.stepProgress(0, ProgressStep.STATE_DONE);
     }
 
     public static String stringifyByteArray(byte[] data) {
@@ -76,18 +99,23 @@ public abstract class CardNFCTask extends AsyncTask<Object, String, List<Object>
     }
 
     @Override
-    protected void onProgressUpdate(String... statuses) {
-        for (String statusMessageId : statuses) {
-            switch (statusMessageId) {
-                case "start":
-                    Message.obtain(this.mHandler, MSG_ID_NFC_STATUS, R.string.nfc_open, 0).sendToTarget();
-                case "found":
-                    Message.obtain(this.mHandler, MSG_ID_NFC_STATUS, R.string.nfc_found, 0).sendToTarget();
-                case "done":
-                    Message.obtain(this.mHandler, MSG_ID_NFC_STATUS, R.string.nfc_done, 0).sendToTarget();
-                default:
-                    Message.obtain(this.mHandler, MSG_ID_NFC_STATUS, statusMessageId).sendToTarget();
-            }
+    protected void onProgressUpdate(Message... statuses) {
+        for (Message statusMessage : statuses) {
+            statusMessage.setTarget(mHandler);
+            statusMessage.sendToTarget();
+        }
+    }
+
+    /**
+     * Utility wrapper around {@link #publishProgress(Object[])}
+     *
+     * @param stepID index into {@link #getListOfSteps()}
+     * @param newState A constant from {@link ProgressStep}
+     */
+    protected final void stepProgress(int stepID, int newState) {
+        publishProgress(Message.obtain(null, MSG_ID_NFC_STATUS, stepID, newState));
+        if (newState == ProgressStep.STATE_WORKING) {
+            curStep = stepID;
         }
     }
 

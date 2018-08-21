@@ -1,9 +1,15 @@
 package org.us.x42.kyork.idcard.tasks;
 
+import android.os.Message;
 import android.os.Parcel;
 
+import com.google.common.collect.ImmutableList;
+
+import org.us.x42.kyork.idcard.ProgressStep;
+import org.us.x42.kyork.idcard.R;
 import org.us.x42.kyork.idcard.desfire.DESFireCard;
 
+import java.io.IOException;
 import java.util.List;
 
 public class CommandTestTask extends CardNFCTask {
@@ -27,26 +33,44 @@ public class CommandTestTask extends CardNFCTask {
         this.cmdData = cmdData;
     }
 
+    public List<ProgressStep> getListOfSteps() {
+        return ImmutableList.<ProgressStep>of(
+                new ProgressStep.WithDoneText(R.string.nfc_generic_findcard, R.string.nfc_generic_findcard_done, R.string.nfc_generic_findcard_fail),
+                new ProgressStep.WithDoneText(R.string.nfc_generic_modify, R.string.nfc_generic_modify, R.string.nfc_generic_modify_fail)
+        );
+    }
+
     @Override
     protected List<Object> doInBackground(Object... params) {
+        this.publishProgress(Message.obtain(null, MSG_ID_NFC_STATUS, 0, ProgressStep.STATE_WORKING));
         try {
             super.setUpCard();
+        } catch (IOException e) {
+            this.publishProgress(Message.obtain(null, MSG_ID_NFC_STATUS, 0, ProgressStep.STATE_FAIL));
+            errorString = e.getClass().getName() + " " + e.getMessage();
+            errorCode = -1;
+            return null;
+        }
+
+        try {
+            this.publishProgress(Message.obtain(null, MSG_ID_NFC_STATUS, 1, ProgressStep.STATE_WORKING));
 
             mCard.selectApplication(appId);
             if (this.encKey != null) {
-                publishProgress("Authenticating");
                 mCard.establishAuthentication(this.keyId, this.encKey);
             }
 
-            publishProgress("Executing command");
             responseData = mCard.sendRequest(cmdId, cmdData);
             errorCode = 0;
+            this.publishProgress(Message.obtain(null, MSG_ID_NFC_STATUS, 1, ProgressStep.STATE_DONE));
+            return null;
         } catch (DESFireCard.CardException e) {
             errorCode = e.getErrorCode();
         } catch (Exception e) {
             errorString = e.getClass().getName() + " " + e.getMessage();
             errorCode = -1;
         }
+        this.publishProgress(Message.obtain(null, MSG_ID_NFC_STATUS, 1, ProgressStep.STATE_FAIL));
         return null;
     }
 

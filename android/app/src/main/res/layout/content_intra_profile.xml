@@ -170,7 +170,7 @@
         android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/full_name"
-        app:srcCompat="@drawable/alert_circle_outline" />
+        app:srcCompat="@drawable/ic_error_outline_black_24dp" />
 
 </android.support.constraint.ConstraintLayout>
 

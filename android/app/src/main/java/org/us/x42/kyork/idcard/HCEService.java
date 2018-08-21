@@ -32,8 +32,6 @@ public class HCEService extends HostApduService {
     private static final byte[] ERROR_GENERIC = new byte[]{(byte) 0x91, (byte) 0xA1};
     private static final byte[] APP_ID_CARD42 = new byte[]{(byte) 0xFB, (byte) 0x98, (byte) 0x52};
 
-    private static final byte[] TK_SERIAL_DEV = new byte[]{(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};  //TEMPORARY, not sure about how serials work with tickets -apuel
-
     private static final int BASE64_FLAGS = Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP;
 
     /**
@@ -46,7 +44,6 @@ public class HCEService extends HostApduService {
     private IOException fetchException;
     private byte[] authRndA;
     private byte[] authRndB;
-    private byte[] pendingRead;
     private Handler handler;
 
     private void resetVariables() {
@@ -55,7 +52,6 @@ public class HCEService extends HostApduService {
         fetchException = null;
         authRndA = null;
         authRndB = null;
-        pendingRead = null;
         handler = new ServerResultHandler(getMainLooper());
     }
 
@@ -112,52 +108,12 @@ public class HCEService extends HostApduService {
         }
     }
 
-    /**
-     * A ticket has been fetched from the server and stored in SharedPreferences.
-     */
-    private static final int MSG_TICKET_OBTAINED = 1;
-
-    /**
-     * An error was encountered fetching a ticket from the server.
-     * @param Throwable an IOException
-     */
-    private static final int MSG_TICKET_OBTAIN_FAIL = 2;
-
-    /**
-     * We are contacting the server to get the ticket.
-     */
-    private static final int MSG_PROGRESS_GETTING_TICKET = 3;
-
-    class ServerResultHandler extends Handler {
-        ServerResultHandler(Looper looper) { super(looper); }
-
-        @Override
-        public void handleMessage(Message msg) {
-            if (msg.what == MSG_TICKET_OBTAINED) {
-                Log.i(LOG_TAG, "Got ticket from server");
-                ourCard = (IDCard) msg.obj;
-                ticketReady = true;
-
-                if (pendingRead != null) {
-                    byte[] r = pendingRead;
-                    pendingRead = null;
-                    replyApdu(processDESFireCommand(r));
-                }
-            } else if (msg.what == MSG_TICKET_OBTAIN_FAIL) {
-                fetchException = (IOException) msg.obj;
-                if (pendingRead != null) {
-                    Log.e(LOG_TAG, "Failed to obtain ticket, sending error to card reader", fetchException);
-                    pendingRead = null;
-                    replyApdu(ERROR_GENERIC);
-                }
-            } else if (msg.what == MSG_PROGRESS_GETTING_TICKET) {
-                Log.i(LOG_TAG, "Contacting server to get a ticket");
-                // TODO blocked on showing a service Activity
-            }
-        }
+    private void replyApdu(byte[] reply) {
+        Log.i(LOG_TAG, "RPL " + DESFireCard.stringifyByteArray(reply));
+        sendResponseApdu(reply);
     }
 
-    // if we cannot return immediately, return null for a time extension and use sendCommandApdu() later
+    // if we cannot return immediately, return null and use sendCommandApdu() later
     public byte[] processCommandApdu(byte[] apdu, Bundle extra) {
         Log.i(LOG_TAG, "REQ " + DESFireCard.stringifyByteArray(apdu));
         if ((apdu[0] == 0x00) && (apdu[1] == (byte) 0xA4)) {
@@ -179,11 +135,6 @@ public class HCEService extends HostApduService {
         } else {
             return new byte[]{(byte) 0x91, DESFireProtocol.StatusCode.COMMAND_ABORTED.getValue()};
         }
-    }
-
-    private void replyApdu(byte[] reply) {
-        Log.i(LOG_TAG, "RPL " + DESFireCard.stringifyByteArray(reply));
-        sendResponseApdu(reply);
     }
 
     private byte[] processDESFireCommand(byte[] apdu) {
@@ -253,6 +204,41 @@ public class HCEService extends HostApduService {
         // TODO abort jobs?
     }
 
+    /**
+     * A ticket has been fetched from the server and stored in SharedPreferences.
+     * @param IDCard the card object
+     */
+    private static final int MSG_TICKET_OBTAINED = 1;
+
+    /**
+     * An error was encountered fetching a ticket from the server.
+     * @param Throwable an IOException
+     */
+    private static final int MSG_TICKET_OBTAIN_FAIL = 2;
+
+    /**
+     * We are contacting the server to get the ticket.
+     */
+    private static final int MSG_PROGRESS_GETTING_TICKET = 3;
+
+    class ServerResultHandler extends Handler {
+        ServerResultHandler(Looper looper) { super(looper); }
+
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == MSG_TICKET_OBTAINED) {
+                Log.i(LOG_TAG, "Got ticket from server");
+                ourCard = (IDCard) msg.obj;
+                ticketReady = true;
+            } else if (msg.what == MSG_TICKET_OBTAIN_FAIL) {
+                fetchException = (IOException) msg.obj;
+            } else if (msg.what == MSG_PROGRESS_GETTING_TICKET) {
+                Log.i(LOG_TAG, "Contacting server to get a ticket");
+                // TODO blocked on showing a service Activity
+            }
+        }
+    }
+
     private void prepare() {
         resetVariables();
 
@@ -274,6 +260,7 @@ public class HCEService extends HostApduService {
                     handler.sendMessage(Message.obtain(handler, MSG_PROGRESS_GETTING_TICKET));
                     try {
                         IDCard ticket = ServerAPIFactory.getAPI().getTicketForLogin(TEST_ACCT_LOGIN, ourCard.fileMetadata);
+                        HCEServiceUtils.storeTicket(HCEServiceUtils.getStorage(HCEService.this), ticket);
                         handler.sendMessage(Message.obtain(handler, MSG_TICKET_OBTAINED, ticket));
                     } catch (IOException e) {
                         handler.sendMessage(Message.obtain(handler, MSG_TICKET_OBTAIN_FAIL, e));

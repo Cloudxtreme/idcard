@@ -5,7 +5,10 @@ import android.content.Context;
 import android.os.Parcel;
 import android.util.Log;
 
+import com.google.common.collect.ImmutableList;
+
 import org.us.x42.kyork.idcard.CardJob;
+import org.us.x42.kyork.idcard.ProgressStep;
 import org.us.x42.kyork.idcard.R;
 import org.us.x42.kyork.idcard.data.CardDataFormat;
 import org.us.x42.kyork.idcard.data.FileDoorPermissions;
@@ -41,9 +44,20 @@ public class ReadCardTask extends CardNFCTask {
     }
 
     @Override
+    public List<ProgressStep> getListOfSteps() {
+        return ImmutableList.of(
+                new ProgressStep.WithDoneText(R.string.nfc_generic_findcard, R.string.nfc_generic_findcard_done, R.string.nfc_generic_findcard_fail),
+                new ProgressStep(R.string.nfc_read_step1),
+                new ProgressStep.WithDoneText(R.string.nfc_read_step2, R.string.nfc_read_step2, R.string.nfc_read_step2)
+        );
+    }
+
+    @Override
     protected List<Object> doInBackground(Object... params) {
         try {
             this.setUpCard();
+
+            stepProgress(1, ProgressStep.STATE_WORKING);
 
             try {
                 mCard.selectApplication(CardJob.APP_ID_CARD42);
@@ -85,6 +99,9 @@ public class ReadCardTask extends CardNFCTask {
             FileDoorPermissions fileDoorPermissions = new FileDoorPermissions(mCard.readFullFile(CardDataFormat.FORMAT_DOORPERMS.fileID, CardDataFormat.FORMAT_DOORPERMS.expectedSize));
             FileSignatures fileSignatures = new FileSignatures(mCard.readFullFile(CardDataFormat.FORMAT_SIGNATURES.fileID, CardDataFormat.FORMAT_SIGNATURES.expectedSize));
 
+            stepProgress(1, ProgressStep.STATE_DONE);
+            stepProgress(2, ProgressStep.STATE_WORKING);
+
             try {
                 // Metadata - not signed
                 fileSignatures.validateSignature((byte)fileUserInfo.getFileID(), fileUserInfo.getRawContent());
@@ -94,15 +111,18 @@ public class ReadCardTask extends CardNFCTask {
                 }
             } catch (DESFireCard.CardException e) {
                 if (e.getStatusCode() == DESFireProtocol.StatusCode.INTEGRITY_ERROR) {
+                    ((ProgressStep.WithDoneText)getListOfSteps().get(2)).errText = R.string.incomingscan_err_validate_serial;
                     setError(R.string.incomingscan_err_validate_serial);
                 } else if (e.getStatusCode() == DESFireProtocol.StatusCode.AUTHENTICATION_ERROR) {
+                    ((ProgressStep.WithDoneText)getListOfSteps().get(2)).errText = R.string.incomingscan_err_validate_sig;
                     setError(R.string.incomingscan_err_validate_sig);
                 }
-                // return null;
-                setError(0);
+                stepProgress(2, ProgressStep.STATE_FAIL);
+                return null;
             }
 
             // Done
+            stepProgress(2, ProgressStep.STATE_DONE);
             cardOut = new IDCard();
             cardOut.fileMetadata = fileMetadata;
             cardOut.fileUserInfo = fileUserInfo;
@@ -114,6 +134,7 @@ public class ReadCardTask extends CardNFCTask {
         } catch (IOException e) {
             setError(e.getClass().getName() + ": " + e.getLocalizedMessage());
         }
+        stepProgress(curStep, ProgressStep.STATE_FAIL);
         return null;
     }
 

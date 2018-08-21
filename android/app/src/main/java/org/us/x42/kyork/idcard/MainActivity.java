@@ -6,6 +6,7 @@ import android.nfc.NfcAdapter;
 import android.nfc.cardemulation.CardEmulation;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -18,9 +19,23 @@ import com.google.common.collect.ImmutableList;
 
 import org.us.x42.kyork.idcard.tasks.ProvisionBlankCardTask;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity implements ProgressStepListFragment.ProgressStepListFragmentInterface {
 
     private static final int REQUEST_ID_PROVISION = 4;
+
+    private @NonNull List<ProgressStep> progressSteps;
+    private ProgressStepRecyclerViewAdapter mProgressFragment;
+
+    public MainActivity() {
+        progressSteps = ImmutableList.of(
+                new ProgressStep(R.string.editor_sig_fil1),
+                new ProgressStep(R.string.editor_sig_fil2),
+                new ProgressStep(R.string.editor_sig_fil3),
+                new ProgressStep.WithDoneText(R.string.editor_user_act, R.string.editor_user_act_student, R.string.editor_user_act_piscine)
+                );
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +83,10 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.test_hce).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                setProgress(0, ProgressStep.STATE_DONE);
+                setProgress(1, ProgressStep.STATE_WORKING);
+                setProgress(2, ProgressStep.STATE_FAIL);
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     CardEmulation emu = CardEmulation.getInstance(NfcAdapter.getDefaultAdapter(MainActivity.this));
                     ComponentName hceService = new ComponentName(MainActivity.this, HCEService.class);
@@ -84,6 +103,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+
+    }
+
+    protected void setProgress(int idx, int progressState) {
+        progressSteps.get(idx).state = progressState;
+        mProgressFragment.notifyItemChanged(idx);
     }
 
     @Override
@@ -103,5 +129,15 @@ public class MainActivity extends AppCompatActivity {
                 builder.create().show();
             }
         }
+    }
+
+    @Override
+    public @NonNull List<ProgressStep> getProgressStepList() {
+        return progressSteps;
+    }
+
+    @Override
+    public void attachFragmentListeners(ProgressStepRecyclerViewAdapter frag) {
+        mProgressFragment = frag;
     }
 }

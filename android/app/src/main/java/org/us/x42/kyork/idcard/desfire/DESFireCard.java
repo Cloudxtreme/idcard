@@ -3,9 +3,9 @@ package org.us.x42.kyork.idcard.desfire;
 import android.annotation.SuppressLint;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
+import org.us.x42.kyork.idcard.HexUtil;
 import org.us.x42.kyork.idcard.PackUtil;
 
 import java.io.ByteArrayOutputStream;
@@ -217,22 +217,22 @@ public class DESFireCard {
         rnd.nextBytes(rndA);
 
         byte[] rndBReply = sendPartialRequest((byte) 0x0A, new byte[]{keyId});
-        Log.i(LOG_TAG, "Challenge B from card: " + stringifyByteArray(rndBReply));
+        Log.i(LOG_TAG, "Challenge B from card: " + HexUtil.stringifyByteArray(rndBReply));
         byte[] rndBActual = doCipherDES(longKey, rndBReply, 1);
-        Log.i(LOG_TAG, "Decrypted RndB: " + stringifyByteArray(rndBActual));
+        Log.i(LOG_TAG, "Decrypted RndB: " + HexUtil.stringifyByteArray(rndBActual));
 
         ByteArrayOutputStream midData = new ByteArrayOutputStream();
         midData.write(rndA, 0, 8);
         midData.write(rndBActual, 1, 7);
         midData.write(rndBActual, 0, 1);
-        Log.i(LOG_TAG, "A+B' challenge to card: " + stringifyByteArray(midData.toByteArray()));
+        Log.i(LOG_TAG, "A+B' challenge to card: " + HexUtil.stringifyByteArray(midData.toByteArray()));
         byte[] midReply = doCipherDES(longKey, midData.toByteArray(), 1);
-        Log.i(LOG_TAG, "A+B' encrypted: " + stringifyByteArray(midReply));
+        Log.i(LOG_TAG, "A+B' encrypted: " + HexUtil.stringifyByteArray(midReply));
 
         byte[] finalReply = sendRequest(DESFireProtocol.ADDITIONAL_FRAME, midReply);
-        Log.i(LOG_TAG, "Challenge A' from card: " + stringifyByteArray(finalReply));
+        Log.i(LOG_TAG, "Challenge A' from card: " + HexUtil.stringifyByteArray(finalReply));
         byte[] rndAPrime = doCipherDES(longKey, finalReply, 1);
-        Log.i(LOG_TAG, "Decrypted A' from card: " + stringifyByteArray(rndAPrime));
+        Log.i(LOG_TAG, "Decrypted A' from card: " + HexUtil.stringifyByteArray(rndAPrime));
         byte temp = rndA[0];
         System.arraycopy(rndA, 1, rndA, 0, 7);
         rndA[7] = temp;
@@ -253,7 +253,7 @@ public class DESFireCard {
     public byte[] sendRequest(byte command, byte[] parameters) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-        Log.i(LOG_TAG, "Sending command " + String.format("%02X", command) + ": " + stringifyByteArray(parameters));
+        Log.i(LOG_TAG, "Sending command " + String.format("%02X", command) + ": " + HexUtil.stringifyByteArray(parameters));
         byte[] recvBuffer = mTagTech.transceive(wrapMessage(command, parameters));
 
         while (true) {
@@ -278,14 +278,14 @@ public class DESFireCard {
         }
 
         byte[] result = output.toByteArray();
-        Log.i(LOG_TAG, "Response to command " + command + ": " + stringifyByteArray(result));
+        Log.i(LOG_TAG, "Response to command " + command + ": " + HexUtil.stringifyByteArray(result));
         return result;
     }
 
     private byte[] sendPartialRequest(byte command, byte[] parameters) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-        Log.i(LOG_TAG, "Sending command " + String.format("%02X", command) + ": " + stringifyByteArray(parameters));
+        Log.i(LOG_TAG, "Sending command " + String.format("%02X", command) + ": " + HexUtil.stringifyByteArray(parameters));
         byte[] recvBuffer = mTagTech.transceive(wrapMessage(command, parameters));
 
         if (recvBuffer[recvBuffer.length - 2] != (byte) 0x91) {
@@ -321,20 +321,4 @@ public class DESFireCard {
         return stream.toByteArray();
     }
 
-    @NonNull
-    public static String stringifyByteArray(byte[] data) {
-        if (data == null) {
-            return "(null)";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append('[');
-        sb.append(' ');
-        for (byte d : data) {
-            sb.append(String.format("%02X", d));
-            sb.append(' ');
-        }
-        sb.append(']');
-        return sb.toString();
-    }
 }

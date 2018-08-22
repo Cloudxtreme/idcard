@@ -3,8 +3,8 @@ package org.us.x42.kyork.idcard.data;
 import com.google.common.io.BaseEncoding;
 
 import org.junit.Test;
+import org.us.x42.kyork.idcard.HexUtil;
 import org.us.x42.kyork.idcard.ServerAPIDebug;
-import org.us.x42.kyork.idcard.desfire.DESFireCard;
 
 import java.util.Arrays;
 
@@ -28,7 +28,7 @@ public class FileSignaturesTest {
         engine.engineUpdate(buf, 0, 56);
 
         byte[] result = engine.engineDigest();
-        System.out.println(DESFireCard.stringifyByteArray(Arrays.copyOfRange(result, 0x00, 0x10)));
+        System.out.println(HexUtil.stringifyByteArray(Arrays.copyOfRange(result, 0x00, 0x10)));
 
         engine.destroy();
     }

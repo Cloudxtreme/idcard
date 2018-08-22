@@ -1,13 +1,6 @@
 package org.us.x42.kyork.idcard;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-
-import com.google.common.io.BaseEncoding;
-
-import org.us.x42.kyork.idcard.data.AbstractCardFile;
 import org.us.x42.kyork.idcard.desfire.DESFireCard;
-import org.us.x42.kyork.idcard.desfire.DESFireProtocol;
 
 import java.io.IOException;
 
@@ -19,9 +12,9 @@ public class CardJob {
 
     // Encryption key values.
     public static final byte[] ENC_KEY_NONE = null;
-    public static final byte[] ENC_KEY_MASTER_TEST = decodeHex("FBCE1357BAC06934167B1987DF09CFAF");
-    public static final byte[] ENC_KEY_NULL = decodeHex("00000000000000000000000000000000");
-    public static final byte[] ENC_KEY_ANDROID_PUBLIC = decodeHex("5BF8127E692E3F65CF8B78C79762E27A");
+    public static final byte[] ENC_KEY_MASTER_TEST = HexUtil.decodeHex("FBCE1357BAC06934167B1987DF09CFAF");
+    public static final byte[] ENC_KEY_NULL = HexUtil.decodeHex("00000000000000000000000000000000");
+    public static final byte[] ENC_KEY_ANDROID_PUBLIC = HexUtil.decodeHex("5BF8127E692E3F65CF8B78C79762E27A");
 
     public interface CardOp {
         void execute(DESFireCard card) throws IOException;
@@ -29,7 +22,4 @@ public class CardJob {
 
     // Gutted, replaced by tasks.CommandTestTask
 
-    public static byte[] decodeHex(String hex) {
-        return BaseEncoding.base16().decode(hex);
-    }
 }

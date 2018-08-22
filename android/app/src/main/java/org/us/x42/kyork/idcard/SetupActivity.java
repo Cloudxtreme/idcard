@@ -48,6 +48,7 @@ public class SetupActivity extends AppCompatActivity {
         clickButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                errorText.setText("");
                 int appId;
                 Log.i(this.getClass().getSimpleName(), "appid spinner position " + appid_spinner.getSelectedItemPosition());
                 switch (appid_spinner.getSelectedItemPosition()) {
@@ -94,18 +95,17 @@ public class SetupActivity extends AppCompatActivity {
                 byte cmdId = (byte)cmdIdInt;
 
                 String inputText = payload_edittext.getText().toString();
-                inputText = inputText.replaceAll(" ", "");
-                if (!BaseEncoding.base16().canDecode(inputText)) {
-                    errorText.setText(R.string.error_not_valid_hex_bytes);
-                    return;
-                }
                 byte[] data;
                 if (inputText.isEmpty()) {
                     data = null;
                 } else {
-                    data = BaseEncoding.base16().decode(inputText);
+                    try {
+                        data = HexUtil.decodeUserInput(inputText);
+                    } catch (HexUtil.DecodeException e) {
+                        errorText.setText(e.getLocalizedMessage(SetupActivity.this));
+                        return;
+                    }
                 }
-                errorText.setText("");
 
                 Intent intent = new Intent(SetupActivity.this, CardWriteActivity.class);
                 CommandTestTask task = new CommandTestTask(appId, keyId, encKey, cmdId, data);
@@ -128,7 +128,7 @@ public class SetupActivity extends AppCompatActivity {
                     if (task.getErrorCode() != -1) {
                         DESFireProtocol.StatusCode code = DESFireProtocol.StatusCode.byId((byte)task.getErrorCode());
                         if (code == DESFireProtocol.StatusCode.UNKNOWN_ERROR_CODE) {
-                            sb.append(String.format("%02X", task.getErrorCode()));
+                            sb.append(Integer.toHexString(task.getErrorCode()));
                         } else {
                             sb.append(code.toString());
                         }
@@ -139,14 +139,7 @@ public class SetupActivity extends AppCompatActivity {
                     byte[] responseData = task.getResponseData();
                     if (responseData != null) {
                         sb.append("Result: ").append(responseData.length).append(" bytes\n");
-                        for (int i = 0; i < responseData.length; i++) {
-                            sb.append(String.format("%02X ", responseData[i]));
-                            if (i % 8 == 7) {
-                                sb.append('\n');
-                            } else if (i % 2 == 1) {
-                                sb.append(' ');
-                            }
-                        }
+                        HexUtil.appendLineWrappedHex(sb, responseData);
                     } else {
                         sb.append("(Success, no result)");
                     }

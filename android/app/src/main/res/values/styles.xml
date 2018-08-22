@@ -24,6 +24,7 @@
     <style name="BlueProgress" parent="AppTheme">
         <item name="colorAccent">@color/colorPrimary</item>
     </style>
+
     <style name="FractalBackground" parent="AppTheme">
         <item name="android:textColorPrimary">?attr/android:textColorPrimaryInverse</item>
     </style>

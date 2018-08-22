@@ -41,9 +41,6 @@
                 android:name="android.nfc.action.TECH_DISCOVERED"
                 android:resource="@xml/nfc_filter_card" />
         </activity>
-        <activity
-            android:name=".EditorActivity"
-            android:label="@string/title_activity_editor" />
 
         <service
             android:name=".HCEService"
@@ -68,7 +65,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.us.x42.kyork.idcard.MainActivity" />
         </activity>
-        <activity android:name=".HCEStatusActivity"></activity>
+        <activity android:name=".HCEStatusActivity" />
+        <activity
+            android:name=".hexedit.HexeditEditorViewActivity"
+            android:label="@string/title_activity_hexedit_editor_view"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

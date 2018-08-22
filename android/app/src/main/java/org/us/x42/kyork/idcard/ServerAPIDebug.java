@@ -22,9 +22,9 @@ import java.util.Map;
 import java.util.TimeZone;
 
 public class ServerAPIDebug implements ServerAPI {
-    private static final byte[] ID_MAC_KEY_DEV = CardJob.decodeHex("2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A");
-    private static final byte[] TK_MAC_KEY_DEV = CardJob.decodeHex("4242424242424242424242424242424242424242424242424242424242424242");
-    private static final byte[] TK_FAKE_SERIAL = CardJob.decodeHex("FFFFFFFFFFFFFFFFFFFFFF"); // longer than any possible NFC-A serial
+    private static final byte[] ID_MAC_KEY_DEV = HexUtil.decodeHex("2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A");
+    private static final byte[] TK_MAC_KEY_DEV = HexUtil.decodeHex("4242424242424242424242424242424242424242424242424242424242424242");
+    private static final byte[] TK_FAKE_SERIAL = HexUtil.decodeHex("FFFFFFFFFFFFFFFFFFFFFF"); // longer than any possible NFC-A serial
     private Map<Long, IDCard> pendingUpdates = new HashMap<>();
 
     @Override

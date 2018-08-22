@@ -14,7 +14,6 @@ import android.util.Log;
 import org.us.x42.kyork.idcard.data.AbstractCardFile;
 import org.us.x42.kyork.idcard.data.FileMetadata;
 import org.us.x42.kyork.idcard.data.IDCard;
-import org.us.x42.kyork.idcard.desfire.DESFireCard;
 import org.us.x42.kyork.idcard.desfire.DESFireProtocol;
 
 import java.io.ByteArrayOutputStream;
@@ -109,13 +108,13 @@ public class HCEService extends HostApduService {
     }
 
     private void replyApdu(byte[] reply) {
-        Log.i(LOG_TAG, "RPL " + DESFireCard.stringifyByteArray(reply));
+        Log.i(LOG_TAG, "RPL " + HexUtil.stringifyByteArray(reply));
         sendResponseApdu(reply);
     }
 
     // if we cannot return immediately, return null and use sendCommandApdu() later
     public byte[] processCommandApdu(byte[] apdu, Bundle extra) {
-        Log.i(LOG_TAG, "REQ " + DESFireCard.stringifyByteArray(apdu));
+        Log.i(LOG_TAG, "REQ " + HexUtil.stringifyByteArray(apdu));
         if ((apdu[0] == 0x00) && (apdu[1] == (byte) 0xA4)) {
             // 7816 SELECT
             if (Arrays.equals(apdu, SELECT_APDU)) {
@@ -130,7 +129,7 @@ public class HCEService extends HostApduService {
             }
         } else if (apdu[0] == (byte) 0x90) {
             byte[] reply = processDESFireCommand(apdu);
-            Log.i(LOG_TAG, "RPL " + DESFireCard.stringifyByteArray(reply));
+            Log.i(LOG_TAG, "RPL " + HexUtil.stringifyByteArray(reply));
             return reply;
         } else {
             return new byte[]{(byte) 0x91, DESFireProtocol.StatusCode.COMMAND_ABORTED.getValue()};

@@ -3,6 +3,12 @@
     <string name="editor_unknown">(Unknown)</string>
     <string name="editor_reserved">(Reserved)</string>
     <string name="editor_reserved_help">All zero.</string>
+    <string name="editor_err_range_byte">Value must be 1 byte (-128 to 127)</string>
+    <string name="editor_err_range_short">Value must be 2 bytes (-32768 to 32767)</string>
+    <string name="editor_err_range_three">Value must be 3 bytes (-8388608 to 8388607)</string>
+    <string name="editor_err_range_int">Value must be 4 bytes (-2147483648 to 2147483647)</string>
+    <string name="editor_err_range_seven">Value must be 7 bytes (-36028797018963968 to 36028797018963967)</string>
+    <string name="editor_err_range_eight">Value must be 8 bytes (-9223372036854775808 to 9223372036854775807)</string>
     <string name="editor_meta_timestamp">Provisioning Date</string>
     <string name="editor_meta_timestamp_help">Set automatically by the server when card is set up.</string>
     <string name="editor_meta_schema">Version</string>

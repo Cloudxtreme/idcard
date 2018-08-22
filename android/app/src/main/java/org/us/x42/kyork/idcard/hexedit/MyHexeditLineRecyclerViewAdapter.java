@@ -44,8 +44,6 @@ public class MyHexeditLineRecyclerViewAdapter extends RecyclerView.Adapter<MyHex
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.changeItem(mValues.get(position));
 
-        holder.mSummaryView.setText(mValues.get(position).getShortContents((Context)this.mListener, mFile.getRawContent()));
-
         holder.mView.setOnClickListener(holder);
     }
 

@@ -28,7 +28,6 @@
     <string name="hce_aidgroup_desc">NFC Application IDs for 42 ID Cards</string>
 
     <string name="hex_decode_error">Invalid character %1$c in hex string at position %2$d</string>
-    <string name="hex_decode_error">Invalid character %1$c in hex string at position %2$d</string>
 
     <string name="nfc_appid_label">App ID</string>
     <string-array name="nfc_appid_items">

@@ -1,18 +1,17 @@
 ext {
     vers = [
-            compileSdkVersion: 26,
-            targetSdkVersion : 26,
+            compileSdkVersion: 27,
+            targetSdkVersion : 27,
             minSdkVersion    : 19,
-            buildToolsVersion: '27.0.3'
+            buildToolsVersion: '27.0.3',
+            supportVersion   : '27.1.1'
     ]
 
-    def supportVersion       = '27.1.1'
-
     libs = [
-            supportAnnotations:       "com.android.support:support-annotations:${supportVersion}",
-            supportAppcompat:         "com.android.support:appcompat-v7:${supportVersion}",
+            supportAnnotations:       "com.android.support:support-annotations:${vers.supportVersion}",
+            supportAppcompat:         "com.android.support:appcompat-v7:${vers.supportVersion}",
             supportConstraint:        "com.android.support.constraint:constraint-layout:1.1.2",
-            supportDesign:            "com.android.support:design:${supportVersion}",
+            supportDesign:            "com.android.support:design:${vers.supportVersion}",
             guava:                    "com.google.guava:guava:24.1-android",
     ]
 }

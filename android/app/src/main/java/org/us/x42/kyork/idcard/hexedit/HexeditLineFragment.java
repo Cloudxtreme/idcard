@@ -2,6 +2,7 @@ package org.us.x42.kyork.idcard.hexedit;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,8 +12,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import org.us.x42.kyork.idcard.R;
-import org.us.x42.kyork.idcard.hexedit.dummy.DummyContent;
-import org.us.x42.kyork.idcard.hexedit.dummy.DummyContent.DummyItem;
+import org.us.x42.kyork.idcard.data.AbstractCardFile;
+import org.us.x42.kyork.idcard.data.HexSpanInfo;
 
 import java.util.List;
 
@@ -57,7 +58,7 @@ public class HexeditLineFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_hexeditline_list, container, false);
 
@@ -70,7 +71,7 @@ public class HexeditLineFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new MyHexeditLineRecyclerViewAdapter(DummyContent.ITEMS, mListener));
+            recyclerView.setAdapter(new MyHexeditLineRecyclerViewAdapter(mListener.getCardFile(), mListener.getSpanInfoList(), mListener));
         }
         return view;
     }
@@ -104,7 +105,9 @@ public class HexeditLineFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnListFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onListFragmentInteraction(DummyItem item);
+        List<HexSpanInfo.Interface> getSpanInfoList();
+        AbstractCardFile getCardFile();
+        void onListFragmentInteraction(HexSpanInfo.Interface item);
+        Context getContext();
     }
 }

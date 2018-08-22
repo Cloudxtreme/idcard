@@ -124,7 +124,7 @@ public class ProvisionBlankCardTask extends CardNFCTask {
             mCard.selectApplication(CardJob.APP_ID_CARD42);
 
             // CreateFile
-            for (CardDataFormat.FileFormatInfo info : CardDataFormat.files) {
+            for (CardDataFormat.FileFormatInfo info : CardDataFormat.filesOnCard) {
                 byte[] createFileData = new byte[7];
                 createFileData[0] = (byte) info.fileID;
                 createFileData[1] = DESFireProtocol.FileEncryptionMode.PLAIN.getValue();

@@ -11,11 +11,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.common.collect.Lists;
-
-import org.us.x42.kyork.idcard.dummy.DummyContent;
-import org.us.x42.kyork.idcard.dummy.DummyContent.DummyItem;
-
 import java.util.List;
 
 /**

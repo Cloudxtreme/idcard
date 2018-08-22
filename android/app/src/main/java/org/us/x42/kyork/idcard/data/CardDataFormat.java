@@ -38,10 +38,15 @@ public class CardDataFormat {
     // cantina file..? (possibly encrypted payment information for real-time payments)
     public static final FileFormatInfo FORMAT_DOORPERMS =
             new FileFormatInfo(FileDoorPermissions.class, (byte)0x4, 64, true, DESFireProtocol.FILETYPE_BACKUP);
+    public static final FileFormatInfo FORMAT_UPDATE =
+            new FileFormatInfo(FileUpdateData.class, (byte)0x6, 256, false, DESFireProtocol.FILETYPE_STANDARD);
     public static final FileFormatInfo FORMAT_SIGNATURES =
             new FileFormatInfo(FileSignatures.class, (byte)0x7, 68 * 5, false, DESFireProtocol.FILETYPE_STANDARD);
 
-    public static final FileFormatInfo[] files = {
+    /**
+     * The files created when creating a new ID card.
+     */
+    public static final FileFormatInfo[] filesOnCard = {
             FORMAT_METADATA, FORMAT_USERINFO, FORMAT_DOORPERMS, FORMAT_SIGNATURES,
     };
 }

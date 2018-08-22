@@ -7,7 +7,6 @@ import android.support.annotation.Nullable;
 import com.google.common.io.BaseEncoding;
 
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 /**
  * Utilities for reading and writing hexadecimal data.
@@ -42,8 +41,18 @@ public final class HexUtil {
         return sb;
     }
 
+    public static CharSequence encodeHexLineWrapped(byte[] data, int start, int end) {
+        StringBuilder sb = new StringBuilder();
+        appendLineWrappedHex(sb, data, start, end);
+        return sb;
+    }
+
     public static void appendLineWrappedHex(StringBuilder sb, byte[] data) {
-        for (int i = 0; i < data.length; i++) {
+        appendLineWrappedHex(sb, data, 0, data.length);
+    }
+
+    public static void appendLineWrappedHex(StringBuilder sb, byte[] data, int start, int end) {
+        for (int i = start; i < end; i++) {
             sb.append(Integer.toHexString(data[i]));
             sb.append(' ');
             if (i % 8 == 7) {
@@ -75,6 +84,7 @@ public final class HexUtil {
         String input;
         int inputPos;
         int outputPos;
+        boolean prevHadWhitespace = true;
 
         UserHexDecoder(String input) { this.input = input; }
 
@@ -82,6 +92,7 @@ public final class HexUtil {
             // note: do not need over-BMP safety here
 
             char c1;
+            boolean hadWhitespace = false;
             do {
                 if (inputPos >= input.length()) {
                     return -1;
@@ -89,20 +100,27 @@ public final class HexUtil {
                 c1 = input.charAt(inputPos);
                 inputPos++;
                 if (Character.isWhitespace(c1)) { // skip whitespace to next hex char
+                    hadWhitespace = true;
                     continue;
+                } else if (-1 == Character.digit(c1, 16)) {
+                    throw new DecodeException(c1, inputPos);
                 }
                 break;
-            } while (false);
+            } while (true);
 
             char c2 = 0;
             if (inputPos < input.length()) { // handle EOF as whitespace
                 c2 = input.charAt(inputPos);
                 inputPos++;
             }
-            if (c2 == 0 || Character.isWhitespace(c2)) { // 0x1, 0x2 -> 0x01, 0x02
+            if ((c2 == 0 || Character.isWhitespace(c2)) && prevHadWhitespace) { // 0x1, 0x2 -> 0x01, 0x02
                 c2 = c1;
                 c1 = '0';
+            } else if (c2 == 0) {
+                // bad EOF
+                throw new DecodeException('␄', input.length());
             }
+            prevHadWhitespace = hadWhitespace;
             int highNibble = Character.digit(c1, 16);
             int lowNibble = Character.digit(c2, 16);
             if (highNibble == -1) {

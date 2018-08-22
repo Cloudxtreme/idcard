@@ -4,11 +4,17 @@ import android.content.Context;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.widget.RecyclerView;
 import android.transition.TransitionManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 
+import org.us.x42.kyork.idcard.HexUtil;
 import org.us.x42.kyork.idcard.R;
 import org.us.x42.kyork.idcard.data.AbstractCardFile;
 import org.us.x42.kyork.idcard.data.HexSpanInfo;
@@ -22,6 +28,7 @@ import java.util.List;
  * TODO: Replace the implementation with code for your data type.
  */
 public class MyHexeditLineRecyclerViewAdapter extends RecyclerView.Adapter<MyHexeditLineRecyclerViewAdapter.ViewHolder> {
+    private static final String LOG_TAG = MyHexeditLineRecyclerViewAdapter.class.getSimpleName();
 
     private final List<HexSpanInfo.Interface> mValues;
     private final OnListFragmentInteractionListener mListener;
@@ -45,6 +52,7 @@ public class MyHexeditLineRecyclerViewAdapter extends RecyclerView.Adapter<MyHex
         holder.changeItem(mValues.get(position));
 
         holder.mView.setOnClickListener(holder);
+        holder.mHexView.setOnClickListener(holder);
     }
 
     @Override
@@ -55,14 +63,17 @@ public class MyHexeditLineRecyclerViewAdapter extends RecyclerView.Adapter<MyHex
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         public final View mView;
         public final TextView mIdView;
+        private final TextView mHexView;
         public HexSpanInfo.Interface mItem;
         private boolean isExpanded;
+        private Button mApplyButton;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
             mView.setClickable(true);
             mIdView = (TextView) view.findViewById(R.id.title);
+            mHexView = (TextView) mView.findViewById(R.id.hexView);
         }
 
         @Override
@@ -77,21 +88,46 @@ public class MyHexeditLineRecyclerViewAdapter extends RecyclerView.Adapter<MyHex
             TextView subHead = mView.findViewById(R.id.subheading);
             subHead.setText(item.getShortContents((Context) mListener, mFile.getRawContent()));
 
-            TextView hexView = mView.findViewById(R.id.hexView);
-            if (isExpanded) {
-                hexView.setVisibility(View.VISIBLE);
-            } else {
-                hexView.setVisibility(View.GONE);
-            }
+            mHexView.setText(HexUtil.encodeHexLineWrapped(mFile.getRawContent(), mItem.getOffset(), mItem.getOffset() + mItem.getLength()));
 
             ConstraintLayout frame;
+            if (mItem instanceof HexSpanInfo.Enumerated) {
+                frame = (ConstraintLayout) mView.findViewById(R.id.enumFrame);
+                mApplyButton = (Button) frame.findViewById(R.id.enumApply);
+                Spinner spinner = (Spinner) frame.findViewById(R.id.spinner);
+
+                mApplyButton.setOnClickListener(this);
+
+                ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>((Context)mListener, android.R.layout.simple_spinner_item);
+
+                for (Integer stringRsc : ((HexSpanInfo.Enumerated) mItem).getPossibleValues()) {
+                    adapter.add(((Context) mListener).getString(stringRsc));
+                }
+                spinner.setAdapter(adapter);
+
+            } else if (mItem instanceof HexSpanInfo.Numeric) {
+                frame = (ConstraintLayout) mView.findViewById(R.id.numberFrame);
+                mApplyButton = (Button) frame.findViewById(R.id.numberApply);
+            } else {
+                // no buttons
+            }
         }
 
         @Override
         public void onClick(View clickedView) {
+            if (clickedView == mApplyButton) {
+                onClickApply();
+            } else if (clickedView == mHexView) {
+                onClickHex();
+            } else {
+                onClickBody();
+            }
+        }
+
+        public void onClickBody() {
             isExpanded = !isExpanded;
             ConstraintLayout container = mView.findViewById(R.id.container);
-            TransitionManager.beginDelayedTransition(container);
+            TransitionManager.beginDelayedTransition(container); // this is a really good line
 
             // only visible while collapsed
             TextView subHead = mView.findViewById(R.id.subheading);
@@ -121,6 +157,14 @@ public class MyHexeditLineRecyclerViewAdapter extends RecyclerView.Adapter<MyHex
             } else {
                 frame.setVisibility(View.GONE);
             }
+        }
+
+        public void onClickApply() {
+            Log.i(LOG_TAG, "clicked Apply button");
+        }
+
+        public void onClickHex() {
+            Log.i(LOG_TAG, "clicked Hex view");
         }
     }
 }

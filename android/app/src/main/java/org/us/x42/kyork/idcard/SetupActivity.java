@@ -85,11 +85,11 @@ public class SetupActivity extends AppCompatActivity {
                 try {
                     cmdIdInt = Integer.parseInt(cmdIdStr.trim(), 16);
                 } catch (NumberFormatException e) {
-                    errorText.setText(R.string.error_cmdid_out_of_range);
+                    cmd_id_edittext.setError(getString(R.string.error_cmdid_out_of_range));
                     return;
                 }
                 if (cmdIdInt < 0 || cmdIdInt > 255) {
-                    errorText.setText(R.string.error_cmdid_out_of_range);
+                    cmd_id_edittext.setError(getString(R.string.error_cmdid_out_of_range));
                     return;
                 }
                 byte cmdId = (byte)cmdIdInt;
@@ -102,6 +102,7 @@ public class SetupActivity extends AppCompatActivity {
                     try {
                         data = HexUtil.decodeUserInput(inputText);
                     } catch (HexUtil.DecodeException e) {
+                        payload_edittext.setError(e.getLocalizedMessage(SetupActivity.this));
                         errorText.setText(e.getLocalizedMessage(SetupActivity.this));
                         return;
                     }

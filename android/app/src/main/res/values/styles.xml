@@ -8,7 +8,7 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:spinnerDropDownItemStyle">@style/mySpinnerItemStyle</item>
         <!--
-        <item name="android:background">"@drawable/app_background"</item>
+        <item name="android:background">"@drawable/neutral_background"</item>
         -->
     </style>
 

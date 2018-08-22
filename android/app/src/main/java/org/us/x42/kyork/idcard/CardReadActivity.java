@@ -1,6 +1,5 @@
 package org.us.x42.kyork.idcard;
 
-import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -15,17 +14,15 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.TextView;
-
-import com.google.common.collect.ImmutableList;
 
 import org.us.x42.kyork.idcard.tasks.CardNFCTask;
+import org.us.x42.kyork.idcard.tasks.ReadCardTask;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class CardWriteActivity extends AppCompatActivity implements ProgressStepListFragment.ProgressStepListFragmentInterface {
+public class CardReadActivity extends AppCompatActivity implements ProgressStepListFragment.ProgressStepListFragmentInterface {
     private static final String LOG_TAG = CardWriteActivity.class.getSimpleName();
     private NfcAdapter mAdapter;
 
@@ -40,7 +37,7 @@ public class CardWriteActivity extends AppCompatActivity implements ProgressStep
     private List<ProgressStep> progressSteps = new ArrayList<>();
     private ProgressStepRecyclerViewAdapter mProgressFragment;
 
-    public static final String CARD_JOB_PARAMS = "org.us.x42.kyork.idcard.CARD_JOB_PARAMS";
+    public static final String RESULT_CARD = "org.us.x42.kyork.idcard.CardReadActivity.cardResult";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,22 +60,14 @@ public class CardWriteActivity extends AppCompatActivity implements ProgressStep
                 } else if (msg.what == CardNFCTask.MSG_ID_NFC_DONE) {
                     // Operation complete
                     Intent returnData = new Intent(Intent.ACTION_VIEW);
-                    returnData.putExtra(CARD_JOB_PARAMS, mTask);
+                    returnData.putExtra(RESULT_CARD, mTask);
                     setResult(RESULT_OK, returnData);
                     finish();
                 }
             }
         };
 
-        Intent launchIntent = getIntent();
-        mTask = launchIntent.getParcelableExtra(CARD_JOB_PARAMS);
-        if (mTask == null) {
-            Log.e("CardWriteActivity", "no CARD_DATA extra");
-            setResult(Activity.RESULT_CANCELED);
-            finish();
-            return;
-        }
-
+        mTask = new ReadCardTask();
         mTask.writeListOfSteps(progressSteps);
         if (mProgressFragment != null) {
             mProgressFragment.notifyDataSetChanged();
@@ -100,7 +89,10 @@ public class CardWriteActivity extends AppCompatActivity implements ProgressStep
     @Override
     public void onNewIntent(Intent intent) {
         if (Objects.equals(intent.getAction(), NfcAdapter.ACTION_TECH_DISCOVERED)) {
+            // is an NDEF tag
             Tag tagFromIntent = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+
+            Log.i(LOG_TAG, "got tag");
 
             mTask.setTagAndHandler(tagFromIntent, mHandler);
             mTask.execute();

@@ -48,6 +48,8 @@ public abstract class CardNFCTask extends AsyncTask<Object, Message, List<Object
     public final void writeListOfSteps(List<ProgressStep> dest) {
         dest.clear();
         dest.addAll(getListOfSteps());
+        // Set the first item as in progress
+        dest.get(0).state = ProgressStep.STATE_WORKING;
     }
 
     public List<ProgressStep> getListOfSteps() {
@@ -68,7 +70,6 @@ public abstract class CardNFCTask extends AsyncTask<Object, Message, List<Object
     }
 
     public void setUpCard() throws IOException {
-        this.stepProgress(0, ProgressStep.STATE_WORKING);
         mCard = new DESFireCard(mTag);
         mCard.connect();
         this.stepProgress(0, ProgressStep.STATE_DONE);

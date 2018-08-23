@@ -53,7 +53,8 @@ public final class HexUtil {
 
     public static void appendLineWrappedHex(StringBuilder sb, byte[] data, int start, int end) {
         for (int i = start; i < end; i++) {
-            sb.append(Integer.toHexString(data[i]));
+            sb.append(Character.forDigit((data[i] >> 4) & 0xF, 16));
+            sb.append(Character.forDigit(data[i] & 0xF, 16));
             sb.append(' ');
             if (i % 8 == 7) {
                 sb.append('\n');

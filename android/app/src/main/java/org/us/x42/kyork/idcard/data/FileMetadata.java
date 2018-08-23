@@ -2,13 +2,18 @@ package org.us.x42.kyork.idcard.data;
 
 import android.os.Parcel;
 
+import com.google.common.collect.ImmutableList;
+
+import org.us.x42.kyork.idcard.R;
+
 import java.util.Date;
+import java.util.List;
 
 /**
  * File 0x1 on the card. Metadata, type of card (e.g. is this actually a card or is it something else?)
  */
 public class FileMetadata extends AbstractCardFile {
-    public static final byte FILE_ID = (byte)0x01;
+    public static final byte FILE_ID = (byte) 0x01;
     public static final int SIZE = 16;
 
     public static final short DEVICE_TYPE_ID = 0x4944;
@@ -17,7 +22,9 @@ public class FileMetadata extends AbstractCardFile {
     public static final short DEVICE_TYPE_CANTINA = 0x4341;
     public static final short DEVICE_TYPE_UPDATE = 0x5550;
 
-    public FileMetadata(byte[] content) { super(content); }
+    public FileMetadata(byte[] content) {
+        super(content);
+    }
 
     protected FileMetadata(Parcel parcel) {
         super(parcel);
@@ -49,7 +56,7 @@ public class FileMetadata extends AbstractCardFile {
         FileMetadata ret = new FileMetadata(new byte[SIZE]);
         ret.setProvisioningDate(new Date());
         ret.setDeviceType(DEVICE_TYPE_UPDATE);
-        ret.setSchemaVersion((short)0x0001);
+        ret.setSchemaVersion((short) 0x0001);
         return ret;
     }
 
@@ -57,7 +64,7 @@ public class FileMetadata extends AbstractCardFile {
         FileMetadata ret = new FileMetadata(new byte[SIZE]);
         ret.setProvisioningDate(new Date());
         ret.setDeviceType(DEVICE_TYPE_TICKET);
-        ret.setSchemaVersion((short)0x0001);
+        ret.setSchemaVersion((short) 0x0001);
         return ret;
     }
 
@@ -100,5 +107,28 @@ public class FileMetadata extends AbstractCardFile {
 
     public void setUnused2(short val) {
         writeLE16(0xe, val);
+    }
+
+    private static List<HexSpanInfo.Interface> SPAN_INFO;
+
+    private static List<HexSpanInfo.Interface> getSpanInfo() {
+        if (SPAN_INFO == null) {
+            SPAN_INFO = ImmutableList.<HexSpanInfo.Interface>of(
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(0x0, 8).fieldName(R.string.editor_meta_timestamp).build(),
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(0x8, 2).fieldName(R.string.editor_meta_schema).build(),
+                    HexSpanInfo.EnumeratedBytes.builder().offsetAndLength(0xa, 2).fieldName(R.string.editor_meta_type)
+                            .addItem("4944", R.string.editor_meta_type_card)
+                            .addItem("544B", R.string.editor_meta_type_ticket)
+                            .addItem("5550", R.string.editor_meta_type_update)
+                            .build(),
+                    HexSpanInfo.Basic.builder().offsetAndLength(0xc, 2).fieldName(R.string.editor_reserved).build(),
+                    HexSpanInfo.Basic.builder().offsetAndLength(0xe, 2).fieldName(R.string.editor_reserved).build()
+                    );
+        }
+        return SPAN_INFO;
+    }
+
+    public void describeHexSpanContents(List<HexSpanInfo.Interface> destination) {
+        destination.addAll(getSpanInfo());
     }
 }

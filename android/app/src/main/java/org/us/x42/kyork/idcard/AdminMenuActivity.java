@@ -12,10 +12,11 @@ import android.view.View;
 import android.widget.EditText;
 
 import org.us.x42.kyork.idcard.desfire.DESFireProtocol;
+import org.us.x42.kyork.idcard.hexedit.HexeditStartActivity;
 import org.us.x42.kyork.idcard.tasks.CommandTestTask;
 import org.us.x42.kyork.idcard.tasks.ProvisionBlankCardTask;
 
-public class CardAdminActivity extends AppCompatActivity {
+public class AdminMenuActivity extends AppCompatActivity {
     private static final int REQUEST_ID_PROVISION = 7;
     private static final int REQUEST_ID_RUNNABLE = 2;
     private static final int REQUEST_ID_FORMAT = 3;
@@ -42,7 +43,7 @@ public class CardAdminActivity extends AppCompatActivity {
         findViewById(R.id.cadmin_launch_manual).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(CardAdminActivity.this, SetupActivity.class);
+                Intent intent = new Intent(AdminMenuActivity.this, SetupActivity.class);
                 startActivity(intent);
             }
         });
@@ -56,7 +57,7 @@ public class CardAdminActivity extends AppCompatActivity {
                     s.show();
                     return;
                 }
-                Intent intent = new Intent(CardAdminActivity.this, CardWriteActivity.class);
+                Intent intent = new Intent(AdminMenuActivity.this, CardWriteActivity.class);
                 ProvisionBlankCardTask task = new ProvisionBlankCardTask(login, false);
                 intent.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
                 startActivityForResult(intent, REQUEST_ID_PROVISION);
@@ -66,31 +67,21 @@ public class CardAdminActivity extends AppCompatActivity {
         findViewById(R.id.cadmin_wipe_card).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(CardAdminActivity.this, CardWriteActivity.class);
+                Intent intent = new Intent(AdminMenuActivity.this, CardWriteActivity.class);
                 CommandTestTask task = new CommandTestTask(0, (byte)0, CardJob.ENC_KEY_NULL, DESFireProtocol.FORMAT_PICC, new byte[0]);
                 intent.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
                 startActivityForResult(intent, REQUEST_ID_FORMAT);
             }
         });
 
-        findViewById(R.id.cadmin_launch_markdirty).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.cadmin_launch_edit).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String login = loginTextbox.getText().toString().toLowerCase();
-                if (login.isEmpty()) {
-                    Snackbar s = Snackbar.make(loginTextbox, R.string.err_need_login, Snackbar.LENGTH_SHORT);
-                    s.show();
-                    return;
-                }
-
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-
-                    }
-                }).start();
+                Intent intent = new Intent(AdminMenuActivity.this, HexeditStartActivity.class);
+                startActivity(intent);
             }
         });
+
     }
 
 

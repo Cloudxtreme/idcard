@@ -1,6 +1,7 @@
 package org.us.x42.kyork.idcard.hexedit;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.widget.RecyclerView;
 import android.transition.TransitionManager;
@@ -17,8 +18,10 @@ import org.us.x42.kyork.idcard.HexUtil;
 import org.us.x42.kyork.idcard.R;
 import org.us.x42.kyork.idcard.data.AbstractCardFile;
 import org.us.x42.kyork.idcard.data.HexSpanInfo;
+import org.us.x42.kyork.idcard.data.IDCard;
 import org.us.x42.kyork.idcard.hexedit.HexeditLineFragment.OnListFragmentInteractionListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,29 +32,38 @@ import java.util.List;
 public class MyHexeditLineRecyclerViewAdapter extends RecyclerView.Adapter<MyHexeditLineRecyclerViewAdapter.ViewHolder> {
     private static final String LOG_TAG = MyHexeditLineRecyclerViewAdapter.class.getSimpleName();
 
+    private final OnListFragmentInteractionListener mContext;
     private final List<HexSpanInfo.Interface> mValues;
-    private final OnListFragmentInteractionListener mListener;
-    private final AbstractCardFile mFile;
+    private final int mFileID;
+    private AbstractCardFile mFile;
 
-    public MyHexeditLineRecyclerViewAdapter(AbstractCardFile file, List<HexSpanInfo.Interface> items, OnListFragmentInteractionListener listener) {
-        mFile = file;
-        mValues = items;
-        mListener = listener;
+    public MyHexeditLineRecyclerViewAdapter(OnListFragmentInteractionListener context, int fileID) {
+        Log.i("HexeditLineRecyclerView", "file id " + fileID);
+        mContext = context;
+        mValues = new ArrayList<>();
+        mFileID = fileID;
     }
 
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    @NonNull
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.fragment_hexeditline, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         holder.changeItem(mValues.get(position));
 
         holder.mView.setOnClickListener(holder);
         holder.mHexView.setOnClickListener(holder);
+    }
+
+    public void switchEditTarget(IDCard card) {
+        mFile = card.getFileByID((byte)mFileID);
+        mFile.describeHexSpanContents(mValues);
+        notifyDataSetChanged();
     }
 
     @Override
@@ -66,6 +78,9 @@ public class MyHexeditLineRecyclerViewAdapter extends RecyclerView.Adapter<MyHex
         public HexSpanInfo.Interface mItem;
         private boolean isExpanded;
         private Button mApplyButton;
+        private Button mHexButton;
+
+        // TODO saved instance state
 
         public ViewHolder(View view) {
             super(view);
@@ -73,6 +88,7 @@ public class MyHexeditLineRecyclerViewAdapter extends RecyclerView.Adapter<MyHex
             mView.setClickable(true);
             mIdView = (TextView) view.findViewById(R.id.title);
             mHexView = (TextView) mView.findViewById(R.id.hexView);
+            mHexButton = (Button) mView.findViewById(R.id.hexEditButton);
         }
 
         @Override
@@ -85,7 +101,7 @@ public class MyHexeditLineRecyclerViewAdapter extends RecyclerView.Adapter<MyHex
             this.mIdView.setText(item.getFieldName());
 
             TextView subHead = mView.findViewById(R.id.subheading);
-            subHead.setText(item.getShortContents((Context) mListener, mFile.getRawContent()));
+            subHead.setText(item.getShortContents(mContext.getContext(), mFile.getRawContent()));
 
             mHexView.setText(HexUtil.encodeHexLineWrapped(mFile.getRawContent(), mItem.getOffset(), mItem.getOffset() + mItem.getLength()));
 
@@ -97,10 +113,10 @@ public class MyHexeditLineRecyclerViewAdapter extends RecyclerView.Adapter<MyHex
 
                 mApplyButton.setOnClickListener(this);
 
-                ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>((Context)mListener, android.R.layout.simple_spinner_item);
+                ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(mContext.getContext(), android.R.layout.simple_spinner_item);
 
                 for (Integer stringRsc : ((HexSpanInfo.Enumerated) mItem).getPossibleValues()) {
-                    adapter.add(((Context) mListener).getString(stringRsc));
+                    adapter.add(mContext.getContext().getString(stringRsc));
                 }
                 spinner.setAdapter(adapter);
 
@@ -136,11 +152,12 @@ public class MyHexeditLineRecyclerViewAdapter extends RecyclerView.Adapter<MyHex
                 subHead.setVisibility(View.VISIBLE);
             }
 
-            TextView hexView = mView.findViewById(R.id.hexView);
             if (isExpanded) {
-                hexView.setVisibility(View.VISIBLE);
+                mHexView.setVisibility(View.VISIBLE);
+                mHexButton.setVisibility(View.VISIBLE);
             } else {
-                hexView.setVisibility(View.GONE);
+                mHexView.setVisibility(View.GONE);
+                mHexButton.setVisibility(View.GONE);
             }
 
             ConstraintLayout frame;

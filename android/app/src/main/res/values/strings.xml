@@ -66,7 +66,7 @@
     <string name="incomingscan_err_validate_serial">Card info is corrupted: Serial numbers do not match</string>
     <string name="title_activity_editor">Hex Editor</string>
     <string name="title_activity_card_admin">Card Administration Menu</string>
-    <string name="launch_card_editor">Change Card Content</string>
+    <string name="launch_card_editor">Inspect Card Content</string>
     <string name="launch_card_admin">Launch Card Admin</string>
     <string name="err_need_login">Please enter a valid intra login</string>
     <string name="done">Done</string>
@@ -78,4 +78,6 @@
     <string name="section_format">Hello World from section: %1$d</string>
     <string name="action_writecard">Write To Card</string>
     <string name="intraprofile_refresh">Refresh</string>
+    <string name="edit_card_contents">Edit Card Contents</string>
+    <string name="wipe_card">Wipe card</string>
 </resources>

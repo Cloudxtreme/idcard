@@ -3,6 +3,8 @@ package org.us.x42.kyork.idcard.data;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import org.us.x42.kyork.idcard.R;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,6 +47,10 @@ public abstract class AbstractCardFile implements CardFile, Parcelable {
     @Override
     public byte[] getRawContent() {
         return rawContent;
+    }
+
+    public void describeHexSpanContents(List<HexSpanInfo.Interface> destination) {
+        destination.add(HexSpanInfo.Basic.builder().offsetAndLength(0, 4).fieldName(R.string.editor_meta_timestamp).build());
     }
 
     public byte[] getSlice(int start, int end) {

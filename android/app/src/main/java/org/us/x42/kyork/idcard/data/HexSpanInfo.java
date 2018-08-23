@@ -1,14 +1,18 @@
 package org.us.x42.kyork.idcard.data;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.Ints;
 
+import org.us.x42.kyork.idcard.HexUtil;
 import org.us.x42.kyork.idcard.PackUtil;
 import org.us.x42.kyork.idcard.R;
 
+import java.io.UnsupportedEncodingException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,10 +45,9 @@ public final class HexSpanInfo {
          * Check if the user-provided value fits in the field.
          *
          * @param newValue proposed value
-         * @return 0 for ok, or the ID of an error message
+         * @return null for OK, or an error message
          */
-        @StringRes
-        int checkValue(long newValue);
+        @Nullable CharSequence checkValue(Context context, long newValue);
 
         void setValue(byte[] file, long newValue);
     }
@@ -59,11 +62,19 @@ public final class HexSpanInfo {
         void setContentByStringResource(byte[] file, @StringRes int stringID);
     }
 
+    public interface Stringish extends Interface {
+        @NonNull String getValue(byte[] file);
+        @Nullable CharSequence checkValue(Context context, CharSequence input);
+        void setValue(byte[] file, CharSequence input);
+    }
+
+    /**
+     * A basic area with no editability other than the raw bytes.
+     */
     public static class Basic implements Interface {
-        private @StringRes
-        int fieldName;
-        private int offset;
-        private int length;
+        @StringRes int fieldName;
+        int offset;
+        int length;
 
         public static Builder builder() {
             return new Builder();
@@ -111,14 +122,7 @@ public final class HexSpanInfo {
 
         public CharSequence getShortContents(Context context, byte[] file) {
             // Encode to hexadecimal
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < length; i++) {
-                if (i != 0) {
-                    sb.append(' ');
-                }
-                sb.append(Integer.toHexString(file[offset + i]));
-            }
-            return sb;
+            return HexUtil.encodeHexLineWrapped(file, getOffset(), getOffset() + getLength());
         }
     }
 
@@ -188,40 +192,40 @@ public final class HexSpanInfo {
         }
 
         @Override
-        public @StringRes int checkValue(long proposedValue) {
+        public @Nullable CharSequence checkValue(Context context, long proposedValue) {
             switch (getLength()) {
                 case 1:
                     if ((proposedValue < -128) || (proposedValue >= 256)) {
-                        return R.string.editor_err_range_byte;
+                        return context.getString(R.string.editor_err_range_byte);
                     }
-                    return 0;
+                    return null;
                 case 2:
                     if ((proposedValue < -32768) || (proposedValue >= 65536)) {
-                        return R.string.editor_err_range_short;
+                        return context.getString(R.string.editor_err_range_short);
                     }
-                    return 0;
+                    return null;
                 case 3:
                     if ((proposedValue < -8388608) || (proposedValue >= 16777216)) {
-                        return R.string.editor_err_range_three;
+                        return context.getString(R.string.editor_err_range_three);
                     }
-                    return 0;
+                    return null;
                 case 4:
                     if ((proposedValue < -2147483648L) || (proposedValue >= 4294967296L)) {
-                        return R.string.editor_err_range_int;
+                        return context.getString(R.string.editor_err_range_int);
                     }
-                    return 0;
+                    return null;
                 case 7:
                     if ((proposedValue < -36028797018963968L) || (proposedValue >= 72057594037927936L)) {
-                        return R.string.editor_err_range_seven;
+                        return context.getString(R.string.editor_err_range_seven);
                     }
-                    return 0;
+                    return null;
                 case 8:
                     if (false) {
-                        return R.string.editor_err_range_eight;
+                        return context.getString(R.string.editor_err_range_eight);
                     }
-                    return 0;
+                    return null;
             }
-            return 0;
+            return null;
         }
     }
 
@@ -251,13 +255,15 @@ public final class HexSpanInfo {
             }
 
             @Override
-            public Basic.Builder offsetAndLength(int off, int len) {
-                return super.offsetAndLength(off, len);
+            public Builder offsetAndLength(int off, int len) {
+                super.offsetAndLength(off, len);
+                return this;
             }
 
             @Override
-            public Basic.Builder fieldName(int name) {
-                return super.fieldName(name);
+            public Builder fieldName(int name) {
+                super.fieldName(name);
+                return this;
             }
 
             public Builder addItem(byte[] pattern, @StringRes int name) {
@@ -316,6 +322,74 @@ public final class HexSpanInfo {
             if (idx == -1) throw new IllegalArgumentException("unknown string resource id");
             System.arraycopy(patterns[idx], 0, file, getOffset(), getLength());
         }
+    }
+
+    public static class StringF extends HexSpanInfo.Basic implements Stringish {
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public static class Builder extends HexSpanInfo.Basic.Builder {
+            private Builder() {
+                super(new HexSpanInfo.StringF());
+            }
+        }
+
+        @Override
+        public CharSequence getShortContents(Context context, byte[] file) {
+            return getValue(file);
+        }
+
+        @Override
+        public String getValue(byte[] file) {
+            int i;
+            int len;
+            len = 0;
+            i = getOffset();
+            while (i < getLength() && file[i] != 0) {
+                i++;
+                len++;
+            }
+            try {
+                return new java.lang.String(file, getOffset(), len, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException("Platform does not support UTF-8", e);
+            }
+        }
+
+        @Override
+        public CharSequence checkValue(Context context, CharSequence input) {
+            try {
+                byte[] inputBytes = input.toString().getBytes("UTF-8");
+                if (inputBytes.length > getLength()) {
+                    return context.getString(R.string.editor_err_string_too_long, getLength());
+                }
+                return null;
+
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException("Platform does not support UTF-8", e);
+            }
+        }
+
+        @Override
+        public void setValue(byte[] file, CharSequence input) {
+            byte[] inputBytes = null;
+            try {
+                inputBytes = input.toString().getBytes("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException("Platform does not support UTF-8", e);
+            }
+            if (inputBytes.length > getLength()) {
+                throw new IllegalArgumentException("String too long");
+            }
+
+            System.arraycopy(inputBytes, 0, file, getOffset(), inputBytes.length);
+            // fill in the null bytes
+            for (int i = inputBytes.length; i < getLength(); i++) {
+                file[i] = 0;
+            }
+        }
+
     }
 
     /**

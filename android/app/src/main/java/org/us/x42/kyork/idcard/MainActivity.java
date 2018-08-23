@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements ProgressStepListF
         launchSetup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, CardAdminActivity.class);
+                Intent intent = new Intent(MainActivity.this, AdminMenuActivity.class);
                 startActivity(intent);
             }
         });

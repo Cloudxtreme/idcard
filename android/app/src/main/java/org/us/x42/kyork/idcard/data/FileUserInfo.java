@@ -2,17 +2,21 @@ package org.us.x42.kyork.idcard.data;
 
 import android.os.Parcel;
 
+import com.google.common.collect.ImmutableList;
+
 import org.us.x42.kyork.idcard.PackUtil;
+import org.us.x42.kyork.idcard.R;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 public class FileUserInfo extends AbstractCardFile {
-    public static final byte FILE_ID = (byte)0x02;
+    public static final byte FILE_ID = (byte) 0x02;
     public static final int SIZE = 32;
 
     public FileUserInfo(byte[] content) {
@@ -73,17 +77,25 @@ public class FileUserInfo extends AbstractCardFile {
         return readLE32(0x8);
     }
 
-    public void setIntraUserID(int id) { writeLE32(0x8, id); }
+    public void setIntraUserID(int id) {
+        writeLE32(0x8, id);
+    }
 
-    public byte getCampusID() { return getRawContent()[0xc]; }
+    public byte getCampusID() {
+        return getRawContent()[0xc];
+    }
 
-    public void setCampusID(byte id) { getRawContent()[0xc] = id; }
+    public void setCampusID(byte id) {
+        getRawContent()[0xc] = id;
+    }
 
     public byte getAccountType() {
         return getRawContent()[0xd];
     }
 
-    public void setAccountType(byte type) { getRawContent()[0xd] = type; }
+    public void setAccountType(byte type) {
+        getRawContent()[0xd] = type;
+    }
 
     public int getPiscineDMYCompressed() {
         return readLE24(0xe);
@@ -144,5 +156,35 @@ public class FileUserInfo extends AbstractCardFile {
 
     public void setLastUpdated(Date date) {
         PackUtil.writeLE64(getRawContent(), 0x18, date.getTime());
+    }
+
+    private static List<HexSpanInfo.Interface> SPAN_INFO;
+
+    private static List<HexSpanInfo.Interface> getSpanInfo() {
+        if (SPAN_INFO == null) {
+            SPAN_INFO = ImmutableList.<HexSpanInfo.Interface>of(
+                    HexSpanInfo.StringF.builder().offsetAndLength(0, 8).fieldName(R.string.editor_user_intra).build(),
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(0x8, 4).fieldName(R.string.editor_user_id).build(),
+                    HexSpanInfo.EnumeratedBytes.builder().offsetAndLength(0xc, 1).fieldName(R.string.editor_user_campus)
+                            .addItem("01", R.string.editor_user_campus_paris)
+                            .addItem("07", R.string.editor_user_campus_fremont)
+                            .build(),
+                    HexSpanInfo.EnumeratedBytes.builder().offsetAndLength(0xd, 1).fieldName(R.string.editor_user_act)
+                            .addItem("01", R.string.editor_user_act_student)
+                            .addItem("02", R.string.editor_user_act_piscine)
+                            .addItem("03", R.string.editor_user_act_bocal)
+                            .addItem("04", R.string.editor_user_act_employee)
+                            .addItem("05", R.string.editor_user_act_security)
+                            .build(),
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(0xe, 3).fieldName(R.string.editor_user_piscine).build(),
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(0x11, 7).fieldName(R.string.editor_user_serial).build(),
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(0x18, 8).fieldName(R.string.editor_user_timestamp).build()
+            );
+        }
+        return SPAN_INFO;
+    }
+
+    public void describeHexSpanContents(List<HexSpanInfo.Interface> destination) {
+        destination.addAll(getSpanInfo());
     }
 }

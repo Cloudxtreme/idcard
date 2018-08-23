@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="org.us.x42.kyork.idcard.CardAdminActivity">
+    tools:context="org.us.x42.kyork.idcard.AdminMenuActivity">
 
     <ImageView
         android:layout_width="match_parent"

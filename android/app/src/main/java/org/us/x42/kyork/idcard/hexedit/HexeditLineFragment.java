@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,8 +15,10 @@ import android.view.ViewGroup;
 import org.us.x42.kyork.idcard.R;
 import org.us.x42.kyork.idcard.data.AbstractCardFile;
 import org.us.x42.kyork.idcard.data.HexSpanInfo;
+import org.us.x42.kyork.idcard.data.IDCard;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A fragment representing a list of Items.
@@ -25,11 +28,9 @@ import java.util.List;
  */
 public class HexeditLineFragment extends Fragment {
 
-    // TODO: Customize parameter argument names
-    private static final String ARG_COLUMN_COUNT = "column-count";
-    // TODO: Customize parameters
-    private int mColumnCount = 1;
+    private static final String ARG_FILE_ID = "fileid";
     private OnListFragmentInteractionListener mListener;
+    private int mFileID;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -38,12 +39,11 @@ public class HexeditLineFragment extends Fragment {
     public HexeditLineFragment() {
     }
 
-    // TODO: Customize parameter initialization
     @SuppressWarnings("unused")
-    public static HexeditLineFragment newInstance(int columnCount) {
+    public static HexeditLineFragment newInstance(int fileID) {
         HexeditLineFragment fragment = new HexeditLineFragment();
         Bundle args = new Bundle();
-        args.putInt(ARG_COLUMN_COUNT, columnCount);
+        args.putInt(ARG_FILE_ID, fileID);
         fragment.setArguments(args);
         return fragment;
     }
@@ -53,7 +53,7 @@ public class HexeditLineFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         if (getArguments() != null) {
-            mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
+            mFileID = getArguments().getInt(ARG_FILE_ID);
         }
     }
 
@@ -64,18 +64,19 @@ public class HexeditLineFragment extends Fragment {
 
         // Set the adapter
         if (view instanceof RecyclerView) {
+            if (mFileID == 0) {
+                Log.e("HexeditLineFragment", "ERROR - created without a fileID");
+                return view;
+            }
             Context context = view.getContext();
             RecyclerView recyclerView = (RecyclerView) view;
-            if (mColumnCount <= 1) {
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            } else {
-                recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
-            }
-            recyclerView.setAdapter(new MyHexeditLineRecyclerViewAdapter(mListener.getCardFile(), mListener.getSpanInfoList(), mListener));
+            recyclerView.setLayoutManager(new LinearLayoutManager(context));
+            MyHexeditLineRecyclerViewAdapter adapter = new MyHexeditLineRecyclerViewAdapter(mListener, mFileID);
+            recyclerView.setAdapter(adapter);
+            mListener.registerAdapterCallbacks(this, adapter);
         }
         return view;
     }
-
 
     @Override
     public void onAttach(Context context) {
@@ -83,14 +84,14 @@ public class HexeditLineFragment extends Fragment {
         if (context instanceof OnListFragmentInteractionListener) {
             mListener = (OnListFragmentInteractionListener) context;
         } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnListFragmentInteractionListener");
+            throw new RuntimeException("HexeditLineFragment: activity is not a proper fragment listener");
         }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
+        mListener.unregisterAdapterCallbacks(this);
         mListener = null;
     }
 
@@ -105,9 +106,8 @@ public class HexeditLineFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnListFragmentInteractionListener {
-        List<HexSpanInfo.Interface> getSpanInfoList();
-        AbstractCardFile getCardFile();
-        void onListFragmentInteraction(HexSpanInfo.Interface item);
+        void registerAdapterCallbacks(HexeditLineFragment fragment, MyHexeditLineRecyclerViewAdapter adapter);
+        void unregisterAdapterCallbacks(HexeditLineFragment fragment);
         Context getContext();
     }
 }

@@ -57,7 +57,7 @@
         </service>
 
         <activity
-            android:name=".CardAdminActivity"
+            android:name=".AdminMenuActivity"
             android:label="@string/title_activity_card_admin"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">

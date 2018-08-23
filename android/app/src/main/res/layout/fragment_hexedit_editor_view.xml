@@ -6,17 +6,26 @@
     android:layout_height="match_parent"
     tools:context="org.us.x42.kyork.idcard.hexedit.HexeditEditorViewActivity$PlaceholderFragment">
 
-    <TextView
-        android:id="@+id/section_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/activity_vertical_margin"
-        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:layout_marginTop="@dimen/activity_vertical_margin"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/constraintLayout"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_constraintTop_creator="1" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <fragment
+            android:id="@+id/progress_test_frag"
+            android:name="org.us.x42.kyork.idcard.hexedit.HexeditLineFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:theme="@style/FractalBackground"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/test_hce"
+            tools:layout_height="600dp"
+            tools:context="org.us.x42.kyork.idcard.hexedit.HexeditLineFragment"
+            tools:listitem="@layout/fragment_hexeditline" />
+
+    </ScrollView>
 
 </android.support.constraint.ConstraintLayout>

@@ -10,7 +10,7 @@ MFRC522::StatusCode send_unwrapped_request(MFRC522 *mfrc522, byte *cmdbuf, byte 
 
   if (result != MFRC522::STATUS_OK) {
     if (result == MFRC522::STATUS_INTERNAL_ERROR)
-      g_lstatus = LERROR_TRANSCEIVE_FAILURE;
+      g_lstatus = LERROR_MFRC522_LIBRARY;
     return (result);
   }
 
@@ -65,7 +65,7 @@ MFRC522::StatusCode send_wrapped_request(MFRC522 *mfrc522, byte *cmdbuf, byte se
 
   if (result != MFRC522::STATUS_OK) {
     if (result == MFRC522::STATUS_INTERNAL_ERROR)
-      g_lstatus = LERROR_TRANSCEIVE_FAILURE;
+      g_lstatus = LERROR_MFRC522_LIBRARY;
     return (result);
   }
 
@@ -136,7 +136,7 @@ MFRC522::StatusCode select_7816_app(MFRC522 *mfrc522) {
   status = mfrc522->ISODEP_Transceive(select_cmd, 13, reply, reply_len);
   if (status != MFRC522::STATUS_OK) {
     if (status == MFRC522::STATUS_INTERNAL_ERROR)
-      g_lstatus = LERROR_TRANSCEIVE_FAILURE;
+      g_lstatus = LERROR_MFRC522_LIBRARY;
     return (status);
   }
 

@@ -30,9 +30,9 @@ ReaderState handle_error(int i, const char *opname, MFRC522::StatusCode status, 
         SERIAL_PRINTLN(errno);
         break;
 
-      case LERROR_TRANSCEIVE_FAILURE:
+      case LERROR_MFRC522_LIBRARY:
         SERIAL_PRINT(opname);
-        SERIAL_PRINTLN(": MFRC522::ISODEP_Transceive() internal error");
+        SERIAL_PRINTLN(": MFRC522 library internal error");
         break;
 
       case LERROR_LARGER_RESPONSE:

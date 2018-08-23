@@ -66,7 +66,7 @@ enum ProtocolStatus : byte {
 };
 
 # define LERROR_ERRNO 0xFFFF // stdlib failure is in 'errno'
-# define LERROR_TRANSCEIVE_FAILURE 0xFFFE // 
+# define LERROR_MFRC522_LIBRARY 0xFFFE
 # define LERROR_LARGER_RESPONSE 0xFFFD
 # define LERROR_BAD_RESPONSE 0xFFFC
 

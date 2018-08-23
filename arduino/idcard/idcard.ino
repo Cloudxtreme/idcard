@@ -76,11 +76,26 @@ void setup() {
     SERIAL_PRINTLN("Loaded configuration from EEPROM");
     SERIAL_PRINT("DOOR ID: "); SERIAL_PRINTLN(g_config.door_id);
     SERIAL_PRINT("PERMISSION MODE: "); SERIAL_PRINTLN(g_config.permission_mode);
-    // Do not expose MAC key in any case
+
+    /* Do not expose MAC key in any case
+    SERIAL_PRINT("ID MAC KEY: ");
+    for (int i = 0; i < BLAKE2S_KEY_SIZE; i++) {
+      if (g_config.id_mac_key[i] < 0x10)
+        SERIAL_PRINT("0");
+      SERIAL_PRINT(g_config.id_mac_key[i], HEX);
+    }
     SERIAL_PRINTLN();
 
-    memset(g_config.id_mac_key, 42, BLAKE2S_KEY_SIZE);
-    memset(g_config.tk_mac_key, 0x42, BLAKE2S_KEY_SIZE);
+    SERIAL_PRINT("TK MAC KEY: ");
+    for (int i = 0; i < BLAKE2S_KEY_SIZE; i++) {
+      if (g_config.tk_mac_key[i] < 0x10)
+        SERIAL_PRINT("0");
+      SERIAL_PRINT(g_config.tk_mac_key[i], HEX);
+    }
+    SERIAL_PRINTLN();
+    */
+
+    SERIAL_PRINTLN();
   }
 
 #if HASH_DEBUG

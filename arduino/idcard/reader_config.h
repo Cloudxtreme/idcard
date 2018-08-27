@@ -26,33 +26,69 @@ enum ReaderState : int {
   STATE_PHONE_WAIT,
 };
 
-/*
-struct  s_reader {
-  MFRC522       *mfrc522;
-  ReaderState   state;
-  ReaderState   nextstate;
-  unsigned long delayuntil;
-};
-*/
+namespace sm {
+  struct ReturnSentinel {};
 
-extern MFRC522           *g_mfrc522[NUM_READERS];
-extern ReaderState       g_states[NUM_READERS];
-extern ReaderState       g_nextstate[NUM_READERS];
-extern unsigned long     g_delayuntil[NUM_READERS];
-extern int               g_extra1[NUM_READERS];
+  class Rdr {
+  public:
+    using StateMachineFunc = ReaderState (Rdr::*)(void);
 
-ReaderState wait_then_do(int cardi, long delay_ms, ReaderState next);
-ReaderState handle_error(int cardi, const char *opname, MFRC522::StatusCode status, bool halt_card = false);
+    Rdr() : mfrc522(NULL), m_curstate(STATE_IDLE), m_delayuntil(0) {};
 
-void        state_machine_loop(void);
-ReaderState connect_to_card(int cardi);
-ReaderState select_app(int i);
-ReaderState read_and_verify(int i);
-ReaderState check_phone_ready(int i);
-ReaderState unlock_lock(int i);
-ReaderState unlock_endbeep(int i);
-ReaderState unlock_end(int i);
-ReaderState err_beeper(int i);
+    void loop();
+
+    // STATE_IDLE
+    ReturnSentinel connect_to_card();
+    // STATE_WAIT
+    ReturnSentinel check_wait();
+    // STATE_SELECT
+    ReturnSentinel select_app();
+    // STATE_READ_START
+    // STATE_READ_POSTPHONEWAIT
+    ReturnSentinel read_and_verify();
+    // STATE_PHONE_WAIT
+    ReturnSentinel check_phone_ready();
+    // STATE_UNLOCK_START
+    ReturnSentinel unlock_start();
+    // STATE_UNLOCK_NOBEEP
+    ReturnSentinel unlock_endbeep();
+    // STATE_UNLOCK_END
+    ReturnSentinel unlock_end();
+    // STATE_ERRBEEP
+    ReturnSentinel err_beeper();
+
+  private:
+    /*
+     * Switch to 'next' after 'delay_ms' milliseconds.
+     */
+    ReturnSentinel wait_then_do(long delay_ms, ReaderState next);
+    /*
+     * Print an error to the serial console, if enabled, and switch to ERRBEEP. Optionally, send a HLTA to the card.
+     */
+    ReturnSentinel handle_error(const char *opname, MFRC522::StatusCode status, bool halt_card = false);
+    /*
+     * Return from a state machine function.
+     */
+    inline ReturnSentinel sm_return(ReaderState switchto) {
+      m_curstate = switchto;
+      return (ReturnSentinel{});
+    }
+
+  // Fields
+  public:
+    MFRC522 *mfrc522;
+  private:
+    ReaderState m_curstate;
+    unsigned long m_delayuntil;
+    union {
+      ReaderState m_nextstate;
+      int m_extra;
+    } u;
+  };
+
+}
+
+extern sm::Rdr g_readers[NUM_READERS];
 
 #define SCAN_PERIOD_MS 5
 #define UNLOCK_PERIOD_MS 5000

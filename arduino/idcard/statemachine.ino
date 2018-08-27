@@ -3,25 +3,69 @@
 
 // todo: auto cps conversion?
 
+sm::Rdr  g_readers[NUM_READERS];
 
-MFRC522           *g_mfrc522[NUM_READERS] = { NULL };
-ReaderState       g_states[NUM_READERS] = { STATE_IDLE };
-ReaderState       g_nextstate[NUM_READERS] = { STATE_IDLE };
-uint32_t          g_delayuntil[NUM_READERS] = { 0 };
-int               g_extra1[NUM_READERS] = { 0 };
+namespace sm {
 
-ReaderState wait_then_do(int i, long delay_ms, ReaderState next) {
-  g_nextstate[i] = next;
-  g_delayuntil[i] = millis() + delay_ms;
-  return (STATE_WAIT);
+void Rdr::loop() {
+  switch (m_curstate) {
+      case STATE_WAIT:
+        check_wait();
+        break;
+
+      case STATE_IDLE:
+        connect_to_card();
+        break;
+
+      case STATE_SELECT:
+        select_app();
+        break;
+
+      case STATE_READ_START:
+      case STATE_READ_POSTPHONEWAIT:
+        read_and_verify();
+        break;
+
+      case STATE_PHONE_WAIT:
+        check_phone_ready();
+        break;
+
+      case STATE_UNLOCK_START:
+        unlock_start();
+        break;
+
+      case STATE_UNLOCK_NOBEEP:
+        unlock_endbeep();
+        break;
+
+      case STATE_UNLOCK_END:
+        unlock_end();
+        break;
+
+      case STATE_ERRBEEP:
+        err_beeper();
+        break;
+
+
+      default: // If something gets corrupted, just lock the door (potentially set the color of a light?)
+        unlock_end();
+        m_curstate = STATE_IDLE;
+  }
 }
 
-ReaderState handle_error(int i, const char *opname, MFRC522::StatusCode status, bool halt_card) {
+ReturnSentinel Rdr::wait_then_do(long delay_ms, ReaderState next) {
+  m_delayuntil = millis() + delay_ms;
+  m_curstate = STATE_WAIT;
+  u.m_nextstate = next;
+  return (ReturnSentinel{});
+}
+
+ReturnSentinel Rdr::handle_error(const char *opname, MFRC522::StatusCode status, bool halt_card) {
   if (halt_card) {
-    g_mfrc522[i]->PICC_HaltA();
+    mfrc522->PICC_HaltA();
   }
   
-  SERIAL_PRINT("Card "); SERIAL_PRINT(i); SERIAL_PRINT(" error ");
+  SERIAL_PRINT("Card error ");
   if (status == MFRC522::STATUS_INTERNAL_ERROR) {
     switch (g_lstatus) {
       case LERROR_ERRNO:
@@ -57,6 +101,9 @@ ReaderState handle_error(int i, const char *opname, MFRC522::StatusCode status, 
     SERIAL_PRINTLN(status);
   }
 
-  g_delayuntil[i] = 0;
-  return (STATE_ERRBEEP);
+  m_delayuntil = 0;
+  m_curstate = STATE_ERRBEEP;
+  return (ReturnSentinel{});
+}
+
 }

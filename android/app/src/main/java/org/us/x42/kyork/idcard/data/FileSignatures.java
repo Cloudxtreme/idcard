@@ -2,6 +2,7 @@ package org.us.x42.kyork.idcard.data;
 
 import android.os.Parcel;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import com.google.errorprone.annotations.CheckReturnValue;
 
@@ -13,6 +14,7 @@ import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
 import net.i2p.crypto.eddsa.spec.EdDSAPrivateKeySpec;
 import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
 
+import org.us.x42.kyork.idcard.R;
 import org.us.x42.kyork.idcard.desfire.DESFireCard;
 import org.us.x42.kyork.idcard.desfire.DESFireProtocol;
 
@@ -24,6 +26,7 @@ import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Interface to the Signatures file on the card.
@@ -69,6 +72,7 @@ public class FileSignatures extends AbstractCardFile {
 
     public static final int MAX_SIGNATURE_COUNT = 5;
     public static final int SIGNATURE_LENGTH = 68;
+    public static final int SIGNATURE_RAW_LENGTH = 64;
 
     public static final int KEYID_DEBUG = 0x545354;
 
@@ -183,5 +187,38 @@ public class FileSignatures extends AbstractCardFile {
             setDirty(offset, 68);
             return;
         }
+    }
+
+    private static List<HexSpanInfo.Interface> SPAN_INFO;
+
+    private static List<HexSpanInfo.Interface> getSpanInfo() {
+        if (SPAN_INFO == null) {
+            SPAN_INFO = ImmutableList.<HexSpanInfo.Interface>of(
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(0, 1).fieldName(R.string.editor_sig_fil1).build(),
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(1, 3).fieldName(R.string.editor_sig_key1).build(),
+                    HexSpanInfo.Basic.builder().offsetAndLength(4, SIGNATURE_RAW_LENGTH).fieldName(R.string.editor_sig_body).build(),
+
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(SIGNATURE_LENGTH, 1).fieldName(R.string.editor_sig_fil2).build(),
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(SIGNATURE_LENGTH + 1, 3).fieldName(R.string.editor_sig_key2).build(),
+                    HexSpanInfo.Basic.builder().offsetAndLength(SIGNATURE_LENGTH + 4, SIGNATURE_RAW_LENGTH).fieldName(R.string.editor_sig_body).build(),
+
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(SIGNATURE_LENGTH * 2, 1).fieldName(R.string.editor_sig_fil3).build(),
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(SIGNATURE_LENGTH * 2 + 1, 3).fieldName(R.string.editor_sig_key3).build(),
+                    HexSpanInfo.Basic.builder().offsetAndLength(SIGNATURE_LENGTH * 2 + 4, SIGNATURE_RAW_LENGTH).fieldName(R.string.editor_sig_body).build(),
+
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(SIGNATURE_LENGTH * 3, 1).fieldName(R.string.editor_sig_fil4).build(),
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(SIGNATURE_LENGTH * 3 + 1, 3).fieldName(R.string.editor_sig_key4).build(),
+                    HexSpanInfo.Basic.builder().offsetAndLength(SIGNATURE_LENGTH * 3 + 4, SIGNATURE_RAW_LENGTH).fieldName(R.string.editor_sig_body).build(),
+
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(SIGNATURE_LENGTH * 4, 1).fieldName(R.string.editor_sig_fil5).build(),
+                    HexSpanInfo.LittleEndian.builder().offsetAndLength(SIGNATURE_LENGTH * 4 + 1, 3).fieldName(R.string.editor_sig_key5).build(),
+                    HexSpanInfo.Basic.builder().offsetAndLength(SIGNATURE_LENGTH * 4 + 4, SIGNATURE_RAW_LENGTH).fieldName(R.string.editor_sig_body).build()
+            );
+        }
+        return SPAN_INFO;
+    }
+
+    public void describeHexSpanContents(List<HexSpanInfo.Interface> destination) {
+        destination.addAll(getSpanInfo());
     }
 }

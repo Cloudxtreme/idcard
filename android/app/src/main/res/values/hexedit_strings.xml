@@ -5,14 +5,26 @@
     <string name="editor_reserved_help">All zero.</string>
     <string name="editor_edithex_short">Edit</string>
     <string name="editor_applyvalue">Apply</string>
+    <string name="editor_hexdialog_title">Edit Raw Values</string>
 
+    <!-- Number input -->
+    <string name="editor_numeric_accessibledesc">Numeric content of the field</string>
     <string name="editor_err_range_byte">Value must be 1 byte (-128 to 127)</string>
     <string name="editor_err_range_short">Value must be 2 bytes (-32768 to 32767)</string>
     <string name="editor_err_range_three">Value must be 3 bytes (-8388608 to 8388607)</string>
     <string name="editor_err_range_int">Value must be 4 bytes (-2147483648 to 2147483647)</string>
     <string name="editor_err_range_seven">Value must be 7 bytes (-36028797018963968 to 36028797018963967)</string>
     <string name="editor_err_range_eight">Value must be 8 bytes (-9223372036854775808 to 9223372036854775807)</string>
+    <!-- Enumerated input -->
+    <string name="editor_other">(Other)</string>
+    <!-- String input -->
     <string name="editor_err_string_too_long">String too long (max %d bytes)</string>
+    <!-- Card expiry date -->
+    <string name="editor_user_piscine_zero">(Does Not Expire)</string>
+    <string name="editor_err_date_invalid">(Invalid Date)</string>
+    <!-- Hex input -->
+    <string name="editor_err_input_wrong_size">Wrong number of bytes. Must be exactly %1$d, got %2$d.</string>
+    <!-- Field names -->
     <string name="editor_meta_title">Metadata</string>
     <string name="editor_meta_timestamp">Provisioning Date</string>
     <string name="editor_meta_timestamp_help">Set automatically by the server when card is set up.</string>
@@ -43,17 +55,13 @@
     <string name="editor_sig_title">Data Signatures</string>
     <string name="editor_sig_fil1">Signature 1 File ID</string>
     <string name="editor_sig_key1">Signature 1 Key ID</string>
-    <string name="editor_sig_sig1">Signature 1 Body</string>
     <string name="editor_sig_fil2">Signature 2 File ID</string>
     <string name="editor_sig_key2">Signature 2 Key ID</string>
-    <string name="editor_sig_sig2">Signature 2 Body</string>
     <string name="editor_sig_fil3">Signature 3 File ID</string>
     <string name="editor_sig_key3">Signature 3 Key ID</string>
-    <string name="editor_sig_sig3">Signature 3 Body</string>
     <string name="editor_sig_fil4">Signature 4 File ID</string>
     <string name="editor_sig_key4">Signature 4 Key ID</string>
-    <string name="editor_sig_sig4">Signature 4 Body</string>
     <string name="editor_sig_fil5">Signature 5 File ID</string>
     <string name="editor_sig_key5">Signature 5 Key ID</string>
-    <string name="editor_sig_sig5">Signature 5 Body</string>
+    <string name="editor_sig_body">Signature Body</string>
 </resources>

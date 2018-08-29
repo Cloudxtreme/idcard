@@ -1,8 +1,10 @@
 package org.us.x42.kyork.idcard.data;
 
+import android.content.Context;
 import android.os.Parcel;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Ints;
 
 import org.us.x42.kyork.idcard.PackUtil;
 import org.us.x42.kyork.idcard.R;
@@ -10,9 +12,13 @@ import org.us.x42.kyork.idcard.R;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.text.DateFormat;
+import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 
 public class FileUserInfo extends AbstractCardFile {
@@ -101,8 +107,97 @@ public class FileUserInfo extends AbstractCardFile {
         return readLE24(0xe);
     }
 
+    public static class PiscineDMYDescriptor extends HexSpanInfo.Basic {
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public static class Builder extends HexSpanInfo.Basic.Builder {
+            private Builder() {
+                super(new PiscineDMYDescriptor());
+            }
+
+            public PiscineDMYDescriptor build() {
+                super.build();
+                return ((PiscineDMYDescriptor) target);
+            }
+
+            @Override
+            public Builder fieldName(int name) {
+                super.fieldName(name);
+                return this;
+            }
+        }
+
+        @Override
+        public int getOffset() {
+            return 0xE;
+        }
+
+        @Override
+        public int getLength() {
+            return 3;
+        }
+
+        @Override
+        public CharSequence getShortContents(Context context, byte[] file) {
+            Date endDate = getPiscineEndDate(file);
+            if (endDate == null) {
+                int val = PackUtil.readLE24(file, getOffset());
+                if (val == 0) {
+                    return context.getString(R.string.editor_user_piscine_zero);
+                }
+                return context.getString(R.string.editor_err_date_invalid);
+            }
+            Locale fmtLocale = Locale.getDefault();
+            DateFormat format = DateFormat.getDateInstance(DateFormat.LONG, fmtLocale);
+
+            return format.format(getPiscineEndDate(file));
+        }
+
+
+        public Date getPiscineEndDate(byte[] file) {
+            int dmy = PackUtil.readLE24(file, getOffset());
+            if (dmy == 0) {
+                return null;
+            }
+            int day = (dmy) & 0x1F;
+            int month = (dmy >> 5) & 0xF;
+            int year = (dmy >> 9);
+            if (day < 1 || day > 31)
+                return null;
+            if (month < 1 || month > 12)
+                return null;
+
+            TimeZone tz = TimeZone.getTimeZone("America/Los_Angeles"); // TODO getCampusTimeZone()
+            Calendar cal = Calendar.getInstance(tz);
+            cal.clear();
+            cal.set(year, month, day);
+            return cal.getTime();
+        }
+
+        public void setPiscineEndDate(byte[] file, Date date) {
+            if (date == null) {
+                PackUtil.writeLE24(file, getOffset(), 0);
+                return;
+            }
+
+            TimeZone tz = TimeZone.getTimeZone("America/Los_Angeles"); // TODO getCampusTimeZone()
+            Calendar cal = Calendar.getInstance(tz);
+
+            cal.clear();
+            cal.setTime(date);
+            int dmy = cal.get(Calendar.YEAR);
+            dmy <<= 4;
+            dmy |= cal.get(Calendar.MONTH);
+            dmy <<= 5;
+            dmy |= cal.get(Calendar.DAY_OF_MONTH);
+
+            PackUtil.writeLE24(file, getOffset(), dmy);
+        }
+    }
     public void setPiscineEndDate(Date date) {
-        TimeZone tz = TimeZone.getTimeZone("America/Los_Angeles");
+        TimeZone tz = TimeZone.getTimeZone("America/Los_Angeles"); // TODO getCampusTimeZone()
         Calendar cal = Calendar.getInstance(tz);
 
         cal.clear();
@@ -176,7 +271,7 @@ public class FileUserInfo extends AbstractCardFile {
                             .addItem("04", R.string.editor_user_act_employee)
                             .addItem("05", R.string.editor_user_act_security)
                             .build(),
-                    HexSpanInfo.LittleEndian.builder().offsetAndLength(0xe, 3).fieldName(R.string.editor_user_piscine).build(),
+                    PiscineDMYDescriptor.builder().offsetAndLength(0xe, 3).fieldName(R.string.editor_user_piscine).build(),
                     HexSpanInfo.LittleEndian.builder().offsetAndLength(0x11, 7).fieldName(R.string.editor_user_serial).build(),
                     HexSpanInfo.LittleEndian.builder().offsetAndLength(0x18, 8).fieldName(R.string.editor_user_timestamp).build()
             );

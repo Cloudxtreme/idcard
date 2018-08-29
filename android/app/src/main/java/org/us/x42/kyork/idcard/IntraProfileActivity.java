@@ -51,17 +51,14 @@ public class IntraProfileActivity extends AppCompatActivity {
     }
 
     private void beginUpdateTask() {
-        Intent intent = new Intent(this, CardWriteActivity.class);
-        WriteCardTask task = new WriteCardTask(updateContent);
-        intent.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
-        startActivityForResult(intent, REQUEST_CODE_UPDATECARD);
+        startActivityForResult(CardWriteActivity.getIntent(this, new WriteCardTask(updateContent)), REQUEST_CODE_UPDATECARD);
     }
 
     @Override
     protected void onActivityResult (int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CODE_UPDATECARD) {
             if (resultCode == RESULT_OK) {
-                WriteCardTask task = data.getParcelableExtra(CardWriteActivity.CARD_JOB_PARAMS);
+                WriteCardTask task = CardWriteActivity.getResultData(data);
                 String err = task.getErrorString(this);
                 if (err.isEmpty()) {
                     String userLogin = task.getCard().fileUserInfo.getLogin();
@@ -75,6 +72,8 @@ public class IntraProfileActivity extends AppCompatActivity {
                     statusBar.show();
                     Log.i("WriteCardTask", err);
                 }
+            } else {
+                // TODO
             }
             Log.i("WriteCardTask", "RESULT => " + resultCode);
         }

@@ -6,35 +6,22 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal">
 
-    <FrameLayout
+    <ViewSwitcher
+        android:id="@+id/iconSwitcher"
+        android:inAnimation="@android:anim/fade_in"
+        android:outAnimation="@android:anim/fade_out"
         android:layout_width="24dp"
         android:layout_height="26dp">
-
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyle"
-            android:theme="@style/BlueProgress"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:contentDescription="@string/working"/>
-
-        <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:contentDescription="@string/done"
-            android:tint="@android:color/holo_green_light"
-            app:srcCompat="@drawable/ic_check_black_24dp" />
-    </FrameLayout>
+        <!-- see progressstep_icon_*.xml -->
+    </ViewSwitcher>
 
     <TextView
         android:id="@+id/content"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:text="PLACEHOLDER"
+        tools:text="PLACEHOLDER"
         android:textAppearance="?attr/textAppearanceListItem"
-        android:textColor="?android:attr/textColorPrimary"
-        tools:ignore="HardcodedText" />
+        android:textColor="?android:attr/textColorPrimary" />
 
 </LinearLayout>

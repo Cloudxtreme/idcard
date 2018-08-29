@@ -69,8 +69,6 @@
     <string name="launch_card_editor">Inspect Card Content</string>
     <string name="launch_card_admin">Launch Card Admin</string>
     <string name="err_need_login">Please enter a valid intra login</string>
-    <string name="done">Done</string>
-    <string name="working">Working</string>
     <string name="title_activity_hexedit_editor_view">HexeditEditorViewActivity</string>
     <string name="tab_text_1">Tab 1</string>
     <string name="tab_text_2">Tab 2</string>
@@ -80,4 +78,8 @@
     <string name="intraprofile_refresh">Refresh</string>
     <string name="edit_card_contents">Edit Card Contents</string>
     <string name="wipe_card">Wipe card</string>
+    <string name="setup_command_id">Command ID</string>
+    <string name="accessibledesc_error_generic">Error</string>
+    <string name="accessibledesc_done">Done</string>
+    <string name="accessibledesc_working">Working</string>
 </resources>

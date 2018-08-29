@@ -3,6 +3,8 @@ package org.us.x42.kyork.idcard.data;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.common.collect.ImmutableList;
+
 import org.us.x42.kyork.idcard.R;
 
 import java.util.ArrayList;
@@ -14,7 +16,7 @@ import java.util.List;
  */
 public abstract class AbstractCardFile implements CardFile, Parcelable {
     protected byte[] rawContent;
-    private List<int[]> dirtyRanges = new ArrayList<>();
+    protected boolean isDirty;
 
     public AbstractCardFile(byte[] content) {
         rawContent = content;
@@ -23,9 +25,7 @@ public abstract class AbstractCardFile implements CardFile, Parcelable {
     protected AbstractCardFile(Parcel parcel) {
         this.rawContent = new byte[parcel.readInt()];
         parcel.readByteArray(rawContent);
-        int length = parcel.readInt();
-        for (int i = 0; i < length; i++)
-            this.dirtyRanges.add(new int[] { parcel.readInt(), parcel.readInt() });
+        isDirty = parcel.readByte() == 1;
     }
 
     @Override
@@ -37,10 +37,10 @@ public abstract class AbstractCardFile implements CardFile, Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(this.rawContent.length);
         dest.writeByteArray(this.rawContent);
-        dest.writeInt(this.dirtyRanges.size());
-        for (int[] dirtyRange : dirtyRanges) {
-            dest.writeInt(dirtyRange[0]);
-            dest.writeInt(dirtyRange[1]);
+        if (isDirty) {
+            dest.writeByte((byte)1);
+        } else {
+            dest.writeByte((byte)0);
         }
     }
 
@@ -64,8 +64,8 @@ public abstract class AbstractCardFile implements CardFile, Parcelable {
     /**
      * Sets the entire file as dirty (needs to be written to the card).
      */
-    protected void setDirty() {
-        this.dirtyRanges.add(new int[] { 0, getExpectedFileSize() });
+    public void setDirty() {
+        isDirty = true;
     }
 
     /**
@@ -75,15 +75,18 @@ public abstract class AbstractCardFile implements CardFile, Parcelable {
      * @param size data size
      */
     protected void setDirty(int offset, int size) {
-        this.dirtyRanges.add(new int[] { offset, size });
+        setDirty();
     }
 
     public List<int[]> getDirtyRanges() {
-        return this.dirtyRanges;
+        if (isDirty) {
+            return ImmutableList.of(new int[] { 0, this.getRawContent().length });
+        }
+        return ImmutableList.of();
     }
 
     public boolean isDirty() {
-        return !this.dirtyRanges.isEmpty();
+        return isDirty;
     }
 
     /**

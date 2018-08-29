@@ -36,6 +36,8 @@ public final class HexSpanInfo {
         int getFieldName();
 
         CharSequence getShortContents(Context context, byte[] file);
+
+        void setRawContents(byte[] file, byte[] newContents);
     }
 
     public interface Numeric extends Interface {
@@ -123,6 +125,12 @@ public final class HexSpanInfo {
         public CharSequence getShortContents(Context context, byte[] file) {
             // Encode to hexadecimal
             return HexUtil.encodeHexLineWrapped(file, getOffset(), getOffset() + getLength());
+        }
+
+        public void setRawContents(byte[] file, byte[] newContents) {
+            if (newContents.length != getLength()) throw new IndexOutOfBoundsException();
+
+            System.arraycopy(newContents, 0, file, getOffset(), getLength());
         }
     }
 

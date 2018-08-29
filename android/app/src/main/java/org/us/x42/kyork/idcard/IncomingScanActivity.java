@@ -12,7 +12,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -45,14 +47,17 @@ public class IncomingScanActivity extends AppCompatActivity implements ProgressS
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_card_communicate);
 
-        Log.i(LOG_TAG, "IncomingScanActivity");
-
         mHandler = new Handler(Looper.getMainLooper()) {
+            private boolean anyErrors;
+
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == CardNFCTask.MSG_ID_NFC_STATUS) {
                     progressSteps.get(msg.arg1).state = msg.arg2;
                     mProgressFragment.notifyItemChanged(msg.arg1);
+                    if (msg.arg2 == ProgressStep.STATE_FAIL) {
+                        anyErrors = true;
+                    }
                 } else if (msg.what == CardNFCTask.MSG_ID_NFC_DONE) {
                     // Operation complete
                     Intent viewProfileIntent = new Intent(IncomingScanActivity.this, IntraProfileActivity.class);
@@ -119,8 +124,8 @@ public class IncomingScanActivity extends AppCompatActivity implements ProgressS
         if (mAdapter != null && needForegroundScan) {
             PendingIntent scanIntent = PendingIntent.getActivity(
                     this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
-            IntentFilter[] scanFilter = new IntentFilter[] { new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED) };
-            String[][] scanTechs = new String[][] { new String[] { IsoDep.class.getName(), NfcA.class.getName() } };
+            IntentFilter[] scanFilter = new IntentFilter[]{new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED)};
+            String[][] scanTechs = new String[][]{new String[]{IsoDep.class.getName(), NfcA.class.getName()}};
             mAdapter.enableForegroundDispatch(this, scanIntent, scanFilter, scanTechs);
         }
     }
@@ -142,7 +147,7 @@ public class IncomingScanActivity extends AppCompatActivity implements ProgressS
     }
 
     @Override
-    public List<ProgressStep> getProgressStepList() {
+    public @NonNull List<ProgressStep> getProgressStepList() {
         return this.progressSteps;
     }
 

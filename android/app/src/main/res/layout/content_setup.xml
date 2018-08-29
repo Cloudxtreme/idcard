@@ -7,6 +7,13 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="org.us.x42.kyork.idcard.SetupActivity"
     tools:showIn="@layout/activity_setup">
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+<android.support.constraint.ConstraintLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
 
     <Button
         android:id="@+id/nfc_test_button"
@@ -17,7 +24,7 @@
         android:text="@string/run_nfc_test"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/errorText" />
+        app:layout_constraintTop_toBottomOf="@+id/setup_payload_editText" />
 
     <Spinner
         android:id="@+id/appid_spinner"
@@ -54,6 +61,7 @@
         android:text="@string/nfc_appid_label"
         android:textColor="#FFFFFF"
         android:textSize="18sp"
+        android:labelFor="@+id/appid_spinner"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -67,6 +75,7 @@
         android:text="@string/nfc_keyid_label"
         android:textColor="#FFFFFF"
         android:textSize="18sp"
+        android:labelFor="@+id/keyid_spinner"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/appid_label" />
@@ -80,6 +89,7 @@
         android:text="@string/payload"
         android:textColor="#FFFFFF"
         android:textSize="18sp"
+        android:labelFor="@+id/setup_payload_editText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView4"
         tools:text="Payload" />
@@ -92,25 +102,10 @@
         android:layout_marginTop="16dp"
         android:digits="0123456789 ABCDEF"
         android:ems="10"
-        android:inputType="textCapCharacters"
+        android:inputType="text|textCapCharacters|textMultiLine|textNoSuggestions"
         android:textColor="#FFFFFF"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/setup_cmdid_text" />
-
-    <TextView
-        android:id="@+id/errorText"
-        android:layout_width="wrap_content"
-        android:layout_height="16dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:textAppearance="@style/TextAppearance.Design.Error"
-        android:textColor="#FFFFFF"
-        android:textSize="18sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.468"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/setup_payload_editText" />
 
     <EditText
         android:id="@+id/setup_cmdid_text"
@@ -131,44 +126,42 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
         android:layout_marginTop="25dp"
-        android:text="Command ID"
+        android:text="@string/setup_command_id"
         android:textColor="#FFFFFF"
         android:textSize="18sp"
+        android:labelFor="@+id/setup_cmdid_text"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/keyid_label" />
 
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@+id/nfc_test_button"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@+id/nfc_test_button" >
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/textView5"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_marginStart="8dp"
+            android:text="@string/nfc_test_results"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small.Inverse"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/nfc_test_results_box"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:text="@null"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="2dp"
+            app:layout_constraintStart_toStartOf="parent" />
+    </LinearLayout>
 
-            <TextView
-                android:id="@+id/textView5"
-                android:layout_width="match_parent"
-                android:layout_height="20dp"
-                android:text="@string/nfc_test_results"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/nfc_test_results_box"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@null"
-                android:textColor="#FFFFFF"
-                android:textSize="18sp" />
-        </LinearLayout>
-
-
-
-    </ScrollView>
-
+</android.support.constraint.ConstraintLayout>
+</ScrollView>
 </android.support.constraint.ConstraintLayout>

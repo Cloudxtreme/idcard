@@ -41,14 +41,12 @@ public class SetupActivity extends AppCompatActivity {
         final Spinner keyid_spinner = findViewById(R.id.keyid_spinner);
         final EditText cmd_id_edittext = findViewById(R.id.setup_cmdid_text);
         final EditText payload_edittext = findViewById(R.id.setup_payload_editText);
-        final TextView errorText = findViewById(R.id.errorText);
         resultText = findViewById(R.id.nfc_test_results_box);
 
         Button clickButton = findViewById(R.id.nfc_test_button);
         clickButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                errorText.setText("");
                 int appId;
                 Log.i(this.getClass().getSimpleName(), "appid spinner position " + appid_spinner.getSelectedItemPosition());
                 switch (appid_spinner.getSelectedItemPosition()) {
@@ -103,15 +101,13 @@ public class SetupActivity extends AppCompatActivity {
                         data = HexUtil.decodeUserInput(inputText);
                     } catch (HexUtil.DecodeException e) {
                         payload_edittext.setError(e.getLocalizedMessage(SetupActivity.this));
-                        errorText.setText(e.getLocalizedMessage(SetupActivity.this));
                         return;
                     }
                 }
 
-                Intent intent = new Intent(SetupActivity.this, CardWriteActivity.class);
                 CommandTestTask task = new CommandTestTask(appId, keyId, encKey, cmdId, data);
-                intent.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
-                startActivityForResult(intent, NFC_REQUEST_CODE);
+                startActivityForResult(CardWriteActivity.getIntent(SetupActivity.this, task),
+                        NFC_REQUEST_CODE);
             }
         });
     }
@@ -121,7 +117,7 @@ public class SetupActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == NFC_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                CommandTestTask task = data.getParcelableExtra(CardWriteActivity.CARD_JOB_PARAMS);
+                CommandTestTask task = CardWriteActivity.getResultData(data);
                 StringBuilder sb = new StringBuilder();
 
                 if (task.getErrorCode() != 0) {

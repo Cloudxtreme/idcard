@@ -52,17 +52,25 @@ public class CardReadActivity extends AppCompatActivity implements ProgressStepL
         scanTechs = new String[][] { new String[] { IsoDep.class.getName(), NfcA.class.getName() } };
 
         mHandler = new Handler(Looper.getMainLooper()) {
+            private boolean anyErrors;
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == CardNFCTask.MSG_ID_NFC_STATUS) {
                     progressSteps.get(msg.arg1).state = msg.arg2;
                     mProgressFragment.notifyItemChanged(msg.arg1);
+                    if (msg.arg2 == ProgressStep.STATE_FAIL) {
+                        anyErrors = true;
+                    }
                 } else if (msg.what == CardNFCTask.MSG_ID_NFC_DONE) {
                     // Operation complete
                     Intent returnData = new Intent(Intent.ACTION_VIEW);
                     returnData.putExtra(RESULT_CARD, mTask);
                     setResult(RESULT_OK, returnData);
-                    finish();
+                    if (anyErrors) {
+                        mHandler.postDelayed(CardReadActivity.this::finish, 1000);
+                    } else {
+                        finish();
+                    }
                 }
             }
         };

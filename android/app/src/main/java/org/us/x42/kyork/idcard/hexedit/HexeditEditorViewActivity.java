@@ -101,6 +101,7 @@ public class HexeditEditorViewActivity extends AppCompatActivity implements Hexe
         return super.onOptionsItemSelected(item);
     }
 
+    // no longer needed - the Activity now always has the card
     private Map<HexeditLineFragment, MyHexeditLineRecyclerViewAdapter> adapterMap = new HashMap<>();
 
     @Override
@@ -114,6 +115,11 @@ public class HexeditEditorViewActivity extends AppCompatActivity implements Hexe
     @Override
     public void unregisterAdapterCallbacks(HexeditLineFragment fragment) {
         adapterMap.remove(fragment);
+    }
+
+    @Override
+    public void notifyContentChanged(int fileID) {
+        // TODO
     }
 
     @Override

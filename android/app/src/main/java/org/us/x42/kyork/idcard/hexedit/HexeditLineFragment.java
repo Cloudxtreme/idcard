@@ -108,6 +108,7 @@ public class HexeditLineFragment extends Fragment {
     public interface OnListFragmentInteractionListener {
         void registerAdapterCallbacks(HexeditLineFragment fragment, MyHexeditLineRecyclerViewAdapter adapter);
         void unregisterAdapterCallbacks(HexeditLineFragment fragment);
+        void notifyContentChanged(int fileID);
         Context getContext();
     }
 }

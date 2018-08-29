@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements ProgressStepListF
                 new ProgressStep(R.string.editor_sig_fil2),
                 new ProgressStep(R.string.editor_sig_fil3),
                 new ProgressStep.WithDoneText(R.string.editor_user_act, R.string.editor_user_act_student, R.string.editor_user_act_piscine)
-                );
+        );
     }
 
     @Override
@@ -72,12 +72,11 @@ public class MainActivity extends AppCompatActivity implements ProgressStepListF
         provisionBlank.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, CardWriteActivity.class);
                 EditText loginTextbox = (EditText) findViewById(R.id.login_textbox);
                 String login = loginTextbox.getText().toString().toLowerCase();
-                ProvisionBlankCardTask task = new ProvisionBlankCardTask(login, false);
-                intent.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
-                startActivityForResult(intent, REQUEST_ID_PROVISION);
+                startActivityForResult(CardWriteActivity.getIntent(
+                        MainActivity.this, new ProvisionBlankCardTask(login, false)),
+                        REQUEST_ID_PROVISION);
             }
         });
 
@@ -118,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements ProgressStepListF
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ID_PROVISION) {
             if (resultCode == RESULT_OK) {
-                ProvisionBlankCardTask result = data.getParcelableExtra(CardWriteActivity.CARD_JOB_PARAMS);
+                ProvisionBlankCardTask result = CardWriteActivity.getResultData(data);
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle(R.string.provision_result_title);
@@ -128,6 +127,8 @@ public class MainActivity extends AppCompatActivity implements ProgressStepListF
                     builder.setMessage("Error: " + result.getErrorString());
                 }
                 builder.create().show();
+            } else {
+                // TODO
             }
         }
     }

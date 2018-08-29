@@ -25,8 +25,10 @@ import org.us.x42.kyork.idcard.tasks.WriteCardTask;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This activity has no UI, but instead routes between several other activities in a flow.
+ */
 public class HexeditStartActivity extends Activity {
-
     /**
      * CardReadActivity. Returns the IDCard via {@link CardReadActivity#RESULT_CARD}.
      */
@@ -79,13 +81,16 @@ public class HexeditStartActivity extends Activity {
                     finish();
                     return;
                 }
-                card = data.getParcelableExtra(CardReadActivity.RESULT_CARD);
-                Intent intent3 = new Intent(this, CardWriteActivity.class);
+                card = data.getParcelableExtra(HexeditEditorViewActivity.EDITOR_PARAMS_CARD);
                 CardNFCTask task = new WriteCardTask(card);
-                intent3.putExtra(CardWriteActivity.CARD_JOB_PARAMS, task);
-                startActivityForResult(intent3, REQ_WRITE_CARD);
+                startActivityForResult(CardWriteActivity.getIntent(this, task), REQ_WRITE_CARD);
                 break;
             case REQ_WRITE_CARD:
+                if (resultCode != RESULT_OK) {
+                    setResult(RESULT_CANCELED);
+                    finish();
+                    return;
+                }
                 setResult(resultCode, data);
                 finish();
                 break;

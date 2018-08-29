@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Title Text View"
+        tools:text="Title Text View"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -26,7 +26,7 @@
         android:layout_marginBottom="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="4dp"
-        android:text="Subheading Text View"
+        tools:text="Subheading Text View"
         android:textAppearance="@style/TextAppearance.AppCompat.Small"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -80,7 +80,8 @@
             android:id="@+id/numberFrame"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="gone">
+            android:visibility="gone"
+            tools:visibility="visible" >
 
             <EditText
                 android:id="@+id/numberInput"
@@ -90,6 +91,7 @@
                 android:layout_marginTop="8dp"
                 android:ems="10"
                 android:inputType="numberSigned"
+                android:contentDescription="@string/editor_numeric_accessibledesc"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/numberApply"
@@ -119,7 +121,6 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:background="?attr/selectableItemBackground"
         android:paddingBottom="4dp"
         android:paddingTop="4dp"
         android:text="01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F"

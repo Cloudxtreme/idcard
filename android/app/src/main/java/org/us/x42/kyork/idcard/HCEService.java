@@ -1,6 +1,7 @@
 package org.us.x42.kyork.idcard;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.nfc.cardemulation.HostApduService;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Parcel;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.util.Log;
 
@@ -18,6 +20,7 @@ import org.us.x42.kyork.idcard.desfire.DESFireProtocol;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -39,7 +42,10 @@ public class HCEService extends HostApduService {
     private static final String TEST_ACCT_LOGIN = "apuel";
 
     private IDCard ourCard;
+    private byte addtlFrameCurrent;
+    private boolean isUpdateMode;
     private boolean ticketReady;
+    private boolean readerLost;
     private IOException fetchException;
     private byte[] authRndA;
     private byte[] authRndB;
@@ -65,8 +71,22 @@ public class HCEService extends HostApduService {
         public static final long TICKET_VALIDITY = 5 * 60;
         public static final String UPDATE_BY_DOOR_PREFIX = "update_d[";
 
+        public enum OperationMode {
+            SERVER_UPDATE,
+            TICKET,
+        }
+
         public static SharedPreferences getStorage(Context context) {
             return context.getSharedPreferences(SHAREDPREFS_HCE, 0);
+        }
+
+        public static boolean inUpdateMode(SharedPreferences prefs) {
+            return prefs.getBoolean(READY_FOR_UPDATES, false);
+        }
+
+        public static void setUpdateMode(SharedPreferences prefs, boolean inUpdateMode) {
+            prefs.edit().putBoolean(READY_FOR_UPDATES, inUpdateMode).apply();
+            return;
         }
 
         public static IDCard tryGetStoredTicket(SharedPreferences prefs) {
@@ -158,6 +178,11 @@ public class HCEService extends HostApduService {
                 return new byte[]{(byte) 0x91, 0x00};
 
             case DESFireProtocol.AUTHENTICATE:
+                this.addtlFrameCurrent = desfire_cmd;
+
+                SecureRandom random = new SecureRandom();
+                authRndA = new byte[8];
+                random.nextBytes(authRndA);
 
                 break;
 
@@ -165,6 +190,10 @@ public class HCEService extends HostApduService {
                 response = new byte[3];
                 response[1] = (byte)0x91;
                 response[2] = 0x00;
+                if (isUpdateMode) {
+                    byte door_id = desfire_cmddata[0];
+                    // TODO - update mode
+                }
                 if (ticketReady) {
                     response[0] = 1;
                 } else if (fetchException != null) {
@@ -195,30 +224,41 @@ public class HCEService extends HostApduService {
                 response[response.length - 1] = (byte) 0x00;
                 return response;
             // ...
+
+            case DESFireProtocol.ADDITIONAL_FRAME:
+                switch (addtlFrameCurrent) {
+                    case DESFireProtocol.AUTHENTICATE:
+                        break;
+                }
+                break;
         }
         return new byte[]{(byte) 0x91, DESFireProtocol.StatusCode.COMMAND_ABORTED.getValue()};
     }
 
     public void onDeactivated(int deactivationMode) {
-        // TODO abort jobs?
+        if (deactivationMode == DEACTIVATION_LINK_LOSS) {
+            if (!ticketReady && fetchException == null) {
+                sendStatusMessageToUI(HCEStatusActivity.StatusCode.FETCHING_SERVER_READER_LOST);
+            } else {
+                sendStatusMessageToUI(HCEStatusActivity.StatusCode.READER_LOST);
+            }
+        } else if (deactivationMode == DEACTIVATION_DESELECTED) {
+            sendStatusMessageToUI(HCEStatusActivity.StatusCode.DESELECTED);
+        }
+        readerLost = true;
     }
 
     /**
      * A ticket has been fetched from the server and stored in SharedPreferences.
-     * @param IDCard the card object
+     * @value IDCard the card object
      */
     private static final int MSG_TICKET_OBTAINED = 1;
 
     /**
      * An error was encountered fetching a ticket from the server.
-     * @param Throwable an IOException
+     * @value Throwable an IOException
      */
     private static final int MSG_TICKET_OBTAIN_FAIL = 2;
-
-    /**
-     * We are contacting the server to get the ticket.
-     */
-    private static final int MSG_PROGRESS_GETTING_TICKET = 3;
 
     class ServerResultHandler extends Handler {
         ServerResultHandler(Looper looper) { super(looper); }
@@ -229,11 +269,19 @@ public class HCEService extends HostApduService {
                 Log.i(LOG_TAG, "Got ticket from server");
                 ourCard = (IDCard) msg.obj;
                 ticketReady = true;
+                if (readerLost) {
+                    sendStatusMessageToUI(HCEStatusActivity.StatusCode.READY_FOR_READER);
+                } else {
+                    sendStatusMessageToUI(HCEStatusActivity.StatusCode.COMMUNICATING_WITH_READER);
+                }
             } else if (msg.what == MSG_TICKET_OBTAIN_FAIL) {
                 fetchException = (IOException) msg.obj;
-            } else if (msg.what == MSG_PROGRESS_GETTING_TICKET) {
-                Log.i(LOG_TAG, "Contacting server to get a ticket");
-                // TODO blocked on showing a service Activity
+                if (fetchException instanceof AndroidLocalizedException) {
+                    sendServerErrorToUI(((AndroidLocalizedException) fetchException).getLocalizedMessage(HCEService.this));
+                } else {
+                    // TODO filter builtin error classes
+                    sendServerErrorToUI(fetchException.getClass() + ": " + fetchException.getLocalizedMessage());
+                }
             }
         }
     }
@@ -241,32 +289,62 @@ public class HCEService extends HostApduService {
     private void prepare() {
         resetVariables();
 
-        SharedPreferences prefs = HCEServiceUtils.getStorage(this);
-        IDCard card = HCEServiceUtils.tryGetStoredTicket(prefs);
-        if (card != null) {
-            ticketReady = true;
-            this.ourCard = card;
-            Log.i(LOG_TAG, "Got ticket from cache");
-        } else {
-            ourCard = new IDCard();
-            ourCard.fileMetadata = FileMetadata.createTicketMetadataFile();
-            ticketReady = false;
+        Intent launchIntent = new Intent(this, HCEStatusActivity.class);
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS |
+                Intent.FLAG_ACTIVITY_NO_USER_ACTION);
 
-            // TODO executor service
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    handler.sendMessage(Message.obtain(handler, MSG_PROGRESS_GETTING_TICKET));
-                    try {
-                        IDCard ticket = ServerAPIFactory.getAPI().getTicketForLogin(TEST_ACCT_LOGIN, ourCard.fileMetadata);
-                        HCEServiceUtils.storeTicket(HCEServiceUtils.getStorage(HCEService.this), ticket);
-                        handler.sendMessage(Message.obtain(handler, MSG_TICKET_OBTAINED, ticket));
-                    } catch (IOException e) {
-                        handler.sendMessage(Message.obtain(handler, MSG_TICKET_OBTAIN_FAIL, e));
+        SharedPreferences prefs = HCEServiceUtils.getStorage(this);
+        if (HCEServiceUtils.inUpdateMode(prefs)) {
+            HCEStatusActivity.addCardMode(launchIntent, HCEServiceUtils.OperationMode.SERVER_UPDATE);
+
+            // TODO - implement card reader config updates
+            // because not implemented, set flag to false
+            HCEServiceUtils.setUpdateMode(prefs, false);
+        } else {
+            HCEStatusActivity.addCardMode(launchIntent, HCEServiceUtils.OperationMode.TICKET);
+
+            IDCard card = HCEServiceUtils.tryGetStoredTicket(prefs);
+            if (card != null) {
+                ticketReady = true;
+                this.ourCard = card;
+                Log.i(LOG_TAG, "Got ticket from cache");
+
+                HCEStatusActivity.addStatusCode(launchIntent, HCEStatusActivity.StatusCode.COMMUNICATING_WITH_READER);
+            } else {
+                ourCard = new IDCard();
+                ourCard.fileMetadata = FileMetadata.createTicketMetadataFile();
+                ticketReady = false;
+
+                HCEStatusActivity.addStatusCode(launchIntent, HCEStatusActivity.StatusCode.FETCHING_FROM_SERVER);
+                // TODO executor service
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            IDCard ticket = ServerAPIFactory.getAPI().getTicketForLogin(TEST_ACCT_LOGIN, ourCard.fileMetadata);
+                            HCEServiceUtils.storeTicket(HCEServiceUtils.getStorage(HCEService.this), ticket);
+                            handler.sendMessage(Message.obtain(handler, MSG_TICKET_OBTAINED, ticket));
+                        } catch (IOException e) {
+                            handler.sendMessage(Message.obtain(handler, MSG_TICKET_OBTAIN_FAIL, e));
+                        }
                     }
-                }
-            }).start();
+                }).start();
+            }
         }
+
+        startActivity(launchIntent);
+    }
+
+    private void sendStatusMessageToUI(HCEStatusActivity.StatusCode code) {
+        LocalBroadcastManager.getInstance(this).sendBroadcast(HCEStatusActivity.newStatusIntent(
+                this, code));
+    }
+
+    private void sendServerErrorToUI(String errMsg) {
+        Intent intent = HCEStatusActivity.newStatusIntent(this, HCEStatusActivity.StatusCode.SERVER_ERROR);
+        HCEStatusActivity.addServerErrorCode(intent, errMsg);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     private byte[] wrapMessage(byte command, byte[] parameters) throws IOException {

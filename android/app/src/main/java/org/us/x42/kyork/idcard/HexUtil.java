@@ -52,13 +52,14 @@ public final class HexUtil {
     }
 
     public static void appendLineWrappedHex(StringBuilder sb, byte[] data, int start, int end) {
-        for (int i = start; i < end; i++) {
+        int offsetInData = 0;
+        for (int i = start; i < end; i++, offsetInData++) {
             sb.append(Character.forDigit((data[i] >> 4) & 0xF, 16));
             sb.append(Character.forDigit(data[i] & 0xF, 16));
             sb.append(' ');
-            if (i % 8 == 7) {
+            if (offsetInData % 8 == 7) {
                 sb.append('\n');
-            } else if (i % 2 == 1) {
+            } else if (offsetInData % 2 == 1) {
                 sb.append(' ');
             }
         }
@@ -157,14 +158,7 @@ public final class HexUtil {
         }
     }
 
-    /**
-     * Interface for a {@link Throwable} that can localize its message on Android.
-     */
-    public interface AndroidLocalizedException {
-        String getLocalizedMessage(Context context);
-    }
-
-    static class DecodeException extends IllegalArgumentException implements AndroidLocalizedException {
+    public static class DecodeException extends IllegalArgumentException implements AndroidLocalizedException {
         private static final String MSG_ENGLISH = "Invalid character %1$c in hex string at position %2$d";
         char badChar;
         int position;

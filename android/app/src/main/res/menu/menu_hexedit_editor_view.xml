@@ -9,7 +9,8 @@
         app:showAsAction="never" />
     <item
         android:id="@+id/write"
+        android:icon="@drawable/ic_save_white_24dp"
         android:orderInCategory="100"
         android:title="@string/action_writecard"
-        app:showAsAction="collapseActionView" />
+        app:showAsAction="ifRoom" />
 </menu>

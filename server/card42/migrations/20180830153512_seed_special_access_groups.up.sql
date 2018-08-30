@@ -15,7 +15,7 @@ VALUES
        (12, '(All NFC Devices)', 'Anything that activates the card reader.', true),
        (13, 'General Access', 'All valid Card42 cards after secondary checks.', true),
        (14, 'Restricted Access', 'Bocal, Security, and Employee cards', true),
-       (15, 'Students', 'Student and Piscine cards', true),
+       (15, 'Students', 'Student, Piscine, and Bocal cards', true),
        (16, 'Revoked Cards', 'Cards in the revocation list', true),
 
        (40, 'Master Key', 'Unlocks every door', false),

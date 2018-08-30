@@ -1,3 +1,4 @@
 #!/bin/sh
 
-migrate -path card42/migrate create -ext sql $@
+cd $(git rev-parse --show-cdup)
+migrate create -dir server/card42/migrations -ext sql $@

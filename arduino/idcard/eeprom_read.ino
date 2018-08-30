@@ -1,15 +1,32 @@
 #include "eeprom_config.h"
 
 void s_config::ReadFromEEPROM(void) {
+  int ab_switch = EEPROM.read(0);
   PointerWrap p;
-  p.offset = EEPROM.read(0);
-  if (p.offset == 1) {
+  if (ab_switch == 1) {
     p.offset = PROTECTED_CONFIG_OFFSET_A;
   } else {
     p.offset = PROTECTED_CONFIG_OFFSET_B;
   }
   p.is_writing = false;
   DoState(p);
+}
+
+void s_config::WriteToEEPROM(void) {
+  int ab_switch = EEPROM.read(0);
+  PointerWrap p;
+  if (ab_switch == 1) {
+    p.offset = PROTECTED_CONFIG_OFFSET_B;
+    ab_switch = 2;
+  } else {
+    p.offset = PROTECTED_CONFIG_OFFSET_A;
+    ab_switch = 1;
+  }
+  p.is_writing = true;
+  DoState(p);
+  Serial.print("Wrote EEPROM up to "); Serial.println(p.offset);
+  EEPROM.write(0, ab_switch);
+  Serial.print("Switched ProtectedConfig to "); Serial.println(ab_switch);
 }
 
 void s_config::DoState(PointerWrap &p) {

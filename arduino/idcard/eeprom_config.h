@@ -8,6 +8,7 @@ struct    s_config {
   const int PROTECTED_CONFIG_OFFSET_A = 128;
   const int PROTECTED_CONFIG_OFFSET_B = 320;
 
+ public:
   class PointerWrap {
    public:
     int offset;
@@ -37,13 +38,16 @@ struct    s_config {
     }
   };
 
+ public:
   void ReadFromEEPROM();
+  void WriteToEEPROM();
   void DoState(PointerWrap &p);
-  
+
   byte id_mac_key[BLAKE2S_KEY_SIZE]; // 32 bytes
   byte tk_mac_key[BLAKE2S_KEY_SIZE]; // 32 bytes
 
   struct per_door_config {
+   public:
     byte door_id;
     uint16_t permission_mode;
 

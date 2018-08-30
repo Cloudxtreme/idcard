@@ -193,7 +193,7 @@ public class IntraProfileActivity extends AppCompatActivity {
                     if (coalName == null) {
                         coalName = getResources().getString(R.string.no_coalition);
                     }
-                    coalitionText.setText(this.getResources().getText(R.string.user_coalition, coalName));
+                    coalitionText.setText(this.getResources().getString(R.string.user_coalition, coalName));
                     int id = coalitionObject.getInt("id");
                     Log.i("IntraProfileActivity", "coalition id" + id);
 

@@ -63,9 +63,6 @@ void setup() {
   // Read configuration from EEPROM
   {
     g_config.ReadFromEEPROM();
-    for (int i = 0; i < sizeof(s_config); i++) {
-      *((byte*)&g_config + i) = EEPROM.read(i);
-    }
     SERIAL_PRINTLN("Loaded configuration from EEPROM");
     for (int i = 0; i < NUM_READERS; i++) {
       SERIAL_PRINT("DOOR ID: "); SERIAL_PRINTLN(g_config.door_confs[i].door_id);
@@ -154,7 +151,8 @@ namespace sm {
 // STATE_IDLE
 ReturnSentinel Rdr::connect_to_card() {
   if (mfrc522->PICC_IsNewCardPresent()) {
-    if (mfrc522->PICC_ReadCardSerial()) {
+    SERIAL_PRINTLN("cardPresent");
+    if (!mfrc522->PICC_ReadCardSerial()) {
       //SERIAL_PRINTLN("Failed to retrieve card UID!");
       return (sm_return(STATE_IDLE));
     }
@@ -202,6 +200,7 @@ ReturnSentinel Rdr::read_and_verify(void) {
   // 16 bytes file 0x1
   // 32 bytes file 0x2
   // 48 bytes file 0x4
+  // 16 bytes empty
 
   status = read_file(mfrc522, 1, 0, &verify_data[0x10], 0x10);
   if (status != MFRC522::STATUS_OK) {
@@ -209,85 +208,84 @@ ReturnSentinel Rdr::read_and_verify(void) {
   }
 
   if ((verify_data[0x1a] == 'U') && (verify_data[0x1b] == 'P')) {
+    m_cardtype = CardType::UPDATE;
     return (sm_return(STATE_READ_UPDATE));
   } else if ((verify_data[0x1a] == 'T') && (verify_data[0x1b] == 'K')) {
+    m_cardtype = CardType::TICKET;
     if (m_curstate == STATE_READ_START) {
       u.m_extra = 0; // attempts counter
       return (sm_return(STATE_PHONE_WAIT));
     } else {
-      // continue, is POSTPHONEWAIT
+      // OK, is POSTPHONEWAIT
     }
   } else if ((verify_data[0x1a] == 'I') && (verify_data[0x1b] == 'D')) {
-    // continue
+    m_cardtype = CardType::IDCARD;
+    // OK
   } else {
     return (handle_error("ReadFile1: Unrecognized type", status, true));
   }
 
-  if (((verify_data[0x1a] == 'I') && (verify_data[0x1b] == 'D')) ||
-      ((verify_data[0x1a] == 'T') && (verify_data[0x1b] == 'K'))) {
+SERIAL_PRINTLN("reading files");
+  {
     status = read_file(mfrc522, 2, 0, &verify_data[0x20], 0x20);
     if (status != MFRC522::STATUS_OK) {
       return (handle_error("ReadFile 2", status, true));
     }
-
+  
     status = read_file(mfrc522, 4, 0, &verify_data[0x40], 0x30);
     if (status != MFRC522::STATUS_OK) {
       return (handle_error("ReadFile 4", status, true));
     }
-
+  
     // Read the MAC
     byte card_mac[0x10];
     status = read_file(mfrc522, 4, 0x30, card_mac, 0x10);
     if (status != MFRC522::STATUS_OK) {
       return (handle_error("ReadFile 4b", status, true));
     }
-
+  
     // Clear out the card serial
     memset(verify_data, 0, 16);
-
-    // ID cards and Tickets have separate MAC keys and serial methods (?)
-    if (verify_data[0x1a] == 'I') {
+  
+    // ID cards and Tickets have separate MAC keys and serial method
+    if (m_cardtype == CardType::IDCARD) {
       for (int j = 0; j < mfrc522->uid.size; j++) {
         verify_data[j] = mfrc522->uid.uidByte[j];
       }
-
+  
       blake2s_init_key(&g_hasher, BLAKE2S_128_OUTPUT_SIZE, g_config.id_mac_key, BLAKE2S_KEY_SIZE);
-    }
-    else {
+    } else {
       memset(verify_data, 0xFF, 11); // kyork: card serials cannot possibly be 11 bytes long
       blake2s_init_key(&g_hasher, BLAKE2S_128_OUTPUT_SIZE, g_config.tk_mac_key, BLAKE2S_KEY_SIZE);
     }
-
+  
     // Compute the MAC
     blake2s_block(&g_hasher, verify_data + 0x00, BLAKE2S_FLAG_NORMAL);
     blake2s_finish(&g_hasher, verify_data + 0x40, 0x30);
     byte compare_mac[16];
     blake2s_output_hash(&g_hasher, compare_mac);
-
+  
     byte compare = 0;
     for (int i = 0; i < 16; i++) {
       compare |= card_mac[i] ^ compare_mac[i];
     }
-
+  
     SERIAL_PRINTLN("Card data:");
     print_memory(verify_data, 0x70); SERIAL_PRINTLN();
-
+  
     SERIAL_PRINTLN("Card MAC:");
     print_memory(card_mac, 0x10); SERIAL_PRINTLN();
-
+  
     SERIAL_PRINTLN("Calculated MAC:");
     print_memory(compare_mac, 0x10); SERIAL_PRINTLN();
-
+  
     if (!compare) {
       //TODO: Verify card information when MAC is valid
       return (sm_return(STATE_UNLOCK_START)); //At this point the card can be pulled away
-    }
-    else {
+    } else {
       return (handle_error("MAC failure", MFRC522::STATUS_OK));
     }
   }
-
-  return (handle_error("Unknown card type", MFRC522::STATUS_OK));
 }
 
 // STATE_PHONE_WAIT
@@ -302,7 +300,7 @@ ReturnSentinel Rdr::check_phone_ready(void) {
   byte cmd[2];
 
   cmd[0] = CMD_CUSTOM_IS_READY;
-  cmd[1] = 0; // TODO - door ID
+  cmd[1] = 0xFF; // TODO - door ID
   MFRC522::StatusCode status = send_wrapped_request(mfrc522, cmd, sizeof(cmd), reply, &reply_len);
   if (status != MFRC522::STATUS_OK) {
     return (handle_error("phone_wait", status, true));
@@ -324,7 +322,17 @@ ReturnSentinel Rdr::unlock_start(void) {
 
   tone(SPEAKER_PIN2(i), GOODBEEP_HZ, GOODBEEP_ON_MS);
   SERIAL_PRINTLN("(speaker on)");
-  return (wait_then_do(GOODBEEP_ON_MS, STATE_UNLOCK_NOBEEP));
+  
+  ReturnSentinel sentinel = wait_then_do(GOODBEEP_ON_MS, STATE_UNLOCK_NOBEEP);
+  if (m_cardtype == CardType::TICKET) {
+    byte cmd[2];
+    cmd[0] = CMD_CUSTOM_IS_READY;
+    cmd[1] = 0; // Success
+    send_wrapped_request(mfrc522, cmd, sizeof(cmd), NULL, NULL);
+    // ignore errors
+  }
+
+  return (sentinel);
 }
 
 // STATE_UNLOCK_NOBEEP

@@ -1,22 +1,22 @@
 #include <EEPROM.h>
 
+#define NUM_READERS 1
+#define BLAKE2S_KEY_SIZE 32
+
+#include "eeprom_config.h"
+
 // Permission modes
 #define PERMISSION_MODE_STANDARD 1
-#define PERMISSION_MODE_NOPISCINE 2
+#define PERMISSION_MODE_OPEN 2
 #define PERMISSION_MODE_STAFF 3
 #define PERMISSION_MODE_MOVIEROOM 4
+#define PERMISSION_MODE_NOPISCINE 5
+#define PERMISSION_MODE_STANDARD_TIMEOPEN 6
 
-// EEPROM contents
-struct    s_config {
-  byte door_id;
-  byte permission_mode;
-
-  byte id_mac_key[0x20];
-  byte tk_mac_key[0x20];
-};
-
-#define DOOR_ID 0
-#define PERMISSION_MODE PERMISSION_MODE_STANDARD
+#define DOOR_ID_A 5
+#define PERMISSION_MODE_A PERMISSION_MODE_STANDARD
+#define DOOR_ID_B 6
+#define PERMISSION_MODE_B PERMISSION_MODE_STANDARD
 
 #define DEBUG_MODE true
 
@@ -27,10 +27,7 @@ byte g_id_mac_key[0x20] = {
   0x2A, 0x2A, 0x2A, 0x2A, 0x2A, 0x2A, 0x2A, 0x2A,
   0x2A, 0x2A, 0x2A, 0x2A, 0x2A, 0x2A, 0x2A, 0x2A
 #else
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+#include "id_mac_key.inc"
 #endif
 };
 
@@ -41,14 +38,9 @@ byte g_tk_mac_key[0x20] = {
   0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42,
   0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42
 #else
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+#include "tk_mac_key.inc"
 #endif
 };
-
-#define STRUCT_IDX(T,field) (int)&(((T *)0)->field)
 
 void setup() {
   Serial.begin(9600);
@@ -56,22 +48,20 @@ void setup() {
     ; // wait for serial port to connect
   }
 
-  Serial.println("Writing door id...");
-  EEPROM.write(STRUCT_IDX(s_config, door_id), DOOR_ID);
+  s_config my_conf;
 
-  Serial.println("Writing permission mode...");
-  EEPROM.write(STRUCT_IDX(s_config, permission_mode), PERMISSION_MODE);
+  Serial.println("Preparing...");
+  memcpy(my_conf.id_mac_key, g_id_mac_key, BLAKE2S_KEY_SIZE);
+  memcpy(my_conf.tk_mac_key, g_tk_mac_key, BLAKE2S_KEY_SIZE);
+  my_conf.door_confs[0].door_id = DOOR_ID_A;
+  my_conf.door_confs[0].permission_mode = PERMISSION_MODE_A;
+#if NUM_READERS > 1
+  my_conf.door_confs[1].door_id = DOOR_ID_B;
+  my_conf.door_confs[1].permission_mode = PERMISSION_MODE_B;
+#endif
 
-  Serial.println("Writing keys...");
-  for (int i = 0; i < 0x20; i++) {
-    EEPROM.write(STRUCT_IDX(s_config, id_mac_key) + i, g_id_mac_key[i]);
-    EEPROM.write(STRUCT_IDX(s_config, tk_mac_key) + i, g_tk_mac_key[i]);
-  }
-
-  //TODO: populate the eeprom with more information than just keys and a door id
-  //TODO: validate the written data
-
-  Serial.println("EEPROM has been properly formatted.");
+  Serial.println("Writing...");
+  my_conf.WriteToEEPROM();
 }
 
 void loop() {

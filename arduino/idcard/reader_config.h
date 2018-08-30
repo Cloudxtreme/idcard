@@ -26,6 +26,12 @@ enum ReaderState : int {
   STATE_PHONE_WAIT,
 };
 
+enum CardType : byte {
+  IDCARD,
+  TICKET,
+  UPDATE
+};
+
 namespace sm {
   struct ReturnSentinel {};
 
@@ -84,6 +90,12 @@ namespace sm {
       ReaderState m_nextstate;
       int m_extra;
     } u;
+    /**
+     * 1: ID card
+     * 2: Phone ticket
+     * 3: Phone update
+     */
+    CardType m_cardtype;
   };
 
 }

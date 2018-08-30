@@ -4,10 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.DrawableRes;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.JsonWriter;
 import android.util.Log;
+import android.util.SparseIntArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,6 +24,7 @@ import com.squareup.picasso.Picasso;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONStringer;
 import org.us.x42.kyork.idcard.data.IDCard;
 import org.us.x42.kyork.idcard.tasks.WriteCardTask;
 
@@ -67,6 +71,9 @@ public class IntraProfileActivity extends AppCompatActivity {
                             Snackbar.LENGTH_LONG);
                     statusBar.show();
                     Log.i("WriteCardTask", "success");
+
+                    ImageView updateAlert = findViewById(R.id.update_needed_alert);
+                    updateAlert.setVisibility(View.INVISIBLE);
                 } else {
                     Snackbar statusBar = Snackbar.make(levelHeader, err, Snackbar.LENGTH_LONG);
                     statusBar.show();
@@ -82,16 +89,36 @@ public class IntraProfileActivity extends AppCompatActivity {
     private void populateUI(String login, IDCard idcard) {
         if (idcard != null) {
             //Populate UI info with card data
+            Thread t = new Thread(() -> {
+                try {
+                    IDCard updateContent = ServerAPIFactory.getAPI().getCardUpdates(idcard.serial, idcard.fileUserInfo.getLastUpdated());
+                    if (updateContent != null) {
+                        Log.i("IntraProfileActivity", "Update required");
+                        IntraProfileActivity.this.updateContent = updateContent;
+                        new Handler(Looper.getMainLooper()).post(IntraProfileActivity.this::markUpdateRequired);
+                    } else {
+                        Log.i("IntraProfileActivity", "no update required");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            t.start();
         }
         IntraAPI api = IntraAPI.get();
 
         if (api.isCached(login)) {
+            JSONObject user = api.cachedUser(login);
+
             TextView fullNameText = findViewById(R.id.full_name);
             fullNameText.setText(api.getFullName(login));
 
             TextView titleText = findViewById(R.id.title);
             String title = api.getTitle(login);
             titleText.setText(title);
+
+            ImageView updateAlert = findViewById(R.id.update_needed_alert);
+            updateAlert.setVisibility(View.GONE);
 
             ImageView bmImage = findViewById(R.id.user_picture);
             Picasso.get().load(api.getImageURL(login)).fit().centerInside().noFade().into(bmImage);
@@ -155,12 +182,47 @@ public class IntraProfileActivity extends AppCompatActivity {
             TextView accountTypeText = findViewById(R.id.account_type);
             accountTypeText.setText("Type: null");
 
-            TextView coalitionText = findViewById(R.id.coalition);
-            coalitionText.setText("Coalition: null");
+            do {
+                try {
+                    TextView coalitionText = findViewById(R.id.coalition);
+                    JSONObject coalitionObject = IntraAPI.getCoalition(user);
+                    if (coalitionObject == null) {
+                        break;
+                    }
+                    String coalName = coalitionObject.optString("name");
+                    if (coalName == null) {
+                        coalName = getResources().getString(R.string.no_coalition);
+                    }
+                    coalitionText.setText(this.getResources().getText(R.string.user_coalition, coalName));
+                    int id = coalitionObject.getInt("id");
+                    Log.i("IntraProfileActivity", "coalition id" + id);
+
+                    @DrawableRes int backgroundRsc = coalitionBackgrounds.get(id, 0);
+                    if (backgroundRsc != 0) {
+                        ImageView background = findViewById(R.id.fractal_background);
+                        background.setImageDrawable(getResources().getDrawable(backgroundRsc));
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } while (false);
 
             TextView phoneText = findViewById(R.id.phone);
             phoneText.setText("Phone: " + api.getPhone(login));
         }
+    }
+
+    private static SparseIntArray coalitionBackgrounds = new SparseIntArray();
+
+    static {
+        coalitionBackgrounds.put(1, R.drawable.federation_background_2048);
+        coalitionBackgrounds.put(2, R.drawable.alliance_background_2048);
+        coalitionBackgrounds.put(3, R.drawable.assembly_background_2048);
+        coalitionBackgrounds.put(4, R.drawable.order_background_2048);
+        coalitionBackgrounds.put(18, R.drawable.alliance_background_2048); // sneks
+        coalitionBackgrounds.put(19, R.drawable.order_background_2048); // hunnybadger
+        coalitionBackgrounds.put(20, R.drawable.galacticat_background_810); // galacticat
+        coalitionBackgrounds.put(21, R.drawable.federation_background_2048); // wufpacke
     }
 
     private void fetchUser(final String login, final boolean updateUI, final IDCard idcard) {
@@ -185,23 +247,6 @@ public class IntraProfileActivity extends AppCompatActivity {
                     );
                 }
 
-                // Check for updates to the card
-                if (idcard != null) {
-                    try {
-                        IDCard updateContent = ServerAPIFactory.getAPI().getCardUpdates(idcard.serial, idcard.fileUserInfo.getLastUpdated());
-                        if (updateContent != null) {
-                            IntraProfileActivity.this.updateContent = updateContent;
-                            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    IntraProfileActivity.this.markUpdateRequired();
-                                }
-                            });
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
             }
         };
         request.start();

@@ -8,6 +8,7 @@ import android.util.Log;
 import com.google.common.collect.ImmutableList;
 
 import org.us.x42.kyork.idcard.CardJob;
+import org.us.x42.kyork.idcard.PackUtil;
 import org.us.x42.kyork.idcard.ProgressStep;
 import org.us.x42.kyork.idcard.R;
 import org.us.x42.kyork.idcard.ServerAPI;
@@ -108,11 +109,16 @@ public class WriteCardTask extends CardNFCTask {
             // Write files
             for (AbstractCardFile f : cardToWrite.files()) {
                 if (f == null) continue;
+                if (f.getFileID() == 1) continue; // Don't try to write FileMetadata
 
-                mCard.writeToFile(
-                        DESFireProtocol.FileEncryptionMode.PLAIN,
-                        (byte)f.getFileID(),
-                        f.getRawContent(), 0);
+                try {
+                    mCard.writeToFile(
+                            DESFireProtocol.FileEncryptionMode.PLAIN,
+                            (byte)f.getFileID(),
+                            f.getRawContent(), 0);
+                } catch (DESFireCard.CardException e) {
+                    throw e;
+                }
             }
 
             // Commit
@@ -121,6 +127,7 @@ public class WriteCardTask extends CardNFCTask {
 
 
             stepProgress(3, ProgressStep.STATE_WORKING);
+            ServerAPIFactory.getAPI().cardUpdatesApplied(PackUtil.readLE56(mTag.getId(), 0), cardToWrite.fileUserInfo.getLastUpdated());
             // TODO contact server
             try {
                 Thread.sleep(350);

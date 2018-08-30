@@ -53,7 +53,10 @@ public class HCEService extends HostApduService {
 
     private void resetVariables() {
         ourCard = null;
+        addtlFrameCurrent = 0;
+        isUpdateMode = false;
         ticketReady = false;
+        readerLost = false;
         fetchException = null;
         authRndA = null;
         authRndB = null;
@@ -190,9 +193,16 @@ public class HCEService extends HostApduService {
                 response = new byte[3];
                 response[1] = (byte)0x91;
                 response[2] = 0x00;
+                byte door_id = desfire_cmddata[0];
+
+                if (door_id == 0) {
+                    // Done
+                    sendStatusMessageToUI(HCEStatusActivity.StatusCode.SUCCESS);
+                    readerLost = true;
+                    return ERROR_GENERIC;
+                }
                 if (isUpdateMode) {
-                    byte door_id = desfire_cmddata[0];
-                    // TODO - update mode
+                    // TODO - update mode data fetch
                 }
                 if (ticketReady) {
                     response[0] = 1;
@@ -236,6 +246,8 @@ public class HCEService extends HostApduService {
     }
 
     public void onDeactivated(int deactivationMode) {
+        if (readerLost) return;
+
         if (deactivationMode == DEACTIVATION_LINK_LOSS) {
             if (!ticketReady && fetchException == null) {
                 sendStatusMessageToUI(HCEStatusActivity.StatusCode.FETCHING_SERVER_READER_LOST);

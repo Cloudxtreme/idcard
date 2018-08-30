@@ -1,6 +1,7 @@
 package org.us.x42.kyork.idcard;
 
 import android.util.Log;
+import android.util.LongSparseArray;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,12 +26,16 @@ public class ServerAPIDebug implements ServerAPI {
     private static final byte[] ID_MAC_KEY_DEV = HexUtil.decodeHex("2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A");
     private static final byte[] TK_MAC_KEY_DEV = HexUtil.decodeHex("4242424242424242424242424242424242424242424242424242424242424242");
     private static final byte[] TK_FAKE_SERIAL = HexUtil.decodeHex("FFFFFFFFFFFFFFFFFFFFFF"); // longer than any possible NFC-A serial
-    private Map<Long, IDCard> pendingUpdates = new HashMap<>();
+    private final Object pendingUpdatesLock = new Object();
+    private LongSparseArray<IDCard> pendingUpdates = new LongSparseArray<IDCard>();
 
     @Override
     public IDCard getCardUpdates(long serial, long last_updated) {
         simulatedDelay();
-        IDCard card = pendingUpdates.get(serial);
+        IDCard card;
+        synchronized (pendingUpdatesLock) {
+            card = pendingUpdates.get(serial);
+        }
         if (card == null) {
             return null;
         }
@@ -72,8 +77,10 @@ public class ServerAPIDebug implements ServerAPI {
             newCard.fileSignatures.setSignature((byte)f.getFileID(), FileSignatures.KEYID_DEBUG, FileSignatures.signForDebug(f.getRawContent()));
         }
 
+        synchronized (pendingUpdatesLock) {
+            pendingUpdates.put(serial, newCard);
+        }
         Log.i("ServerAPIDebug", "stored update for " + serial);
-        pendingUpdates.put(serial, newCard);
     }
 
     @Override
@@ -96,6 +103,15 @@ public class ServerAPIDebug implements ServerAPI {
     @Override
     public void cardUpdatesApplied(long serial, long new_last_updated) {
         simulatedDelay();
+
+        synchronized (pendingUpdatesLock) {
+            IDCard card = pendingUpdates.get(serial);
+            if (card != null) {
+                if (card.fileUserInfo.getLastUpdated() == new_last_updated) {
+                    pendingUpdates.remove(serial);
+                }
+            }
+        }
     }
 
     @Override

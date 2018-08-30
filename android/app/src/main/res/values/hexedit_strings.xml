@@ -6,6 +6,7 @@
     <string name="editor_edithex_short">Edit</string>
     <string name="editor_applyvalue">Apply</string>
     <string name="editor_hexdialog_title">Edit Raw Values</string>
+    <string name="editor_save_server_reject">Server returned error: %s</string>
 
     <!-- Number input -->
     <string name="editor_numeric_accessibledesc">Numeric content of the field</string>

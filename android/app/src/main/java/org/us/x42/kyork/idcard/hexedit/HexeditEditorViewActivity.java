@@ -1,9 +1,13 @@
 package org.us.x42.kyork.idcard.hexedit;
 
 import android.app.Activity;
+import android.app.job.JobScheduler;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -19,10 +23,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import org.us.x42.kyork.idcard.AndroidLocalizedException;
 import org.us.x42.kyork.idcard.R;
+import org.us.x42.kyork.idcard.ServerAPI;
+import org.us.x42.kyork.idcard.ServerAPIFactory;
 import org.us.x42.kyork.idcard.data.AbstractCardFile;
 import org.us.x42.kyork.idcard.data.IDCard;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,8 +53,19 @@ public class HexeditEditorViewActivity extends AppCompatActivity implements Hexe
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+    private Handler mHandler;
+    private Snackbar mSnackbar;
 
     public static final String EDITOR_PARAMS_CARD = "org.us.x42.kyork.idcard.hexedit.Card";
+
+    /**
+     * Card content saved on the server
+     */
+    private static final int MSG_ID_SAVED = 1;
+    /**
+     * Server rejected the edits
+     */
+    private static final int MSG_ID_SAVE_ERR = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +95,30 @@ public class HexeditEditorViewActivity extends AppCompatActivity implements Hexe
         mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         tabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
 
+        mSnackbar = Snackbar.make(mViewPager, R.string.accessibledesc_done, 0);
+        mHandler = new Handler(getMainLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                if (msg.what == MSG_ID_SAVED) {
+                    mSnackbar.dismiss();
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.putExtra(EDITOR_PARAMS_CARD, (IDCard)msg.obj);
+                    setResult(RESULT_OK, intent);
+                    finish();
+                } else if (msg.what == MSG_ID_SAVE_ERR) {
+                    Throwable t = (Throwable) msg.obj;
+                    String errMsg;
+                    if (t instanceof AndroidLocalizedException) {
+                        errMsg = ((AndroidLocalizedException) t).getLocalizedMessage(HexeditEditorViewActivity.this);
+                    } else {
+                        errMsg = t.getLocalizedMessage();
+                    }
+                    errMsg = HexeditEditorViewActivity.this.getString(R.string.editor_save_server_reject, errMsg);
+                    mSnackbar.setText(errMsg);
+                    mSnackbar.setDuration(Snackbar.LENGTH_LONG);
+                }
+            }
+        };
     }
 
 
@@ -96,6 +139,24 @@ public class HexeditEditorViewActivity extends AppCompatActivity implements Hexe
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
+        }
+        if (id == R.id.write) {
+            new Thread(() -> {
+                try {
+                    try {
+                         Log.i("Hexedit Exit", Byte.toString(card.fileUserInfo.getAccountType()));
+                    } catch (Throwable ignored) {}
+                    ServerAPIFactory.getAPI().submitCardUpdates(card.serial, card);
+                    IDCard signedCard = ServerAPIFactory.getAPI().getCardUpdates(card.serial, 0);
+                    mHandler.sendMessage(Message.obtain(mHandler, MSG_ID_SAVED, signedCard));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    mHandler.sendMessage(Message.obtain(mHandler, MSG_ID_SAVE_ERR, e));
+                }
+            }).start();
+            mSnackbar.dismiss();
+            mSnackbar = Snackbar.make(mViewPager, "Saving data to server...", Snackbar.LENGTH_INDEFINITE);
+            mSnackbar.show();
         }
 
         return super.onOptionsItemSelected(item);

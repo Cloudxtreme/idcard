@@ -8,6 +8,7 @@ import android.util.Log;
 import com.google.common.collect.ImmutableList;
 
 import org.us.x42.kyork.idcard.CardJob;
+import org.us.x42.kyork.idcard.PackUtil;
 import org.us.x42.kyork.idcard.ProgressStep;
 import org.us.x42.kyork.idcard.R;
 import org.us.x42.kyork.idcard.data.CardDataFormat;
@@ -124,6 +125,7 @@ public class ReadCardTask extends CardNFCTask {
             // Done
             stepProgress(2, ProgressStep.STATE_DONE);
             cardOut = new IDCard();
+            cardOut.serial = serial;
             cardOut.fileMetadata = fileMetadata;
             cardOut.fileUserInfo = fileUserInfo;
             cardOut.fileDoorPermissions = fileDoorPermissions;

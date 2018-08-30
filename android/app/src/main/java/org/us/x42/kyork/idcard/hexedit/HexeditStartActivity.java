@@ -82,7 +82,7 @@ public class HexeditStartActivity extends Activity {
                     return;
                 }
                 card = data.getParcelableExtra(HexeditEditorViewActivity.EDITOR_PARAMS_CARD);
-                CardNFCTask task = new WriteCardTask(card);
+                CardNFCTask task = new WriteCardTask(null);
                 startActivityForResult(CardWriteActivity.getIntent(this, task), REQ_WRITE_CARD);
                 break;
             case REQ_WRITE_CARD:

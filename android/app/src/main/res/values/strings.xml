@@ -70,6 +70,7 @@
     <string name="launch_card_admin">Launch Card Admin</string>
     <string name="err_need_login">Please enter a valid intra login</string>
     <string name="title_activity_hexedit_editor_view">HexeditEditorViewActivity</string>
+    <string name="user_coalition">Coalition: %s</string>
     <string name="tab_text_1">Tab 1</string>
     <string name="tab_text_2">Tab 2</string>
     <string name="tab_text_3">Tab 3</string>
@@ -82,4 +83,17 @@
     <string name="accessibledesc_error_generic">Error</string>
     <string name="accessibledesc_done">Done</string>
     <string name="accessibledesc_working">Working</string>
+    <string name="accessibledesc_door">Unlocking a door</string>
+    <string name="accessibledesc_update_door">Updating door configuration</string>
+    <string name="hce_fetching_update">Getting update data from server</string>
+    <string name="hce_fetching_ticket">Getting entry ticket from server</string>
+    <string name="hce_comm_update">Applying update, do not remove the phone</string>
+    <string name="hce_comm_ticket">Sending ticket</string>
+    <string name="hce_success_update">Update applied</string>
+    <string name="hce_success_ticket">Door is open</string>
+    <string name="hce_ready_retry">Please touch the phone to the card reader</string>
+    <string name="hce_server_error_generic">Server returned an error</string>
+    <string name="hce_reader_lost">Card reader lost, please try again</string>
+    <string name="hce_fetching_noreader">Getting data from server. Please remove the phone from the card reader.</string>
+    <string name="no_coalition">(none)</string>
 </resources>

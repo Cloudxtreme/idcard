@@ -98,6 +98,18 @@ public class IntraAPI {
         }
 
         JSONObject user = new JSONObject(this.apiCall("/v2/users/" + login));
+        boolean needs_coalitions = false;
+        JSONArray cursus_users = user.getJSONArray("cursus_users");
+        for (int i = 0; i < cursus_users.length(); i++) {
+            JSONObject cursus_user_relation = cursus_users.getJSONObject(i);
+            if (cursus_user_relation.optBoolean("has_coalition")) {
+                needs_coalitions = true;
+            }
+        }
+        if (needs_coalitions) {
+            JSONArray coalitionList = new JSONArray(apiCall("/v2/users/" + user.getInt("id") + "/coalitions"));
+            user.put("coalitions", coalitionList);
+        }
         this.users.put(login, user);
         return user;
     }
@@ -226,5 +238,33 @@ public class IntraAPI {
             // TODO - fix this
             return 1;
         }
+    }
+
+    /**
+     * attempt to get the coalition id from a user object
+     * @param userObject
+     * @return -1 if no coalitions
+     * @throws JSONException on malformed data
+     */
+    public static JSONObject getCoalition(JSONObject userObject) throws JSONException {
+        int coalitionID = -1;
+        JSONObject ret = null;
+
+        JSONArray coalitionInfo = userObject.optJSONArray("coalitions");
+        if (coalitionInfo == null) {
+            return null;
+        }
+        for (int i = 0; i < coalitionInfo.length(); i++) {
+            JSONObject subObject = coalitionInfo.getJSONObject(i);
+            int subID = subObject.getInt("id");
+            if (coalitionID == -1) {
+                coalitionID = subID;
+                ret = subObject;
+            } else if (coalitionID != subID) {
+                // found multiple different coalitions
+                return null;
+            }
+        }
+        return ret;
     }
 }
